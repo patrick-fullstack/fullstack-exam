@@ -2,7 +2,9 @@ import express, { Request, Response } from 'express';
 import { env } from './config/env';
 import { configureCors } from './config/cors';
 import { configureSecurity } from './middlewares/security';
+import { configureErrorHandlers } from './middlewares/errorHandler';
 import connectDB from './config/database';
+import authRoutes from './routes/authRoutes';
 
 const app = express();
 
@@ -18,15 +20,13 @@ app.use(express.json());
 // Connect to database
 connectDB();
 
-// Simple route for testing
-app.get('/', (req: Request, res: Response) => {
-  res.json({ 
-    message: 'Server is running!',
-    environment: env.NODE_ENV 
-  });
-});
+// ROUTES
+// Authentication routes
+app.use('/api/auth', authRoutes);
 
-    
+// Configure error handling middleware
+configureErrorHandlers(app);
+
 // Start server
 app.listen(env.PORT, () => {
     console.log(`Server is running on port ${env.PORT}`);
