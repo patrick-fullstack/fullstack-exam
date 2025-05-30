@@ -178,6 +178,45 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+// Refresj token controller
+export const refreshToken = asyncHandler(
+  async (req: Request, res: Response) => {
+    // User is available from authenticate middleware
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+    }
+
+    // Check if user is still active
+    if (!req.user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: "Account is deactivated. Please contact administrator.",
+      });
+    }
+
+    // Generate new token with same payload structure as login
+    const tokenData = generateUserToken({
+      _id: req.user._id.toString(),
+      email: req.user.email,
+      role: req.user.role,
+      companyId: req.user.companyId?.toString(),
+    });
+
+    // Return new token (same format as login response)
+    res.status(200).json({
+      success: true,
+      message: "Token refreshed successfully",
+      data: {
+        token: tokenData.token,
+        expiresIn: tokenData.expiresIn,
+      },
+    });
+  }
+);
+
 // Get current user profile (protected route)
 export const getCurrentUser = asyncHandler(
   async (req: Request, res: Response) => {
