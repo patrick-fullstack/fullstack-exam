@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
-import { User } from '../models/User';
-import { generateUserToken } from '../utils/jwt';
-import { asyncHandler } from '../middlewares/errorHandler';
+import { Request, Response } from "express";
+import { User, UserRole } from "../models/User";
+import { generateUserToken } from "../utils/jwt";
+import { asyncHandler } from "../middlewares/errorHandler";
 
 // Login request interface
 interface LoginRequest {
@@ -27,96 +27,165 @@ interface LoginResponse {
   };
 }
 
+// Register request interface
+interface RegisterRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  companyId?: string;
+}
+
 // Login controller
 export const login = asyncHandler(async (req: Request, res: Response) => {
-  try {
-    // 1. Extract email and password from request body
-    const { email, password }: LoginRequest = req.body;
+  const { email, password }: LoginRequest = req.body;
 
-    // 2. Validate input
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and password are required'
-      });
-    }
+  // Validate input
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Email and password are required" });
+  }
 
-    // 3. Find user by email (include password for comparison)
-    const user = await User.findOne({ email }).select('+password');
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
-    }
-
-    // 4. Check if user account is active
-    if (!user.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: 'Account is deactivated. Please contact administrator.'
-      });
-    }
-
-    // 5. Compare password using the model method
-    const isPasswordValid = await user.comparePassword(password);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
-    }
-
-    // 6. Generate JWT token
-    const tokenData = generateUserToken({
-      _id: user._id.toString(), // typescript will identify this _id is ObjectId
-      email: user.email,
-      role: user.role,
-      companyId: user.companyId?.toString()
-    });
-
-    // 7. Prepare user data (exclude sensitive information)
-    const userData = {
-      id: user._id.toString(),
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      companyId: user.companyId?.toString()
-    };
-
-    // 8. Send successful response
-    const response: LoginResponse = {
-      success: true,
-      message: 'Login successful',
-      data: {
-        user: userData,
-        token: tokenData.token,
-        expiresIn: tokenData.expiresIn
-      }
-    };
-
-    res.status(200).json(response);
-
-  } catch (error: any) {
-    console.error('Login error:', error);
-    res.status(500).json({
+  // Find and validate user
+  const user = await User.findOne({ email }).select("+password");
+  if (!user) {
+    return res
+      .status(401)
+      .json({ success: false, message: "Invalid email or password" });
+  }
+  if (!user.isActive) {
+    return res.status(401).json({
       success: false,
-      message: 'Internal server error during login'
+      message: "Account is deactivated. Please contact administrator.",
     });
   }
+
+  // Verify password
+  if (!(await user.comparePassword(password))) {
+    return res
+      .status(401)
+      .json({ success: false, message: "Invalid email or password" });
+  }
+
+  // Generate token and respond
+  const tokenData = generateUserToken({
+    _id: user._id.toString(),
+    email: user.email,
+    role: user.role,
+    companyId: user.companyId?.toString(),
+  });
+
+  // Prepare response data - using LoginResponse interface
+  const response: LoginResponse = {
+    success: true,
+    message: "Login successful",
+    data: {
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        companyId: user.companyId?.toString(),
+      },
+      token: tokenData.token,
+      expiresIn: tokenData.expiresIn,
+    },
+  };
+
+  res.status(200).json(response);
+});
+
+// Register controller
+export const register = asyncHandler(async (req: Request, res: Response) => {
+  const {
+    email,
+    password,
+    firstName,
+    lastName,
+    role,
+    companyId,
+  }: RegisterRequest = req.body;
+
+  // Validate required fields
+  if (!email || !password || !firstName || !lastName || !role) {
+    return res.status(400).json({
+      success: false,
+      message: "Email, password, firstName, lastName, and role are required",
+    });
+  }
+
+  // Validate role
+  if (!Object.values(UserRole).includes(role)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid role specified",
+    });
+  }
+
+  // Validate companyId for non-super admin roles
+  if (role !== UserRole.SUPER_ADMIN && !companyId) {
+    return res.status(400).json({
+      success: false,
+      message: "CompanyId is required for manager and employee roles",
+    });
+  }
+
+  // Check if user already exists
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return res.status(409).json({
+      success: false,
+      message: "User with this email already exists",
+    });
+  }
+
+  // Create new user
+  const userData: any = {
+    email,
+    password,
+    firstName,
+    lastName,
+    role,
+  };
+
+  // Add companyId if provided (for managers and employees)
+  if (companyId) {
+    userData.companyId = companyId;
+  }
+
+  const newUser = await User.create(userData);
+
+  // Return user data (excluding password)
+  res.status(201).json({
+    success: true,
+    message: "User registered successfully",
+    data: {
+      user: {
+        id: newUser._id.toString(),
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        role: newUser.role,
+        companyId: newUser.companyId?.toString(),
+        isActive: newUser.isActive,
+        createdAt: newUser.createdAt,
+        updatedAt: newUser.updatedAt,
+      },
+    },
+  });
 });
 
 // Get current user profile (protected route)
-export const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
-  try {
+export const getCurrentUser = asyncHandler(
+  async (req: Request, res: Response) => {
     // User is available from authenticate middleware
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'User not authenticated'
+        message: "User not authenticated",
       });
     }
 
@@ -129,25 +198,18 @@ export const getCurrentUser = asyncHandler(async (req: Request, res: Response) =
       role: req.user.role,
       companyId: req.user.companyId?.toString(),
       createdAt: req.user.createdAt,
-      updatedAt: req.user.updatedAt
+      updatedAt: req.user.updatedAt,
     };
 
     res.status(200).json({
       success: true,
-      message: 'User profile retrieved successfully',
+      message: "User profile retrieved successfully",
       data: {
-        user: userData
-      }
-    });
-
-  } catch (error: any) {
-    console.error('Get current user error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
+        user: userData,
+      },
     });
   }
-});
+);
 
 // Logout controller (optional - for token blacklisting in future)
 export const logout = asyncHandler(async (req: Request, res: Response) => {
@@ -155,6 +217,6 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
   // will create a token blacklist in future to invalidate tokens
   res.status(200).json({
     success: true,
-    message: 'Logout successful'
+    message: "Logout successful",
   });
 });
