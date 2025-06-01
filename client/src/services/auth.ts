@@ -3,13 +3,12 @@ import Cookies from "js-cookie";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// Define interfaces for request and user data
+// Define interfaces
 export interface LoginRequest {
   email: string;
   password: string;
 }
 
-// Define the structure of the user object returned by the API
 export interface User {
   id: string;
   email: string;
@@ -19,12 +18,30 @@ export interface User {
   companyId?: string;
 }
 
+// Event emitter for auth events
+class AuthEventEmitter {
+  private listeners: (() => void)[] = [];
+
+  subscribe(callback: () => void) {
+    this.listeners.push(callback);
+    return () => {
+      this.listeners = this.listeners.filter(listener => listener !== callback);
+    };
+  }
+
+  emit() {
+    this.listeners.forEach(callback => callback());
+  }
+}
+
+export const authEvents = new AuthEventEmitter();
+
 const api = axios.create({
   baseURL: API_URL,
   timeout: 10000,
 });
 
-// Automatically add token to all requests
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
     const token = Cookies.get("token");
@@ -36,42 +53,45 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle token expiration automatically
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired - clear it and redirect to login
       Cookies.remove("token");
-      window.location.href = "/";
+      authEvents.emit(); // Emit logout event
     }
     return Promise.reject(error);
   }
 );
 
 export const auth = {
-  // Login
   async login(email: string, password: string) {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
+      const response = await api.post("/auth/login", {
         email,
         password,
       });
 
       if (response.data.success) {
-        // Store in cookies
         Cookies.set("token", response.data.data.token, { expires: 1 });
+        
+        // Emit event to trigger App.tsx to re-check auth
+        authEvents.emit();
+        
         return { success: true, user: response.data.data.user };
       }
 
       return { success: false, error: response.data.message };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      return { success: false, error: "Login failed" };
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Login failed" 
+      };
     }
   },
 
-  // Get current user from cookies
   async getCurrentUser(): Promise<User | null> {
     try {
       const response = await api.get("/auth/me");
@@ -87,7 +107,6 @@ export const auth = {
     }
   },
 
-  // Check if logged in
   isLoggedIn(): boolean {
     return !!Cookies.get("token");
   },
@@ -96,16 +115,14 @@ export const auth = {
     return Cookies.get("token");
   },
 
-  // Logout
   async logout() {
     try {
-      // Call server logout endpoint
       await api.post("/auth/logout");
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Always clear token locally
       Cookies.remove("token");
+      authEvents.emit();
     }
   },
 };

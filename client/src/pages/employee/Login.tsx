@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { auth } from '../../services/auth';
 import { Header } from '../../components/layout/Header';
 import { LoginForm } from '../../components/forms/LoginForm';
@@ -14,22 +15,13 @@ export default function EmployeeLogin() {
         try {
             const result = await auth.login(email, password);
 
-            if (result.success) {
+            if (result.success && result.user) { // Added type guard
                 // Check if user is actually an employee
                 if (result.user.role !== 'employee') {
-                    let roleMessage = '';
-                    if (result.user.role === 'super_admin') {
-                        roleMessage = 'You are a Super Admin. This is the Employee portal.';
-                    } else if (result.user.role === 'manager') {
-                        roleMessage = 'You are a Manager. This is the Employee portal.';
-                    }
-
-                    setError(`Access denied. ${roleMessage}`);
+                    setError(`Access denied. You are a ${result.user.role.replace('_', ' ')}. This is the Employee portal.`);
                     auth.logout(); // Clear stored credentials
                     return;
                 }
-
-                window.location.reload(); // Redirect to employee dashboard
             } else {
                 setError(result.error || 'Login failed');
             }
@@ -59,12 +51,12 @@ export default function EmployeeLogin() {
                     error={error}
                 />
 
-                {/* Navigation */}
+                {/* Navigation - Using Link components instead of <a> tags */}
                 <div className="mt-4 text-center">
                     <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
                         Not an employee?
-                        <a href="/admin-login" style={{ color: 'var(--primary-green)', marginLeft: '0.25rem' }}>Admin Login</a> |
-                        <a href="/manager-login" style={{ color: 'var(--primary-green)', marginLeft: '0.25rem' }}>Manager Login</a>
+                        <Link to="/admin-login" style={{ color: 'var(--primary-green)', marginLeft: '0.25rem' }}>Admin Login</Link> |
+                        <Link to="/manager-login" style={{ color: 'var(--primary-green)', marginLeft: '0.25rem' }}>Manager Login</Link>
                     </p>
                 </div>
             </div>

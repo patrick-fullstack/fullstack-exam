@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { auth } from '../../services/auth';
 import { Header } from '../../components/layout/Header';
 import type { User } from '../../services/auth';
@@ -6,6 +7,7 @@ import type { User } from '../../services/auth';
 export default function EmployeeDashboard() {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     // Fetch user data when component mounts
     useEffect(() => {
@@ -14,28 +16,36 @@ export default function EmployeeDashboard() {
                 const userData = await auth.getCurrentUser();
                 setUser(userData);
 
-                // If no user data, redirect to login
+                // If no user data, redirect to login using React Router
                 if (!userData) {
-                    window.location.href = '/employee-login';
+                    navigate('/employee-login', { replace: true });
+                    return;
+                }
+
+                // Check if user is actually an employee
+                if (userData.role !== 'employee') {
+                    navigate('/employee-login', { replace: true });
+                    return;
                 }
             } catch (error) {
                 console.error('Failed to fetch user:', error);
-                window.location.href = '/employee-login';
+                navigate('/employee-login', { replace: true });
             } finally {
                 setLoading(false);
             }
         };
 
         fetchUser();
-    }, []);
+    }, [navigate]);
 
     const handleLogout = async () => {
         try {
             await auth.logout();
-            window.location.href = '/employee-login';
+            // Use React Router navigation instead of window.location.href
+            navigate('/employee-login', { replace: true });
         } catch (error) {
             console.error('Logout error:', error);
-            window.location.href = '/employee-login';
+            navigate('/employee-login', { replace: true });
         }
     };
 

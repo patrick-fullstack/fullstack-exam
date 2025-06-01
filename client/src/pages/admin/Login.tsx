@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { auth } from '../../services/auth';
 import { Header } from '../../components/layout/Header';
 import { LoginForm } from '../../components/forms/LoginForm';
@@ -14,15 +15,13 @@ export default function AdminLogin() {
         try {
             const result = await auth.login(email, password);
 
-            if (result.success) {
+            if (result.success && result.user) { // Added type guard
                 // Check if user is actually a super admin
                 if (result.user.role !== 'super_admin') {
                     setError(`Access denied. You are a ${result.user.role.replace('_', ' ')}. This is the Admin portal.`);
                     auth.logout(); // Clear stored credentials
                     return;
                 }
-
-                window.location.reload(); // Redirect to admin dashboard
             } else {
                 setError(result.error || 'Login failed');
             }
@@ -52,12 +51,12 @@ export default function AdminLogin() {
                     error={error}
                 />
 
-                {/* Navigation */}
+                {/* Navigation - Using Link components instead of <a> tags */}
                 <div className="mt-4 text-center">
                     <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
                         Not an admin?
-                        <a href="/manager-login" style={{ color: 'var(--primary-green)', marginLeft: '0.25rem' }}>Manager Login</a> |
-                        <a href="/employee-login" style={{ color: 'var(--primary-green)', marginLeft: '0.25rem' }}>Employee Login</a>
+                        <Link to="/manager-login" style={{ color: 'var(--primary-green)', marginLeft: '0.25rem' }}>Manager Login</Link> |
+                        <Link to="/employee-login" style={{ color: 'var(--primary-green)', marginLeft: '0.25rem' }}>Employee Login</Link>
                     </p>
                 </div>
             </div>
