@@ -5,6 +5,7 @@ import { configureSecurity } from './middlewares/security';
 import { configureErrorHandlers } from './middlewares/errorHandler';
 import connectDB from './config/database';
 import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
 
 const app = express();
 
@@ -23,6 +24,7 @@ connectDB();
 // ROUTES
 // Authentication routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Configure error handling middleware
 configureErrorHandlers(app);
