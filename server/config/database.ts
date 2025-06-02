@@ -12,14 +12,7 @@ const connectDB = async (): Promise<typeof mongoose> => {
   try {
     console.log("Connecting to MongoDB...");
 
-    const conn = await mongoose.connect(env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      connectTimeoutMS: 30000,
-      maxPoolSize: 10,
-      minPoolSize: 0,
-      bufferCommands: true,
-    });
+    const conn = await mongoose.connect(env.MONGO_URI);
 
     // Set up event listeners only once
     if (!isConnected) {
