@@ -21,15 +21,19 @@ configureCors(app);
 // Body parsing middleware - parses JSON requests to req.body (without it, req.body will be undefined)
 app.use(express.json());
 
+
+// Connect to the database
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
 app.get("/", (req: Request, res: Response) => {
   res.json({
     success: true,
     message: "API is running",
   });
 });
-
-// Connect to the database
-connectDB();
 
 // ROUTES
 // Authentication routes
