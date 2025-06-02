@@ -29,10 +29,13 @@ app.use("/api/users", ensureDatabase, userRoutes);
 // Configure error handling middleware
 configureErrorHandlers(app);
 
-// Start server
-app.listen(env.PORT, () => {
-  console.log(`Server is running on port ${env.PORT}`);
-  console.log(`Environment: ${env.NODE_ENV}`);
-});
+// For local development
+if (process.env.NODE_ENV !== "production") {
+  const PORT = env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`Environment: ${env.NODE_ENV}`);
+  });
+}
 
 export default app;
