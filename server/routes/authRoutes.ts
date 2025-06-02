@@ -9,6 +9,7 @@ import {
 import { authenticate, authorize } from "../middlewares/auth";
 import { authLimiter } from "../middlewares/security";
 import { UserRole } from "../models/User";
+import { upload } from "../middlewares/upload";
 
 const router = express.Router();
 
@@ -20,6 +21,7 @@ router.post(
   "/register",
   authenticate,
   authorize(UserRole.SUPER_ADMIN), // Only super admin can register new users
+  upload.single("avatar"),
   register
 );
 router.get("/me", authenticate, getCurrentUser);

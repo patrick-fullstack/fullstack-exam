@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { User, UserRole } from "../models/User";
 import { generateUserToken } from "../utils/jwt";
 import { asyncHandler } from "../middlewares/errorHandler";
+import { uploadToCloudinary } from "../utils/cloudinary";
 
 // Login request interface
 interface LoginRequest {
@@ -19,6 +20,8 @@ interface LoginResponse {
       email: string;
       firstName: string;
       lastName: string;
+      phone?: string;
+      avatar?: string;
       role: string;
       companyId?: string;
     };
@@ -33,6 +36,7 @@ interface RegisterRequest {
   password: string;
   firstName: string;
   lastName: string;
+  phone?: string;
   role: UserRole;
   companyId?: string;
 }
@@ -87,6 +91,8 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        phone: user.phone,
+        avatar: user.avatar,
         role: user.role,
         companyId: user.companyId?.toString(),
       },
@@ -105,6 +111,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     password,
     firstName,
     lastName,
+    phone,
     role,
     companyId,
   }: RegisterRequest = req.body;
@@ -148,6 +155,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     password,
     firstName,
     lastName,
+    phone,
     role,
   };
 
@@ -168,6 +176,8 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
         email: newUser.email,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
+        phone: newUser.phone,
+        avatar: newUser.avatar,
         role: newUser.role,
         companyId: newUser.companyId?.toString(),
         isActive: newUser.isActive,
@@ -234,6 +244,8 @@ export const getCurrentUser = asyncHandler(
       email: req.user.email,
       firstName: req.user.firstName,
       lastName: req.user.lastName,
+      phone: req.user.phone,
+      avatar: req.user.avatar,
       role: req.user.role,
       companyId: req.user.companyId?.toString(),
       createdAt: req.user.createdAt,

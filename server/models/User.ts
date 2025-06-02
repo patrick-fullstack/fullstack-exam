@@ -15,6 +15,8 @@ export interface IUser extends Document {
   password: string;
   firstName: string;
   lastName: string;
+  phone?: string;
+  avatar?: string;
   role: UserRole;
   companyId?: mongoose.Types.ObjectId; // Optional for super admin
   isActive: boolean;
@@ -51,6 +53,15 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, "Last name is required"],
       trim: true,
+    },
+    phone: {
+      type: String,
+      required: [true, "Phone number is required"],
+      trim: true,
+    },
+    avatar: {
+      type: String,
+      default: null,
     },
     role: {
       type: String,
