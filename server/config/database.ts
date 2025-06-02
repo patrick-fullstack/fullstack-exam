@@ -15,10 +15,10 @@ const connectDB = async (): Promise<typeof mongoose> => {
     const conn = await mongoose.connect(env.MONGO_URI, {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 10000,
+      connectTimeoutMS: 30000,
       maxPoolSize: 10,
       minPoolSize: 0,
-      bufferCommands: false,
+      bufferCommands: true,
     });
 
     // Set up event listeners only once
