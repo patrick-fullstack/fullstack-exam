@@ -9,6 +9,9 @@ import userRoutes from "./routes/userRoutes";
 
 const app = express();
 
+// For vercel deployment, trust the proxy headers
+app.set("trust proxy", 1);
+
 // Apply security middleware - helmet & rate limiting
 configureSecurity(app);
 
