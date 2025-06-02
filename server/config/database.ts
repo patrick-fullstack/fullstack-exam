@@ -1,16 +1,14 @@
 import mongoose from "mongoose";
 import { env } from "./env";
 
-let isConnected = false;
-
 const connectDB = async (): Promise<typeof mongoose> => {
   // If already connected, return
-  if (isConnected && mongoose.connection.readyState === 1) {
+  if (mongoose.connection.readyState === 1) {
     return mongoose;
   }
 
   try {
-    console.log("Connecting to MongoDB...");
+    // Fix for serverless - disable buffering
     mongoose.set('bufferCommands', false);
 
     const conn = await mongoose.connect(env.MONGO_URI, {
@@ -18,15 +16,12 @@ const connectDB = async (): Promise<typeof mongoose> => {
       socketTimeoutMS: 45000,
     });
 
-    isConnected = true;
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     return conn;
   } catch (error) {
     console.error("MongoDB connection failed:", error);
-    isConnected = false;
     throw error;
   }
 };
 
-export { isConnected };
 export default connectDB;
