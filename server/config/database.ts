@@ -1,22 +1,32 @@
 import mongoose from "mongoose";
 import { env } from "./env";
 
+let isConnected = false;
+
 const connectDB = async (): Promise<typeof mongoose> => {
-  // Skip if already connected
-  if (mongoose.connection.readyState === 1) {
+  // If already connected, return
+  if (isConnected && mongoose.connection.readyState === 1) {
     return mongoose;
   }
 
-  // Connect with serverless-optimized settings
-  const conn = await mongoose.connect(env.MONGO_URI, {
-    bufferCommands: false, // Critical for serverless
-    maxPoolSize: 10,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000,
-  });
+  try {
+    console.log("Connecting to MongoDB...");
+    mongoose.set('bufferCommands', false);
 
-  console.log(`MongoDB Connected: ${conn.connection.host}`);
-  return conn;
+    const conn = await mongoose.connect(env.MONGO_URI, {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      socketTimeoutMS: 45000,
+    });
+
+    isConnected = true;
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    return conn;
+  } catch (error) {
+    console.error("MongoDB connection failed:", error);
+    isConnected = false;
+    throw error;
+  }
 };
 
+export { isConnected };
 export default connectDB;
