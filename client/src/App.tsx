@@ -47,19 +47,17 @@ function AppContent() {
     }
   };
 
-  // Helper function to redirect authenticated users to their dashboard
-  const getAuthenticatedRedirect = () => {
-    if (!isAuthenticated || !user) return null;
-    
-    switch (user.role) {
+  // Helper function to get user's dashboard route
+  const getUserDashboard = (userRole: string) => {
+    switch (userRole) {
       case 'super_admin':
-        return <Navigate to="/admin-dashboard" replace />;
+        return '/admin-dashboard';
       case 'manager':
-        return <Navigate to="/manager-dashboard" replace />;
+        return '/manager-dashboard';
       case 'employee':
-        return <Navigate to="/employee-dashboard" replace />;
+        return '/employee-dashboard';
       default:
-        return <Navigate to="/" replace />;
+        return '/';
     }
   };
 
@@ -88,49 +86,65 @@ function AppContent() {
 
   return (
     <Routes>
-      {/* Landing page - Portal selector */}
+      {/* Landing page - Redirect authenticated users to dashboard */}
       <Route
         path="/"
-        element={isAuthenticated ? getAuthenticatedRedirect() : <PortalSelector />}
+        element={
+          isAuthenticated && user ?
+            <Navigate to={getUserDashboard(user.role)} replace /> :
+            <PortalSelector />
+        }
       />
 
-      {/* Login pages - Allow access even if authenticated */}
+      {/* Login pages - Redirect authenticated users to their dashboard */}
       <Route
         path="/admin-login"
-        element={<AdminLogin />}
+        element={
+          isAuthenticated && user ?
+            <Navigate to={getUserDashboard(user.role)} replace /> :
+            <AdminLogin />
+        }
       />
       <Route
         path="/manager-login"
-        element={<ManagerLogin />}
+        element={
+          isAuthenticated && user ?
+            <Navigate to={getUserDashboard(user.role)} replace /> :
+            <ManagerLogin />
+        }
       />
       <Route
         path="/employee-login"
-        element={<EmployeeLogin />}
+        element={
+          isAuthenticated && user ?
+            <Navigate to={getUserDashboard(user.role)} replace /> :
+            <EmployeeLogin />
+        }
       />
 
-      {/* Dashboard routes - Show dashboard or redirect to login */}
+      {/* Dashboard routes - Show dashboard or redirect to appropriate login */}
       <Route
         path="/admin-dashboard"
         element={
-          isAuthenticated && user?.role === 'super_admin' ? 
-          <AdminDashboard /> : 
-          <Navigate to="/admin-login" replace />
+          isAuthenticated && user?.role === 'super_admin' ?
+            <AdminDashboard /> :
+            <Navigate to="/admin-login" replace />
         }
       />
       <Route
         path="/manager-dashboard"
         element={
-          isAuthenticated && user?.role === 'manager' ? 
-          <ManagerDashboard /> : 
-          <Navigate to="/manager-login" replace />
+          isAuthenticated && user?.role === 'manager' ?
+            <ManagerDashboard /> :
+            <Navigate to="/manager-login" replace />
         }
       />
       <Route
         path="/employee-dashboard"
         element={
-          isAuthenticated && user?.role === 'employee' ? 
-          <EmployeeDashboard /> : 
-          <Navigate to="/employee-login" replace />
+          isAuthenticated && user?.role === 'employee' ?
+            <EmployeeDashboard /> :
+            <Navigate to="/employee-login" replace />
         }
       />
 

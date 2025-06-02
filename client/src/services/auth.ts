@@ -25,12 +25,14 @@ class AuthEventEmitter {
   subscribe(callback: () => void) {
     this.listeners.push(callback);
     return () => {
-      this.listeners = this.listeners.filter(listener => listener !== callback);
+      this.listeners = this.listeners.filter(
+        (listener) => listener !== callback
+      );
     };
   }
 
   emit() {
-    this.listeners.forEach(callback => callback());
+    this.listeners.forEach((callback) => callback());
   }
 }
 
@@ -75,19 +77,19 @@ export const auth = {
 
       if (response.data.success) {
         Cookies.set("token", response.data.data.token, { expires: 1 });
-        
+
         // Emit event to trigger App.tsx to re-check auth
         authEvents.emit();
-        
+
         return { success: true, user: response.data.data.user };
       }
 
       return { success: false, error: response.data.message };
     } catch (error: any) {
       console.error("Login error:", error);
-      return { 
-        success: false, 
-        error: error.response?.data?.message || "Login failed" 
+      return {
+        success: false,
+        error: error.response?.data?.message || "Login failed",
       };
     }
   },

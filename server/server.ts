@@ -3,13 +3,13 @@ import { env } from "./config/env";
 import { configureCors } from "./config/cors";
 import { configureSecurity } from "./middlewares/security";
 import { configureErrorHandlers } from "./middlewares/errorHandler";
-import { ensureDatabase } from "./middlewares/database";
 import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
+import connectDB from "./config/database";
 
 const app = express();
 
-// Trust proxy for Vercel deployment
+// Trust proxy for Vercel deployment - error in vercel deployment if not set " The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false (default)."
 app.set("trust proxy", 1);
 
 // Apply security middleware - helmet & rate limiting
@@ -28,10 +28,13 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+// Connect to the database
+connectDB();
+
 // ROUTES
 // Authentication routes
-app.use("/api/auth", ensureDatabase, authRoutes);
-app.use("/api/users", ensureDatabase, userRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
 // Configure error handling middleware
 configureErrorHandlers(app);

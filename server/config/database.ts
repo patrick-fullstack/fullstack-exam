@@ -1,71 +1,63 @@
 import mongoose from "mongoose";
 import { env } from "./env";
 
-// Track the connection status
 let isConnected = false;
-let connectionPromise: Promise<typeof mongoose> | null = null;
 
 const connectDB = async (): Promise<typeof mongoose> => {
-  // If already connected, return existing connection
+  // If already connected, return
   if (isConnected && mongoose.connection.readyState === 1) {
-    console.log("Using existing MongoDB connection");
     return mongoose;
   }
 
-  // If connection is in progress, wait for it to complete
-  if (connectionPromise) {
-    console.log("Connection already in progress, waiting...");
-    return connectionPromise;
-  }
-
   try {
-    console.log("Creating new MongoDB connection...");
+    console.log("Connecting to MongoDB...");
 
-    // Store the connection promise for reuse
-    connectionPromise = mongoose.connect(env.MONGO_URI, {
-      serverSelectionTimeoutMS: 15000,
+    const conn = await mongoose.connect(env.MONGO_URI, {
+      serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 30000,
+      connectTimeoutMS: 10000,
       maxPoolSize: 10,
-      minPoolSize: 5,
+      minPoolSize: 0,
+      bufferCommands: false,
     });
 
-    // Await the connection
-    const conn = await connectionPromise;
+    // Set up event listeners only once
+    if (!isConnected) {
+      mongoose.connection.on("connected", () => {
+        console.log("MongoDB connected successfully");
+        isConnected = true;
+      });
 
-    // Set up connection event handlers
-    mongoose.connection.on("connected", () => {
-      console.log("MongoDB connection established");
-      isConnected = true;
-    });
+      mongoose.connection.on("error", (err) => {
+        console.error("MongoDB connection error:", err);
+        isConnected = false;
+      });
 
-    mongoose.connection.on("error", (err) => {
-      console.error("MongoDB connection error:", err);
-      isConnected = false;
-      connectionPromise = null;
-    });
-
-    mongoose.connection.on("disconnected", () => {
-      console.log("MongoDB disconnected");
-      isConnected = false;
-      connectionPromise = null;
-    });
+      mongoose.connection.on("disconnected", () => {
+        console.log("MongoDB disconnected");
+        isConnected = false;
+      });
+    }
 
     isConnected = true;
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     return conn;
   } catch (error) {
     console.error(
-      `MongoDB connection error: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`
+      "MongoDB connection failed:",
+      error instanceof Error ? error.message : error
     );
     isConnected = false;
-    connectionPromise = null;
-    throw error; // Re-throw to handle in the caller
+
+    // Don't crash in production - let it retry later
+    if (env.NODE_ENV === "production") {
+      console.log("Production mode: Continuing without database...");
+      return mongoose;
+    }
+
+    throw error;
   }
 };
 
-// Export the connection state and function
 export { isConnected };
 export default connectDB;
