@@ -18,7 +18,7 @@ const connectDB = async (): Promise<typeof mongoose> => {
       connectTimeoutMS: 10000,
       maxPoolSize: 10,
       minPoolSize: 0,
-      bufferCommands: false,
+      bufferCommands: true,
     });
 
     // Set up event listeners only once
