@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { auth } from '../../services/auth';
 import { Header } from '../../components/layout/Header';
 import type { User } from '../../services/auth';
+import { Link } from 'react-router-dom';
 
 export default function AdminDashboard() {
     const [user, setUser] = useState<User | null>(null);
@@ -86,6 +87,28 @@ export default function AdminDashboard() {
                             <li>• System-wide settings and reports</li>
                             <li>• Complete access to all data</li>
                         </ul>
+                    </div>
+                    {/* Quick Actions */}
+                    <div className="mt-8">
+                        <h3 className="mb-4">Quick Actions</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Create User Card */}
+                            <Link
+                                to="/admin/create-user"
+                                className="block p-6 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                                style={{ textDecoration: 'none', color: 'inherit' }}
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <div className="flex-shrink-0">
+                                        <span className="text-2xl"></span>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-medium">Create User</h4>
+                                        <p className="text-sm text-gray-500">Add new managers or employees</p>
+                                    </div>
+                                </div>
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </main>

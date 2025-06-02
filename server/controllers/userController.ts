@@ -216,7 +216,6 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
     if (firstName !== undefined) updateData.firstName = firstName;
     if (lastName !== undefined) updateData.lastName = lastName;
     if (phone !== undefined) updateData.phone = phone;
-    if (email !== undefined) updateData.email = email;
     if (password) {
       updateData.password = await bcrypt.hash(password, 12);
     }

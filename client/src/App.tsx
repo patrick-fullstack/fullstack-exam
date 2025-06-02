@@ -13,6 +13,7 @@ import AdminDashboard from './pages/admin/Dashboard';
 import ManagerDashboard from './pages/manager/Dashboard';
 import EmployeeDashboard from './pages/employee/Dashboard';
 import ProfilePage from './pages/Profile';
+import CreateUserPage from './pages/admin/CreateUser';
 
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
@@ -129,6 +130,14 @@ function AppContent() {
         element={
           isAuthenticated && user?.role === 'super_admin' ?
             <AdminDashboard /> :
+            <Navigate to="/admin-login" replace />
+        }
+      />
+      <Route
+        path="/admin/create-user"
+        element={
+          isAuthenticated && user?.role === 'super_admin' ?
+            <CreateUserPage /> :
             <Navigate to="/admin-login" replace />
         }
       />

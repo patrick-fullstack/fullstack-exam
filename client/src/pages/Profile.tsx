@@ -149,7 +149,7 @@ export default function ProfilePage() {
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-gray)' }}>
             {/* Header */}
             <Header
-                title="👤 Profile Settings"
+                title="Profile Settings"
                 variant="dashboard"
                 onLogout={handleLogout}
                 userAvatar={user?.avatar}
@@ -219,15 +219,22 @@ export default function ProfilePage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                <Input
-                                    label="Email"
-                                    name="email"
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                    disabled={updating}
-                                    required
-                                />
+                                <div>
+                                    <Input
+                                        label={`Email ${user?.role === 'employee' ? '(Read Only)' : ''}`}
+                                        name="email"
+                                        type="email"
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        disabled={updating || user?.role === 'employee'}
+                                        required
+                                    />
+                                    {user?.role === 'employee' && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Contact your manager to change your email
+                                        </p>
+                                    )}
+                                </div>
 
                                 <Input
                                     label="Phone"
