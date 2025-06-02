@@ -62,9 +62,11 @@ export default function EmployeeDashboard() {
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-gray)' }}>
             {/* Header */}
             <Header
-                title="👨‍💻 Employee Portal"
+                title="Employee Portal"
                 variant="dashboard"
                 onLogout={handleLogout}
+                userAvatar={user?.avatar}
+                userName={user?.firstName}
             />
 
             {/* Content */}

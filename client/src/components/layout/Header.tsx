@@ -1,17 +1,22 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 interface HeaderProps {
     title: string;
     subtitle?: string;
     variant?: 'login' | 'dashboard';
     onLogout?: () => void;
+    userAvatar?: string;
+    userName?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
     title,
     subtitle,
     variant = 'login',
-    onLogout
+    onLogout,
+    userAvatar,
+    userName
 }) => {
 
     // Login header (with logo)
@@ -53,22 +58,90 @@ export const Header: React.FC<HeaderProps> = ({
         );
     }
 
-    // Dashboard header (horizontal with logout)
+    // Dashboard header (horizontal with profile and logout)
     return (
         <header style={{
             backgroundColor: 'white',
             borderBottom: '1px solid var(--border-gray)',
             padding: '1rem 0'
         }}>
-            <div className="container flex-between">
+            <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <h1 style={{ fontSize: '1.25rem', fontWeight: '600' }}>
                     {title}
                 </h1>
-                {onLogout && (
-                    <button className="btn btn-secondary" onClick={onLogout}>
-                        Logout
-                    </button>
-                )}
+
+                {/* Right side - Profile and Logout */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {/* Profile Link */}
+                    <Link
+                        to="/profile"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            color: 'var(--text-gray)',
+                            textDecoration: 'none',
+                            padding: '0.5rem',
+                            borderRadius: '0.5rem',
+                            transition: 'background-color 0.2s'
+                        }}
+                        className="hover:bg-gray-100"
+                        title="Edit Profile"
+                    >
+                        {/* Avatar or Default Icon */}
+                        {userAvatar ? (
+                            <img
+                                src={userAvatar}
+                                alt="Profile"
+                                style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '50%',
+                                    objectFit: 'cover',
+                                    border: '2px solid var(--border-gray)'
+                                }}
+                            />
+                        ) : (
+                            <div style={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                backgroundColor: 'var(--primary-green)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontSize: '14px',
+                                fontWeight: '600'
+                            }}>
+                                {userName ?
+                                    `${userName.charAt(0).toUpperCase()}` :
+                                    '👤'
+                                }
+                            </div>
+                        )}
+
+                        {/* Profile Text (hidden on mobile) */}
+                        <span style={{
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            display: 'none'
+                        }} className="md:inline">
+                            Profile
+                        </span>
+                    </Link>
+
+                    {/* Logout Button */}
+                    {onLogout && (
+                        <button
+                            className="btn btn-secondary"
+                            onClick={onLogout}
+                            style={{ fontSize: '0.875rem' }}
+                        >
+                            Logout
+                        </button>
+                    )}
+                </div>
             </div>
         </header>
     );

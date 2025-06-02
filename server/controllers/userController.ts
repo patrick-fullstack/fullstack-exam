@@ -172,25 +172,39 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
       updateData.password = await bcrypt.hash(password, 12);
     }
   } else if (currentUser.role === UserRole.MANAGER) {
-    // Manager can only update employees in their company
-    if (
-      targetUser.role !== UserRole.EMPLOYEE ||
-      targetUser.companyId?.toString() !== currentUser.companyId?.toString()
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: "You can only update employees in your company",
-      });
-    }
+    // Manager can update employees in their company OR their own profile
+    if (currentUser._id.toString() === userId) {
+      // Manager updating their own profile
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (lastName !== undefined) updateData.lastName = lastName;
+      if (phone !== undefined) updateData.phone = phone;
+      if (email !== undefined) updateData.email = email;
+      if (password) {
+        updateData.password = await bcrypt.hash(password, 12);
+      }
+    } else {
+      // Manager updating an employee
+      if (
+        targetUser.role !== UserRole.EMPLOYEE ||
+        targetUser.companyId?.toString() !== currentUser.companyId?.toString()
+      ) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "You can only update employees in your company or your own profile",
+        });
+      }
 
-    // Manager can update limited fields
-    if (firstName !== undefined) updateData.firstName = firstName;
-    if (lastName !== undefined) updateData.lastName = lastName;
-    if (phone !== undefined) updateData.phone = phone;
-    if (email !== undefined) updateData.email = email;
-    if (isActive !== undefined) updateData.isActive = isActive;
+      // Manager can update limited fields for employees
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (lastName !== undefined) updateData.lastName = lastName;
+      if (phone !== undefined) updateData.phone = phone;
+      if (email !== undefined) updateData.email = email;
+      if (isActive !== undefined) updateData.isActive = isActive;
+      // Note: Managers cannot change employee passwords
+    }
   } else if (currentUser.role === UserRole.EMPLOYEE) {
-    // Employee can only update themselves and only password
+    // Employee can only update themselves and allowed fields
     if (currentUser._id.toString() !== userId) {
       return res.status(403).json({
         success: false,
@@ -198,6 +212,11 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
       });
     }
 
+    // Allow employees to update their own profile fields
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
+    if (phone !== undefined) updateData.phone = phone;
+    if (email !== undefined) updateData.email = email;
     if (password) {
       updateData.password = await bcrypt.hash(password, 12);
     }

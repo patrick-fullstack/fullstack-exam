@@ -62,9 +62,11 @@ export default function ManagerDashboard() {
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-gray)' }}>
             {/* Header */}
             <Header
-                title="👨‍💼 Manager Dashboard"
+                title="Manager Dashboard"
                 variant="dashboard"
                 onLogout={handleLogout}
+                userAvatar={user?.avatar}
+                userName={user?.firstName}
             />
 
             {/* Content */}

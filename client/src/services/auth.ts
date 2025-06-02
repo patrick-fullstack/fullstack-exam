@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import Cookies from "js-cookie";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -14,8 +14,28 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  phone?: string;
+  avatar?: string;
   role: string;
   companyId?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateProfileRequest {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  email?: string;
+  password?: string;
+  avatar?: File;
+}
+
+// API Error response interface
+interface ApiErrorResponse {
+  success: false;
+  message: string;
 }
 
 // Event emitter for auth events
@@ -58,7 +78,7 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  (error: AxiosError) => {
     if (error.response?.status === 401) {
       Cookies.remove("token");
       authEvents.emit(); // Emit logout event
@@ -85,11 +105,21 @@ export const auth = {
       }
 
       return { success: false, error: response.data.message };
-    } catch (error: any) {
+    } catch (error) {
       console.error("Login error:", error);
+
+      // Type guard for AxiosError
+      if (error instanceof AxiosError && error.response?.data) {
+        const apiError = error.response.data as ApiErrorResponse;
+        return {
+          success: false,
+          error: apiError.message || "Login failed",
+        };
+      }
+
       return {
         success: false,
-        error: error.response?.data?.message || "Login failed",
+        error: "Login failed",
       };
     }
   },
@@ -106,6 +136,53 @@ export const auth = {
     } catch (error) {
       console.error("Get current user error:", error);
       return null;
+    }
+  },
+
+  async updateProfile(userId: string, data: UpdateProfileRequest) {
+    try {
+      const formData = new FormData();
+
+      // Add text fields
+      if (data.firstName) formData.append("firstName", data.firstName);
+      if (data.lastName) formData.append("lastName", data.lastName);
+      if (data.phone) formData.append("phone", data.phone);
+      if (data.email) formData.append("email", data.email);
+      if (data.password) formData.append("password", data.password);
+
+      // Add avatar file
+      if (data.avatar) {
+        formData.append("avatar", data.avatar);
+      }
+
+      const response = await api.put(`/users/${userId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.data.success) {
+        // Emit event to refresh user data
+        authEvents.emit();
+        return { success: true, user: response.data.data.user };
+      }
+
+      return { success: false, error: response.data.message };
+    } catch (error) {
+      console.error("Update profile error:", error);
+
+      if (error instanceof AxiosError && error.response?.data) {
+        const apiError = error.response.data as ApiErrorResponse;
+        return {
+          success: false,
+          error: apiError.message || "Update failed",
+        };
+      }
+
+      return {
+        success: false,
+        error: "Update failed",
+      };
     }
   },
 

@@ -12,6 +12,7 @@ import EmployeeLogin from './pages/employee/Login';
 import AdminDashboard from './pages/admin/Dashboard';
 import ManagerDashboard from './pages/manager/Dashboard';
 import EmployeeDashboard from './pages/employee/Dashboard';
+import ProfilePage from './pages/Profile';
 
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
@@ -145,6 +146,14 @@ function AppContent() {
           isAuthenticated && user?.role === 'employee' ?
             <EmployeeDashboard /> :
             <Navigate to="/employee-login" replace />
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          isAuthenticated && user ?
+            <ProfilePage /> :
+            <Navigate to="/" replace />
         }
       />
 

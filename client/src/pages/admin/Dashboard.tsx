@@ -62,9 +62,11 @@ export default function AdminDashboard() {
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-gray)' }}>
             {/* Header */}
             <Header
-                title="🛡️ Super Admin Dashboard"
+                title="Super Admin Dashboard"
                 variant="dashboard"
                 onLogout={handleLogout}
+                userAvatar={user?.avatar}
+                userName={user?.firstName}
             />
 
             {/* Content */}
