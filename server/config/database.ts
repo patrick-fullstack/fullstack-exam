@@ -7,21 +7,16 @@ const connectDB = async (): Promise<typeof mongoose> => {
     return mongoose;
   }
 
-  try {
-    // Fix for serverless - disable buffering
-    mongoose.set('bufferCommands', false);
+  // Connect with serverless-optimized settings
+  const conn = await mongoose.connect(env.MONGO_URI, {
+    bufferCommands: false,
+    maxPoolSize: 10,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+  });
 
-    const conn = await mongoose.connect(env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      socketTimeoutMS: 45000,
-    });
-
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    return conn;
-  } catch (error) {
-    console.error("MongoDB connection failed:", error);
-    throw error;
-  }
+  console.log(`MongoDB Connected: ${conn.connection.host}`);
+  return conn;
 };
 
 export default connectDB;
