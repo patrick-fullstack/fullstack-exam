@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { auth } from '../../services/auth';
 import { Header } from '../../components/layout/Header';
 import type { User } from '../../services/auth';
@@ -16,13 +16,11 @@ export default function ManagerDashboard() {
                 const userData = await auth.getCurrentUser();
                 setUser(userData);
 
-                // If no user data, redirect to login using React Router
                 if (!userData) {
                     navigate('/manager-login', { replace: true });
                     return;
                 }
 
-                // Check if user is actually a manager
                 if (userData.role !== 'manager') {
                     navigate('/manager-login', { replace: true });
                     return;
@@ -41,7 +39,6 @@ export default function ManagerDashboard() {
     const handleLogout = async () => {
         try {
             await auth.logout();
-            // Use React Router navigation instead of window.location.href
             navigate('/manager-login', { replace: true });
         } catch (error) {
             console.error('Logout error:', error);
@@ -49,11 +46,13 @@ export default function ManagerDashboard() {
         }
     };
 
-    // Show loading while fetching user
     if (loading) {
         return (
             <div className="flex-center" style={{ minHeight: '100vh' }}>
-                <p>Loading...</p>
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading dashboard...</p>
+                </div>
             </div>
         );
     }
@@ -71,22 +70,103 @@ export default function ManagerDashboard() {
 
             {/* Content */}
             <main className="container" style={{ paddingTop: '2rem' }}>
-                <div className="card">
-                    <h2>Welcome back, {user?.firstName}! 💼</h2>
-                    <div className="mt-4" style={{ color: 'var(--text-gray)' }}>
-                        <p><strong>Email:</strong> {user?.email}</p>
-                        <p><strong>Role:</strong> Manager</p>
-                        <p><strong>Company ID:</strong> {user?.companyId}</p>
-                        <p><strong>Access Level:</strong> Company Management</p>
+                <div className="space-y-6">
+                    {/* Hero Card */}
+                    <div className="card">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                                    Welcome back, {user?.firstName}
+                                </h1>
+                                <p className="text-lg text-gray-600 mb-6">
+                                    Company Manager Dashboard
+                                </p>
+
+                                {/* User Info Grid */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <div className="text-sm font-medium text-gray-500 mb-1">Email</div>
+                                        <div className="text-gray-900">{user?.email}</div>
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <div className="text-sm font-medium text-gray-500 mb-1">Role</div>
+                                        <div className="text-gray-900">Manager</div>
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <div className="text-sm font-medium text-gray-500 mb-1">Access Level</div>
+                                        <div className="text-gray-900">Company Management</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Avatar Section */}
+                            <div className="flex-shrink-0">
+                                <div className="w-16 h-16 bg-green-800 rounded-full flex items-center justify-center">
+                                    {user?.avatar ? (
+                                        <img
+                                            src={user.avatar}
+                                            alt={user.firstName}
+                                            className="w-full h-full object-cover rounded-full"
+                                        />
+                                    ) : (
+                                        <span className="text-white text-xl font-bold">
+                                            {user?.firstName?.charAt(0).toUpperCase()}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="mt-6">
-                        <h3 style={{ marginBottom: '1rem' }}>Manager Features:</h3>
-                        <ul style={{ color: 'var(--text-gray)', lineHeight: '1.6' }}>
-                            <li>• Manage company employees</li>
-                            <li>• View company reports and analytics</li>
-                            <li>• Create and assign tasks</li>
-                            <li>• Access to company data only</li>
-                        </ul>
+
+                    {/* Quick Actions - Simple */}
+                    <div className="card">
+                        <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            {/* Manage My Company */}
+                            {user?.companyId && (
+                                <Link
+                                    to={`/manager/company/${user.companyId}`}
+                                    className="group block p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-green-300 hover:shadow-md transition-all duration-200"
+                                    style={{ textDecoration: 'none', color: 'inherit' }}
+                                >
+                                    <div className="flex items-start space-x-4">
+                                        <div className="flex-shrink-0">
+                                            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                                                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 mb-1">Manage My Company</h3>
+                                            <p className="text-sm text-gray-600">View and manage your company's employees</p>
+                                        </div>
+                                    </div>
+                                </Link>
+                            )}
+
+                            {/* Browse All Companies */}
+                            <Link
+                                to="/manager/companies"
+                                className="group block p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all duration-200"
+                                style={{ textDecoration: 'none', color: 'inherit' }}
+                            >
+                                <div className="flex items-start space-x-4">
+                                    <div className="flex-shrink-0">
+                                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                                            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 mb-1">Browse Companies</h3>
+                                        <p className="text-sm text-gray-600">View all companies in the system</p>
+                                    </div>
+                                </div>
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </main>

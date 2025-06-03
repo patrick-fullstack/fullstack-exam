@@ -49,7 +49,13 @@ export const getAllCompanies = asyncHandler(
       }
       // Manager can only see their company
     } else if (currentUser.role === UserRole.MANAGER) {
-      filter._id = currentUser.companyId;
+      if (search) {
+        filter.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+          { website: { $regex: search, $options: "i" } },
+        ];
+      }
     } else {
       return res.status(403).json({
         success: false,

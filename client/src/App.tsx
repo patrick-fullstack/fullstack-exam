@@ -14,6 +14,12 @@ import ManagerDashboard from './pages/manager/Dashboard';
 import EmployeeDashboard from './pages/employee/Dashboard';
 import ProfilePage from './pages/Profile';
 import CreateUserPage from './pages/admin/CreateUser';
+import CompaniesPage from './pages/admin/Companies';
+import CreateCompanyPage from './pages/admin/CreateCompany';
+import CompanyDetailPage from './pages/admin/CompanyDetail';
+import CompanyEmployeeDetailPage from './pages/employee/CompanyDetail';
+import ManagerCompaniesPage from './pages/manager/Companies';
+import ManagerCompanyDetailPage from './pages/manager/CompanyDetail';
 
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
@@ -125,11 +131,37 @@ function AppContent() {
       />
 
       {/* Dashboard routes - Show dashboard or redirect to appropriate login */}
+
+      {/* ADMIN */}
       <Route
         path="/admin-dashboard"
         element={
           isAuthenticated && user?.role === 'super_admin' ?
             <AdminDashboard /> :
+            <Navigate to="/admin-login" replace />
+        }
+      />
+      <Route
+        path="/admin/companies"
+        element={
+          isAuthenticated && user?.role === 'super_admin' ?
+            <CompaniesPage /> :
+            <Navigate to="/admin-login" replace />
+        }
+      />
+      <Route
+        path="/admin/companies/create"
+        element={
+          isAuthenticated && user?.role === 'super_admin' ?
+            <CreateCompanyPage /> :
+            <Navigate to="/admin-login" replace />
+        }
+      />
+      <Route
+        path="/admin/companies/:companyId"
+        element={
+          isAuthenticated && (user?.role === 'super_admin' || user?.role === 'manager' || user?.role === 'employee') ?
+            <CompanyDetailPage /> :
             <Navigate to="/admin-login" replace />
         }
       />
@@ -141,6 +173,7 @@ function AppContent() {
             <Navigate to="/admin-login" replace />
         }
       />
+      {/* MANAGER */}
       <Route
         path="/manager-dashboard"
         element={
@@ -150,6 +183,24 @@ function AppContent() {
         }
       />
       <Route
+        path="/manager/companies"
+        element={
+          isAuthenticated && user?.role === 'manager' ?
+            <ManagerCompaniesPage /> :
+            <Navigate to="/manager-login" replace />
+        }
+      />
+      <Route
+        path="/manager/company/:companyId"
+        element={
+          isAuthenticated && user?.role === 'manager' ?
+            <ManagerCompanyDetailPage /> :
+            <Navigate to="/manager-login" replace />
+        }
+      />
+
+      {/* EMPLOYEE */}
+      <Route
         path="/employee-dashboard"
         element={
           isAuthenticated && user?.role === 'employee' ?
@@ -157,6 +208,15 @@ function AppContent() {
             <Navigate to="/employee-login" replace />
         }
       />
+      <Route
+        path="/employee/company/:companyId"
+        element={
+          isAuthenticated && user?.role === 'employee' ?
+            <CompanyEmployeeDetailPage /> :
+            <Navigate to="/employee-login" replace />
+        }
+      />
+
       <Route
         path="/profile"
         element={

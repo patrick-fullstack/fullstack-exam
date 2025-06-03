@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, type User, type UpdateProfileRequest } from '../services/auth'; // ← Add 'type' keyword
+import { auth, type User, type UpdateProfileRequest } from '../services/auth';
 import { Header } from '../components/layout/Header';
 import { ProfileView } from '../components/profile/ProfileView';
 import { ProfileEdit } from '../components/profile/ProfileEdit';
