@@ -115,7 +115,7 @@ export function CompanyForm({ onSubmit, loading, error, company, mode }: Company
                      hover:file:bg-blue-100"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                    PNG, JPG up to 5MB
+                    PNG, JPG up to 2MB
                 </p>
             </div>
 
