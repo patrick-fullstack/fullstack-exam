@@ -105,6 +105,42 @@ export const userService = {
   },
 
   /**
+   * Get user by ID
+   */
+  async getUserById(userId: string) {
+    try {
+      const response = await api.get(`/users/${userId}`);
+
+      if (response.data.success) {
+        return {
+          success: true,
+          user: response.data.data.user as User,
+        };
+      }
+
+      return {
+        success: false,
+        error: response.data.message || "Failed to fetch user",
+      };
+    } catch (error) {
+      console.error("Get user by ID error:", error);
+
+      if (error instanceof AxiosError && error.response?.data) {
+        const apiError = error.response.data as ApiErrorResponse;
+        return {
+          success: false,
+          error: apiError.message || "Failed to fetch user",
+        };
+      }
+
+      return {
+        success: false,
+        error: "Failed to fetch user",
+      };
+    }
+  },
+
+  /**
    * Get all users with filtering and pagination
    */
   async getUsers(params?: {

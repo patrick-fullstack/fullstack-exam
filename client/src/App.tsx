@@ -217,8 +217,17 @@ function AppContent() {
         }
       />
 
+      {/* Profile routes */}
       <Route
         path="/profile"
+        element={
+          isAuthenticated && user ?
+            <ProfilePage /> :
+            <Navigate to="/" replace />
+        }
+      />
+      <Route
+        path="/profile/:userId"
         element={
           isAuthenticated && user ?
             <ProfilePage /> :

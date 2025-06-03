@@ -125,14 +125,17 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
   if (currentUser.role === UserRole.SUPER_ADMIN) {
     // Super admin can see anyone
   } else if (currentUser.role === UserRole.MANAGER) {
-    // Manager can only see employees in their company
-    if (
-      user.role !== UserRole.EMPLOYEE ||
-      user.companyId?.toString() !== currentUser.companyId?.toString()
-    ) {
+    // Manager can see themselves or employees in their company
+    const isViewingSelf = currentUser._id.toString() === userId;
+    const isViewingCompanyEmployee =
+      user.role === UserRole.EMPLOYEE &&
+      user.companyId?.toString() === currentUser.companyId?.toString();
+
+    if (!isViewingSelf && !isViewingCompanyEmployee) {
       return res.status(403).json({
         success: false,
-        message: "You can only view employees in your company",
+        message:
+          "You can only view your own profile or employees in your company",
       });
     }
   } else if (currentUser.role === UserRole.EMPLOYEE) {
