@@ -127,10 +127,24 @@ export const getCompanyById = asyncHandler(
         message: "Company retrieved successfully",
         data: { company: formatCompany(responseData) },
       });
-    } else if (
-      currentUser.role === UserRole.MANAGER ||
-      currentUser.role === UserRole.EMPLOYEE
-    ) {
+    } else if (currentUser.role === UserRole.MANAGER) {
+      // Manager can view any company with all users
+      const users = await User.find({ companyId: companyId })
+        .select("-password")
+        .sort({ createdAt: -1 });
+
+      // Response object
+      const responseData = {
+        ...company.toObject(),
+        users: users,
+      };
+
+      return res.status(200).json({
+        success: true,
+        message: "Company retrieved successfully",
+        data: { company: formatCompany(responseData) },
+      });
+    } else if (currentUser.role === UserRole.EMPLOYEE) {
       if (currentUser.companyId?.toString() !== companyId) {
         return res.status(403).json({
           success: false,
