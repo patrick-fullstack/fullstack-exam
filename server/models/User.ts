@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
 
-// Define user roles
+// Define user roles - enum because it provides a constant set of values good for type safety
 export enum UserRole {
   SUPER_ADMIN = "super_admin",
   MANAGER = "manager",

@@ -1,10 +1,11 @@
 import express, { Request, Response } from "express";
+import authRoutes from "./routes/authRoutes";
+import userRoutes from "./routes/userRoutes";
+import companyRoutes from "./routes/companyRoutes";
 import { env } from "./config/env";
 import { configureCors } from "./config/cors";
 import { configureSecurity } from "./middlewares/security";
 import { configureErrorHandlers } from "./middlewares/errorHandler";
-import authRoutes from "./routes/authRoutes";
-import userRoutes from "./routes/userRoutes";
 import connectDB from "./config/database";
 
 const app = express();
@@ -20,7 +21,6 @@ configureCors(app);
 
 // Body parsing middleware - parses JSON requests to req.body (without it, req.body will be undefined)
 app.use(express.json());
-
 
 // Connect to the database
 app.use(async (req, res, next) => {
@@ -39,6 +39,7 @@ app.get("/", (req: Request, res: Response) => {
 // Authentication routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/company", companyRoutes);
 
 // Configure error handling middleware
 configureErrorHandlers(app);

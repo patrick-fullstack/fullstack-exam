@@ -3,6 +3,7 @@ import { User, UserRole } from "../models/User";
 import { asyncHandler } from "../middlewares/errorHandler";
 import bcrypt from "bcryptjs";
 import { uploadToCloudinary } from "../utils/cloudinary";
+import { validateFileUpload } from "../middlewares/upload";
 
 const formatUser = (user: any) => ({
   id: user._id.toString(),
@@ -223,15 +224,11 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
 
   // Handle avatar upload
   if (req.file) {
-    try {
-      const avatarUrl = await uploadToCloudinary(req.file.buffer);
-      updateData.avatar = avatarUrl;
-    } catch (error) {
-      return res.status(400).json({
-        success: false,
-        message: "Failed to upload avatar",
-      });
-    }
+    // Validate file before uploading
+    if (!validateFileUpload(req.file, res)) return;
+
+    const avatarUrl = await uploadToCloudinary(req.file.buffer, "user-avatars");
+    updateData.avatar = avatarUrl;
   }
 
   if (Object.keys(updateData).length === 0) {
@@ -303,15 +300,15 @@ export const getUserStats = asyncHandler(
           },
         },
       },
-      {
-        $project: {
-          role: "$_id",
-          count: 1,
-          active: 1,
-          inactive: 1,
-          _id: 0,
-        },
-      },
+      // {
+      //   $project: {
+      //     role: "$_id",
+      //     count: 1,
+      //     active: 1,
+      //     inactive: 1,
+      //     _id: 0,
+      //   },
+      // },
     ]);
 
     const totalUsers = await User.countDocuments();

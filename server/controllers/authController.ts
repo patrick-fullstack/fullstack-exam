@@ -3,6 +3,7 @@ import { User, UserRole } from "../models/User";
 import { generateUserToken } from "../utils/jwt";
 import { asyncHandler } from "../middlewares/errorHandler";
 import { uploadToCloudinary } from "../utils/cloudinary";
+import { validateFileUpload } from "../middlewares/upload";
 
 // Login request interface
 interface LoginRequest {
@@ -162,6 +163,15 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   // Add companyId if provided (for managers and employees)
   if (companyId) {
     userData.companyId = companyId;
+  }
+
+  // Handle avatar upload if file is provided
+  if (req.file) {
+    // Validate file before uploading
+    if (!validateFileUpload(req.file, res)) return;
+
+    const avatarUrl = await uploadToCloudinary(req.file.buffer, "user-avatars");
+    userData.avatar = avatarUrl;
   }
 
   const newUser = await User.create(userData);
