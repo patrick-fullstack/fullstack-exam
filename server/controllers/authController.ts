@@ -25,6 +25,7 @@ interface LoginResponse {
       avatar?: string;
       role: string;
       companyId?: string;
+      isActive?: boolean;
     };
     token: string;
     expiresIn: string;
@@ -258,6 +259,7 @@ export const getCurrentUser = asyncHandler(
       avatar: req.user.avatar,
       role: req.user.role,
       companyId: req.user.companyId?.toString(),
+      isActive: req.user.isActive,
       createdAt: req.user.createdAt,
       updatedAt: req.user.updatedAt,
     };

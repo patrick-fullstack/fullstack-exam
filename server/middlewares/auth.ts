@@ -120,33 +120,3 @@ export const authorizeCompany = (
 
   next();
 };
-
-// will remove if not needed
-// Optional authentication middleware (for public routes that can be enhanced with auth)
-export const optionalAuth = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // Try to extract token
-      const authHeader = req.headers.authorization;
-
-      if (authHeader) {
-        const token = extractTokenFromHeader(authHeader);
-        const payload = verifyToken(token);
-
-        // Find user if token is valid
-        const user = await User.findById(payload.userId).select("-password");
-
-        if (user && user.isActive) {
-          req.user = user;
-          req.tokenPayload = payload;
-        }
-      }
-
-      // Continue regardless of authentication status
-      next();
-    } catch (error) {
-      // If token is invalid, just continue without user
-      next();
-    }
-  }
-);

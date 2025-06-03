@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, type User, type UpdateProfileRequest } from '../services/auth';
+import { auth, type User, type UpdateProfileRequest } from '../services/auth'; // ← Add 'type' keyword
 import { Header } from '../components/layout/Header';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { AvatarUpload } from '../components/ui/AvatarUpload';
+import { ProfileView } from '../components/profile/ProfileView';
+import { ProfileEdit } from '../components/profile/ProfileEdit';
 
 export default function ProfilePage() {
     const [user, setUser] = useState<User | null>(null);
@@ -12,18 +11,8 @@ export default function ProfilePage() {
     const [updating, setUpdating] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
     const navigate = useNavigate();
-
-    // Form states
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        phone: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
-    });
-    const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
     // Fetch user data
     useEffect(() => {
@@ -32,14 +21,6 @@ export default function ProfilePage() {
                 const userData = await auth.getCurrentUser();
                 if (userData) {
                     setUser(userData);
-                    setFormData({
-                        firstName: userData.firstName || '',
-                        lastName: userData.lastName || '',
-                        phone: userData.phone || '',
-                        email: userData.email || '',
-                        password: '',
-                        confirmPassword: ''
-                    });
                 } else {
                     navigate('/');
                 }
@@ -54,57 +35,41 @@ export default function ProfilePage() {
         fetchUser();
     }, [navigate]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleEditClick = () => {
+        setIsEditing(true);
         setError('');
         setSuccess('');
+    };
 
-        // Validate passwords match if password is being changed
-        if (formData.password && formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+    const handleCancelEdit = () => {
+        setIsEditing(false);
+        setError('');
+        setSuccess('');
+    };
+
+    const handleSaveProfile = async (updateData: UpdateProfileRequest) => {
+        if (!user) return;
+
+        // Check if there are any changes
+        if (Object.keys(updateData).length === 0) {
+            setError('No changes to save');
             return;
         }
 
         setUpdating(true);
+        setError('');
+        setSuccess('');
 
         try {
-            if (!user) return;
-
-            const updateData: UpdateProfileRequest = {};
-
-            // Only include changed fields
-            if (formData.firstName !== user.firstName) updateData.firstName = formData.firstName;
-            if (formData.lastName !== user.lastName) updateData.lastName = formData.lastName;
-            if (formData.phone !== user.phone) updateData.phone = formData.phone;
-            if (formData.email !== user.email) updateData.email = formData.email;
-            if (formData.password) updateData.password = formData.password;
-            if (avatarFile) updateData.avatar = avatarFile;
-
-            // Check if there are any changes
-            if (Object.keys(updateData).length === 0) {
-                setError('No changes to save');
-                return;
-            }
-
             const result = await auth.updateProfile(user.id, updateData);
 
             if (result.success) {
                 setSuccess('Profile updated successfully!');
                 setUser(result.user);
-                setFormData(prev => ({
-                    ...prev,
-                    password: '',
-                    confirmPassword: ''
-                }));
-                setAvatarFile(null);
+                setIsEditing(false);
+
+                // Clear success message after 3 seconds
+                setTimeout(() => setSuccess(''), 3000);
             } else {
                 setError(result.error || 'Update failed');
             }
@@ -145,15 +110,23 @@ export default function ProfilePage() {
         );
     }
 
+    if (!user) {
+        return (
+            <div className="flex-center" style={{ minHeight: '100vh' }}>
+                <p>User not found</p>
+            </div>
+        );
+    }
+
     return (
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-gray)' }}>
             {/* Header */}
             <Header
-                title="Profile Settings"
+                title={isEditing ? "Edit Profile" : "Profile Information"}
                 variant="dashboard"
                 onLogout={handleLogout}
-                userAvatar={user?.avatar}
-                userName={user?.firstName}
+                userAvatar={user.avatar}
+                userName={user.firstName}
             />
 
             {/* Content */}
@@ -169,161 +142,41 @@ export default function ProfilePage() {
                         </button>
                     </div>
 
-                    <h2 className="mb-6">Profile Information</h2>
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Avatar Section */}
-                        <div className="text-center pb-6 border-b border-gray-200">
-                            <h3 className="mb-4">Profile Picture</h3>
-                            <AvatarUpload
-                                currentAvatar={user?.avatar}
-                                onAvatarChange={setAvatarFile}
-                                disabled={updating}
-                            />
-                        </div>
-
-                        {/* Alert Messages */}
-                        {error && (
-                            <div className="alert alert-error">
-                                {error}
-                            </div>
-                        )}
-
-                        {success && (
-                            <div className="alert alert-success">
-                                {success}
-                            </div>
-                        )}
-
-                        {/* Personal Information */}
-                        <div>
-                            <h3 className="mb-4">Personal Information</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Input
-                                    label="First Name"
-                                    name="firstName"
-                                    value={formData.firstName}
-                                    onChange={handleInputChange}
-                                    disabled={updating}
-                                    required
-                                />
-
-                                <Input
-                                    label="Last Name"
-                                    name="lastName"
-                                    value={formData.lastName}
-                                    onChange={handleInputChange}
-                                    disabled={updating}
-                                    required
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                <div>
-                                    <Input
-                                        label={`Email ${user?.role === 'employee' ? '(Read Only)' : ''}`}
-                                        name="email"
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={handleInputChange}
-                                        disabled={updating || user?.role === 'employee'}
-                                        required
-                                    />
-                                    {user?.role === 'employee' && (
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Contact your manager to change your email
-                                        </p>
-                                    )}
-                                </div>
-
-                                <Input
-                                    label="Phone"
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleInputChange}
-                                    disabled={updating}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Account Information (Read Only) */}
-                        <div>
-                            <h3 className="mb-4">Account Information</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Role
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={user?.role?.replace('_', ' ') || ''}
-                                        disabled
-                                        className="input-field bg-gray-50"
-                                    />
-                                </div>
-
-                                {user?.companyId && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Company ID
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={user.companyId}
-                                            disabled
-                                            className="input-field bg-gray-50"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Password Change */}
-                        <div>
-                            <h3 className="mb-4">Change Password</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Input
-                                    label="New Password"
-                                    name="password"
-                                    type="password"
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    disabled={updating}
-                                    placeholder="Leave blank to keep current password"
-                                />
-
-                                <Input
-                                    label="Confirm New Password"
-                                    name="confirmPassword"
-                                    type="password"
-                                    value={formData.confirmPassword}
-                                    onChange={handleInputChange}
-                                    disabled={updating}
-                                    placeholder="Confirm new password"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    {/* Page Title */}
+                    <div className="flex items-center justify-between mb-6">
+                        <h2>{isEditing ? "Edit Profile" : "Profile Information"}</h2>
+                        {!isEditing && (
                             <button
-                                type="button"
-                                onClick={() => navigate(getDashboardRoute())}
-                                className="btn btn-secondary"
-                                disabled={updating}
+                                onClick={handleEditClick}
+                                className="btn btn-primary"
                             >
-                                Cancel
+                                Edit Profile
                             </button>
+                        )}
+                    </div>
 
-                            <Button
-                                type="submit"
-                                loading={updating}
-                                disabled={updating}
-                            >
-                                Save Changes
-                            </Button>
+                    {/* Success Message */}
+                    {success && (
+                        <div className="alert alert-success mb-6">
+                            {success}
                         </div>
-                    </form>
+                    )}
+
+                    {/* Profile Content */}
+                    {isEditing ? (
+                        <ProfileEdit
+                            user={user}
+                            onSave={handleSaveProfile}
+                            onCancel={handleCancelEdit}
+                            loading={updating}
+                            error={error}
+                        />
+                    ) : (
+                        <ProfileView
+                            user={user}
+                            onEditClick={handleEditClick}
+                        />
+                    )}
                 </div>
             </main>
         </div>
