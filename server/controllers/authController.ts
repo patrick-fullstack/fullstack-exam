@@ -25,7 +25,14 @@ interface LoginResponse {
       avatar?: string;
       role: string;
       companyId?: string;
-      isActive?: boolean;
+      isActive: boolean;
+      company?: {
+        id: string;
+        name: string;
+        email: string;
+        website: string;
+        logo?: string;
+      };
     };
     token: string;
     expiresIn: string;
@@ -43,6 +50,21 @@ interface RegisterRequest {
   companyId?: string;
 }
 
+// Format populated company data
+function formatCompanyData(companyId: any) {
+  if (!companyId || typeof companyId !== "object") {
+    return undefined;
+  }
+
+  return {
+    id: companyId._id.toString(),
+    name: companyId.name,
+    email: companyId.email,
+    website: companyId.website,
+    logo: companyId.logo,
+  };
+}
+
 // Login controller
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password }: LoginRequest = req.body;
@@ -55,7 +77,9 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Find and validate user
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email })
+    .select("+password")
+    .populate("companyId", "name email website logo");
   if (!user) {
     return res
       .status(401)
@@ -80,7 +104,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     _id: user._id.toString(),
     email: user.email,
     role: user.role,
-    companyId: user.companyId?.toString(),
+    companyId: user.companyId?._id?.toString(),
   });
 
   // Prepare response data - using LoginResponse interface
@@ -96,7 +120,9 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
         phone: user.phone,
         avatar: user.avatar,
         role: user.role,
-        companyId: user.companyId?.toString(),
+        companyId: user.companyId?._id?.toString(),
+        isActive: user.isActive,
+        company: formatCompanyData(user.companyId),
       },
       token: tokenData.token,
       expiresIn: tokenData.expiresIn,
@@ -248,20 +274,32 @@ export const getCurrentUser = asyncHandler(
         message: "User not authenticated",
       });
     }
+    // Fetch user with populated company details
+    const userWithCompany = await User.findById(req.user._id)
+      .populate("companyId", "name email website logo")
+      .select("-password");
+
+    if (!userWithCompany) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
     // Prepare user data
     const userData = {
-      id: req.user._id.toString(),
-      email: req.user.email,
-      firstName: req.user.firstName,
-      lastName: req.user.lastName,
-      phone: req.user.phone,
-      avatar: req.user.avatar,
-      role: req.user.role,
-      companyId: req.user.companyId?.toString(),
-      isActive: req.user.isActive,
-      createdAt: req.user.createdAt,
-      updatedAt: req.user.updatedAt,
+      id: userWithCompany._id.toString(),
+      email: userWithCompany.email,
+      firstName: userWithCompany.firstName,
+      lastName: userWithCompany.lastName,
+      phone: userWithCompany.phone,
+      avatar: userWithCompany.avatar,
+      role: userWithCompany.role,
+      companyId: userWithCompany.companyId?._id?.toString(),
+      isActive: userWithCompany.isActive,
+      createdAt: userWithCompany.createdAt,
+      updatedAt: userWithCompany.updatedAt,
+      company: formatCompanyData(userWithCompany.companyId),
     };
 
     res.status(200).json({

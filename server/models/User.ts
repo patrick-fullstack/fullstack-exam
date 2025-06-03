@@ -1,11 +1,17 @@
 import mongoose, { Document, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
+import { ICompany } from "./Company";
 
 // Define user roles - enum because it provides a constant set of values good for type safety
 export enum UserRole {
   SUPER_ADMIN = "super_admin",
   MANAGER = "manager",
   EMPLOYEE = "employee",
+}
+
+// User company interface
+export interface IUserWithCompany extends Omit<IUser, "companyId"> {
+  companyId?: ICompany;
 }
 
 // User interface

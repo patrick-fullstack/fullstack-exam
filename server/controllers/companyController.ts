@@ -1,27 +1,35 @@
 import { Request, Response } from "express";
 import { Company } from "../models/Company";
-import { UserRole } from "../models/User";
+import { User, UserRole } from "../models/User";
 import { asyncHandler } from "../middlewares/errorHandler";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import { validateFileUpload } from "../middlewares/upload";
 
+// For populating user data in company responses
+function formatUserData(user: any) {
+  if (!user) return undefined;
+
+  return {
+    id: user._id.toString(),
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: user.role,
+    isActive: user.isActive,
+    avatar: user.avatar,
+  };
+}
+
 const formatCompany = (company: any) => ({
   id: company._id.toString(),
   name: company.name,
+  email: company.email,
   logo: company.logo,
   website: company.website,
   createdAt: company.createdAt,
   updatedAt: company.updatedAt,
+  users: company.users ? company.users.map(formatUserData) : undefined,
 });
-
-// Valiate logo dimension and size
-const validateLogo = (file: Express.Multer.File): void => {
-  // check for size 2mb max
-  const maxSize = 2 * 1024 * 1024; // 2MB
-  if (file.size > maxSize) {
-    throw new Error("Logo size must be less than 2MB");
-  }
-};
 
 // Get all companies - super admin sees all, manager sees their company
 export const getAllCompanies = asyncHandler(
@@ -73,7 +81,7 @@ export const getAllCompanies = asyncHandler(
           totalCompanies,
           hasNextPage: pageNumber < Math.ceil(totalCompanies / limitNumber),
           hasPrevPage: pageNumber > 1,
-          companiesPerpage: limitNumber,
+          companiesPerPage: limitNumber,
         },
       },
     });
@@ -97,7 +105,22 @@ export const getCompanyById = asyncHandler(
 
     // Check access permissions
     if (currentUser.role === UserRole.SUPER_ADMIN) {
-      // super admin can see any company
+      // Super admin can see any company with all users
+      const users = await User.find({ companyId: companyId })
+        .select("-password")
+        .sort({ createdAt: -1 });
+
+      // Response object
+      const responseData = {
+        ...company.toObject(),
+        users: users,
+      };
+
+      return res.status(200).json({
+        success: true,
+        message: "Company retrieved successfully",
+        data: { company: formatCompany(responseData) },
+      });
     } else if (
       currentUser.role === UserRole.MANAGER ||
       currentUser.role === UserRole.EMPLOYEE
@@ -108,8 +131,28 @@ export const getCompanyById = asyncHandler(
           message: "You can only view your own company",
         });
       }
+
+      // For managers/employees, show company with filtered users
+      const users = await User.find({
+        companyId: companyId,
+        role: UserRole.EMPLOYEE, // Only show employees
+      })
+        .select("-password")
+        .sort({ createdAt: -1 });
+
+      const responseData = {
+        ...company.toObject(),
+        users: users,
+      };
+
+      return res.status(200).json({
+        success: true,
+        message: "Company retrieved successfully",
+        data: { company: formatCompany(responseData) },
+      });
     }
 
+    // Fallback - should not reach here
     res.status(200).json({
       success: true,
       message: "Company retrieved successfully",

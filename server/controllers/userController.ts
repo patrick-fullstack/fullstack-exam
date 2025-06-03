@@ -5,6 +5,21 @@ import bcrypt from "bcryptjs";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import { validateFileUpload } from "../middlewares/upload";
 
+// For populated company data
+function formatCompanyData(companyId: any) {
+  if (!companyId || typeof companyId !== "object") {
+    return undefined;
+  }
+
+  return {
+    id: companyId._id.toString(),
+    name: companyId.name,
+    email: companyId.email,
+    website: companyId.website,
+    logo: companyId.logo,
+  };
+}
+
 const formatUser = (user: any) => ({
   id: user._id.toString(),
   email: user.email,
@@ -13,10 +28,11 @@ const formatUser = (user: any) => ({
   phone: user.phone,
   avatar: user.avatar,
   role: user.role,
-  companyId: user.companyId?.toString(),
+  companyId: user.companyId?._id?.toString() || user.companyId?.toString(),
   isActive: user.isActive,
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
+  company: formatCompanyData(user.companyId),
 });
 
 // Get all users (Super Admin sees all, Manager sees their company employees)
@@ -67,6 +83,7 @@ export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
 
   const users = await User.find(filter)
     .select("-password")
+    .populate("companyId", "name email website logo")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limitNumber);
@@ -93,7 +110,9 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
   const { userId } = req.params;
   const currentUser = req.user!;
 
-  const user = await User.findById(userId).select("-password");
+  const user = await User.findById(userId)
+    .select("-password")
+    .populate("companyId", "name email website logo");
 
   if (!user) {
     return res.status(404).json({
@@ -241,7 +260,9 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
   const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
     new: true,
     runValidators: true,
-  }).select("-password");
+  })
+    .select("-password")
+    .populate("companyId", "name email website logo");
 
   res.status(200).json({
     success: true,
