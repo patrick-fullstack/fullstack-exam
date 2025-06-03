@@ -121,32 +121,7 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Check access permissions
-  if (currentUser.role === UserRole.SUPER_ADMIN) {
-    // Super admin can see anyone
-  } else if (currentUser.role === UserRole.MANAGER) {
-    // Manager can see themselves or employees in their company
-    const isViewingSelf = currentUser._id.toString() === userId;
-    const isViewingCompanyEmployee =
-      user.role === UserRole.EMPLOYEE &&
-      user.companyId?.toString() === currentUser.companyId?.toString();
-
-    if (!isViewingSelf && !isViewingCompanyEmployee) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "You can only view your own profile or employees in your company",
-      });
-    }
-  } else if (currentUser.role === UserRole.EMPLOYEE) {
-    // Employee can only see themselves
-    if (currentUser._id.toString() !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "You can only view your own profile",
-      });
-    }
-  }
+  // Check access permissions - all roles can view other users
 
   res.status(200).json({
     success: true,
