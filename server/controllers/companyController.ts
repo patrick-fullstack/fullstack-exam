@@ -47,7 +47,6 @@ export const getAllCompanies = asyncHandler(
           { website: { $regex: search, $options: "i" } },
         ];
       }
-      // Manager can only see their company
     } else if (currentUser.role === UserRole.MANAGER) {
       if (search) {
         filter.$or = [
@@ -288,7 +287,7 @@ export const updateCompany = asyncHandler(
       // check if new name conflicts with existing company
       const existingCompany = await Company.findOne({
         name: { $regex: new RegExp(`^${name}$`, "i") },
-        _id: { $new: companyId }, // Exclude current company
+        _id: { $ne: companyId }, // Exclude current company
       });
 
       if (existingCompany) {
