@@ -254,4 +254,24 @@ export const companyService = {
       throw new Error("Network error occurred");
     }
   },
+
+  /**
+   * Export company data to CSV
+   */
+  async exportCompanyToCSV(companyId: string): Promise<void> {
+    const { data, headers } = await api.get(`/company/export/${companyId}`, {
+      responseType: "blob",
+      timeout: 30000,
+    });
+
+    const blob = new Blob([data], { type: "text/csv; charset=utf-8" });
+    const filename =
+      headers["content-disposition"]?.match(/filename="(.+)"/)?.[1] ||
+      `company_export_${Date.now()}.csv`;
+
+    Object.assign(document.createElement("a"), {
+      href: URL.createObjectURL(blob),
+      download: filename,
+    }).click();
+  },
 };

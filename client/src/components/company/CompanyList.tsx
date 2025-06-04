@@ -81,26 +81,61 @@ export function CompanyList({ onDelete, userRole, onError }: CompanyListProps) {
     return (
         <div>
             {/* Search Bar */}
-            <div className="card mb-6">
-                <div className="flex gap-4">
-                    <div className="flex-1">
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => handleSearch(e.target.value)}
-                            placeholder="Search companies by name, email, or website..."
-                            className="input w-full"
-                        />
-                    </div>
-                    {searchTerm && (
-                        <button
-                            onClick={clearSearch}
-                            className="btn btn-secondary"
+            <div className="mb-6">
+                <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg
+                            className="h-5 w-5 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                         >
-                            Clear
-                        </button>
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                        </svg>
+                    </div>
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        placeholder="Search companies by name, email, or website..."
+                        className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    />
+                    {searchTerm && (
+                        <div className="absolute inset-y-0 right-0 flex items-center">
+                            <button
+                                onClick={clearSearch}
+                                className="mr-3 p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors"
+                                title="Clear search"
+                            >
+                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
                     )}
                 </div>
+
+                {/* Search Stats */}
+                {searchTerm && (
+                    <div className="mt-2 text-sm text-gray-500 flex items-center gap-2">
+                        <span>
+                            {companies.length > 0
+                                ? `Found ${pagination.totalCompanies} compan${pagination.totalCompanies !== 1 ? 'ies' : 'y'} matching "${searchTerm}"`
+                                : `No companies found matching "${searchTerm}"`
+                            }
+                        </span>
+                        {companies.length > 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {pagination.totalCompanies} result{pagination.totalCompanies !== 1 ? 's' : ''}
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Loading State */}

@@ -9,6 +9,7 @@ import {
 import { authenticate, authorize } from "../middlewares/auth";
 import { UserRole } from "../models/User";
 import { upload } from "../middlewares/upload";
+import { globalLimiter } from "../middlewares/security";
 
 const router = express.Router();
 
@@ -25,9 +26,15 @@ router.get(
 router.put(
   "/:userId",
   upload.single("avatar"),
+  globalLimiter,
   authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE),
   updateUser
 );
-router.delete("/:userId", authorize(UserRole.SUPER_ADMIN), deleteUser);
+router.delete(
+  "/:userId",
+  authorize(UserRole.SUPER_ADMIN),
+  globalLimiter,
+  deleteUser
+);
 
 export default router;

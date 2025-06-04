@@ -4,6 +4,7 @@ import { User, UserRole } from "../models/User";
 import { asyncHandler } from "../middlewares/errorHandler";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import { validateFileUpload } from "../middlewares/upload";
+import * as json2csv from "json-2-csv";
 
 // For populating user data in company responses
 function formatUserData(user: any) {
@@ -124,13 +125,11 @@ export const getCompanyById = asyncHandler(
     // Check access permissions
     if (currentUser.role === UserRole.SUPER_ADMIN) {
       // Super admin can see any company with all users
-      // Add role filter if specified
       if (userRole && Object.values(UserRole).includes(userRole as UserRole)) {
         userFilter.role = userRole;
       }
     } else if (currentUser.role === UserRole.MANAGER) {
       // Manager can view any company with all users (NO RESTRICTION)
-      // Add role filter if specified
       if (userRole && Object.values(UserRole).includes(userRole as UserRole)) {
         userFilter.role = userRole;
       }
@@ -169,7 +168,10 @@ export const getCompanyById = asyncHandler(
       User.countDocuments(userFilter),
       User.find(userFilter)
         .select("-password")
-        .sort({ createdAt: -1 })
+        .sort([
+          ["role", -1], // Manager first
+          ["createdAt", 1],
+        ])
         .skip(userSkip)
         .limit(userLimitNumber),
     ]);
@@ -416,5 +418,73 @@ export const deleteCompany = asyncHandler(
       success: true,
       message: "Company deleted successfully",
     });
+  }
+);
+
+// Export company data as CSV
+export const exportCompanyData = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { companyId } = req.params;
+    const currentUser = req.user!;
+
+    // Check permissions
+    if (currentUser.role === UserRole.SUPER_ADMIN) {
+      // Super admin can export any company
+    } else if (currentUser.role === UserRole.MANAGER) {
+      if (currentUser.companyId?.toString() !== companyId) {
+        return res.status(403).json({
+          success: false,
+          message: "You can only export data for your own company",
+        });
+      }
+    } else {
+      return res.status(403).json({
+        success: false,
+        message: "Insufficient permissions to export company data",
+      });
+    }
+
+    // Get company data
+    const company = await Company.findById(companyId);
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: "Company not found",
+      });
+    }
+
+    // Get all users in the company
+    const employees = await User.find({ companyId: companyId })
+      .select("-password")
+      .sort([
+        ["role", -1], // Manager first
+        ["createdAt", 1],
+      ]);
+
+    // Prepare data for csv export
+    const csvData = employees.map((employee) => ({
+      "Company Name": company.name,
+      "Company Email": company.email,
+      "Company Website": company.website,
+      "Employee ID": employee._id.toString(),
+      "First Name": employee.firstName,
+      "Last Name": employee.lastName,
+      Email: employee.email,
+      Role: employee.role,
+      "Is Active": employee.isActive ? "Yes" : "No",
+      "Phone Number": employee.phone || "N/A",
+      "Hire Date": employee.createdAt.toISOString().split("T")[0],
+    }));
+
+    // Convert to CSV format
+    const csv = await json2csv.json2csv(csvData);
+
+    // Set headers for CSV download
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=company_${companyId}_data.csv`
+    );
+    res.status(200).send(csv);
   }
 );

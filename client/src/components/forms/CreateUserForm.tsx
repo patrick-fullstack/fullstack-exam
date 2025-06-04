@@ -206,7 +206,6 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
                     >
                         <option value="employee">Employee</option>
                         <option value="manager">Manager</option>
-                        <option value="super_admin">Super Admin</option>
                     </select>
                 </div>
 

@@ -27,6 +27,7 @@ export function CompanyDetails({ company, companyId, loading, onUpdate, currentU
     const [success, setSuccess] = useState('');
     const [userLoading, setUserLoading] = useState(!currentUser);
     const [internalUser, setInternalUser] = useState<User | null>(currentUser || null);
+    const [exporting, setExporting] = useState(false);
 
     useEffect(() => {
         if (currentUser) {
@@ -63,6 +64,25 @@ export function CompanyDetails({ company, companyId, loading, onUpdate, currentU
         internalUser.role === 'super_admin' ||
         (internalUser.role === 'manager' && internalUser.companyId === companyId)
     );
+
+    const handleExportCSV = () => {
+        setExporting(true);
+        setError('');
+        setSuccess('');
+
+        companyService.exportCompanyToCSV(companyId)
+            .then(() => {
+                setSuccess('Company data exported successfully!');
+                setTimeout(() => setSuccess(''), 3000);
+            })
+            .catch((error) => {
+                console.error('Export error:', error);
+                setError(error instanceof Error ? error.message : 'Failed to export company data');
+            })
+            .finally(() => {
+                setExporting(false);
+            });
+    };
 
     const handleEditClick = () => {
         setIsEditing(true);
@@ -210,15 +230,40 @@ export function CompanyDetails({ company, companyId, loading, onUpdate, currentU
                     {userLoading ? (
                         <div className="w-24 h-10 bg-gray-200 rounded animate-pulse"></div>
                     ) : canEdit ? (
-                        <button
-                            onClick={handleEditClick}
-                            className="btn btn-primary"
-                        >
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Edit Company
-                        </button>
+                        <div className="flex items-center gap-3">
+                            {/* Export CSV Button */}
+                            <button
+                                onClick={handleExportCSV}
+                                disabled={exporting}
+                                className="btn btn-secondary"
+                                title="Export company data to CSV"
+                            >
+                                {exporting ? (
+                                    <>
+                                        <span className="loading loading-spinner loading-sm mr-2"></span>
+                                        Exporting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Export CSV
+                                    </>
+                                )}
+                            </button>
+
+                            {/* Edit Company Button */}
+                            <button
+                                onClick={handleEditClick}
+                                className="btn btn-primary"
+                            >
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit Company
+                            </button>
+                        </div>
                     ) : null}
                 </div>
 

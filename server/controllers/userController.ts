@@ -84,7 +84,10 @@ export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
   const users = await User.find(filter)
     .select("-password")
     .populate("companyId", "name email website logo")
-    .sort({ createdAt: -1 })
+    .sort([
+      ["role", -1], // Manager first
+      ["createdAt", 1],
+    ])
     .skip(skip)
     .limit(limitNumber);
 

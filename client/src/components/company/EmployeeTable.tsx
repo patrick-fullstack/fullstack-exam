@@ -25,6 +25,7 @@ export function EmployeeTable({
     const [loading, setLoading] = useState<boolean>(true);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>('');
 
     // Pagination state with explicit typing
     const [pagination, setPagination] = useState<{
@@ -43,8 +44,17 @@ export function EmployeeTable({
         usersPerPage: 10
     });
 
+    // Debounce search term
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 300); // 300ms delay
+
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
     // Fetch employees from backend
-    const fetchEmployees = async (page = 1, search = searchTerm): Promise<void> => {
+    const fetchEmployees = async (page = 1, search = debouncedSearchTerm): Promise<void> => {
         setLoading(true);
         try {
             const response = await companyService.getCompanyById(companyId, {
@@ -92,21 +102,27 @@ export function EmployeeTable({
         }
     }, [companyId]);
 
-    // Handle search
+    // Trigger search when debounced search term changes
+    useEffect(() => {
+        if (companyId) {
+            fetchEmployees(1, debouncedSearchTerm); // Reset to page 1 when searching
+        }
+    }, [debouncedSearchTerm, companyId]);
+
+    // Handle search input change - just update the search term, debouncing will handle the actual search
     const handleSearch = (value: string): void => {
         setSearchTerm(value);
-        fetchEmployees(1, value); // Reset to page 1 when searching
     };
 
-    // Clear search
+    // Clear search - exactly like CompanyList
     const clearSearch = (): void => {
         setSearchTerm('');
-        fetchEmployees(1, '');
+        setDebouncedSearchTerm('');
     };
 
     // Handle page change
     const handlePageChange = (page: number): void => {
-        fetchEmployees(page, searchTerm);
+        fetchEmployees(page, debouncedSearchTerm);
     };
 
     // Handle delete with refresh
@@ -120,7 +136,7 @@ export function EmployeeTable({
             if (result.success) {
                 onSuccess?.('User deleted successfully');
                 // Refresh current page after delete
-                fetchEmployees(pagination.currentPage, searchTerm);
+                fetchEmployees(pagination.currentPage, debouncedSearchTerm);
             } else {
                 onError?.(result.error || 'Failed to delete user');
             }
@@ -174,26 +190,61 @@ export function EmployeeTable({
                 </p>
             </div>
 
-            {/* Search Bar */}
-            <div className="mb-6 flex gap-4">
-                <div className="flex-1">
+            {/* Search Bar - Exactly like CompanyList */}
+            <div className="mb-6">
+                <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg
+                            className="h-5 w-5 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                        </svg>
+                    </div>
                     <input
                         type="text"
                         value={searchTerm}
                         onChange={(e) => handleSearch(e.target.value)}
                         placeholder="Search employees by name or email..."
-                        className="input w-full"
-                        disabled={loading}
+                        className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 transition-colors"
                     />
+                    {searchTerm && (
+                        <div className="absolute inset-y-0 right-0 flex items-center">
+                            <button
+                                onClick={clearSearch}
+                                className="mr-3 p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors"
+                                title="Clear search"
+                            >
+                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
                 </div>
+
+                {/* Search Stats */}
                 {searchTerm && (
-                    <button
-                        onClick={clearSearch}
-                        className="btn btn-secondary"
-                        disabled={loading}
-                    >
-                        Clear
-                    </button>
+                    <div className="mt-2 text-sm text-gray-500 flex items-center gap-2">
+                        <span>
+                            {employees.length > 0
+                                ? `Found ${pagination.totalUsers} employee${pagination.totalUsers !== 1 ? 's' : ''} matching "${searchTerm}"`
+                                : `No employees found matching "${searchTerm}"`
+                            }
+                        </span>
+                        {employees.length > 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {pagination.totalUsers} result{pagination.totalUsers !== 1 ? 's' : ''}
+                            </span>
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -318,7 +369,7 @@ export function EmployeeTable({
                         </table>
                     </div>
 
-                    {/* Pagination */}
+                    {/* Pagination - Made consistent with CompanyList */}
                     {pagination && pagination.totalPages > 1 && (
                         <div className="flex items-center justify-between border-t pt-6">
                             {/* Results info */}
@@ -332,24 +383,19 @@ export function EmployeeTable({
                             <div className="flex space-x-2">
                                 <button
                                     onClick={() => handlePageChange(pagination.currentPage - 1)}
-                                    disabled={!pagination.hasPrevPage || loading}
+                                    disabled={!pagination.hasPrevPage}
                                     className="btn btn-secondary"
                                 >
                                     Previous
                                 </button>
 
-                                {/* Page numbers (max 5) */}
+                                {/* Page numbers (max 5) - Made consistent with CompanyList */}
                                 {[...Array(Math.min(pagination.totalPages, 5))].map((_, index) => {
-                                    const startPage = Math.max(1, pagination.currentPage - 2);
-                                    const page = startPage + index;
-
-                                    if (page > pagination.totalPages) return null;
-
+                                    const page = index + 1;
                                     return (
                                         <button
                                             key={page}
                                             onClick={() => handlePageChange(page)}
-                                            disabled={loading}
                                             className={`btn ${page === pagination.currentPage
                                                 ? 'btn-primary'
                                                 : 'btn-secondary'
@@ -362,7 +408,7 @@ export function EmployeeTable({
 
                                 <button
                                     onClick={() => handlePageChange(pagination.currentPage + 1)}
-                                    disabled={!pagination.hasNextPage || loading}
+                                    disabled={!pagination.hasNextPage}
                                     className="btn btn-secondary"
                                 >
                                     Next
