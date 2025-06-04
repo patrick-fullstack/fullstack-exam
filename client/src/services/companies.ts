@@ -29,6 +29,7 @@ export interface CompanyEmployee {
   role: "manager" | "employee";
   isActive: boolean;
   avatar?: string;
+  companyId?: string;
 }
 
 export interface CreateCompanyData {
@@ -109,7 +110,13 @@ export const companyService = {
     search?: string;
   }): Promise<CompaniesResponse> {
     try {
-      const response = await api.get("/company", { params });
+      const queryParams = new URLSearchParams();
+
+      if (params?.page) queryParams.append("page", params.page.toString());
+      if (params?.limit) queryParams.append("limit", params.limit.toString());
+      if (params?.search) queryParams.append("search", params.search);
+
+      const response = await api.get(`/company?${queryParams.toString()}`);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {

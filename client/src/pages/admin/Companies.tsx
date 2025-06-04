@@ -59,7 +59,7 @@ export default function CompaniesPage() {
         try {
             const response = await companyService.getCompanies({
                 page,
-                limit: 9,
+                limit: 6,
                 search: search.trim() || undefined,
             });
 
@@ -81,27 +81,37 @@ export default function CompaniesPage() {
     }, [user, currentPage]);
 
     // Handle search
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setCurrentPage(1);
-        await fetchCompanies(1, searchTerm);
-    };
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (user) {
+                setCurrentPage(1); // Reset to first page
+                fetchCompanies(1, searchTerm);
+            }
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, user]);
+
+
 
     // Handle delete company
     const handleDeleteCompany = async (companyId: string) => {
         try {
             await companyService.deleteCompany(companyId);
 
-            // Refresh companies list
+            // Refresh current page
             await fetchCompanies(currentPage, searchTerm);
 
-            // Show success message
-            setError(''); // Clear any existing errors
+            // If current page is empty after deletion, go to previous page
+            if (companies.length === 1 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            }
         } catch (error) {
             console.error('Failed to delete company:', error);
             setError(error instanceof Error ? error.message : 'Failed to delete company');
         }
     };
+
 
     // Handle logout
     const handleLogout = async () => {
@@ -175,7 +185,7 @@ export default function CompaniesPage() {
 
                     {/* Search Bar */}
                     <div className="card">
-                        <form onSubmit={handleSearch} className="flex gap-4">
+                        <div className="flex gap-4">
                             <div className="flex-1">
                                 <input
                                     type="text"
@@ -185,23 +195,15 @@ export default function CompaniesPage() {
                                     className="input w-full"
                                 />
                             </div>
-                            <button type="submit" className="btn btn-primary">
-                                Search
-                            </button>
                             {searchTerm && (
                                 <button
-                                    type="button"
-                                    onClick={() => {
-                                        setSearchTerm('');
-                                        setCurrentPage(1);
-                                        fetchCompanies(1, '');
-                                    }}
+                                    onClick={() => setSearchTerm('')}
                                     className="btn btn-secondary"
                                 >
                                     Clear
                                 </button>
                             )}
-                        </form>
+                        </div>
                     </div>
 
                     {/* Error Message */}

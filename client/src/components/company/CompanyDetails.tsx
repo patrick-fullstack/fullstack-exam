@@ -270,10 +270,15 @@ export function CompanyDetails({ company, companyId, loading, onUpdate, currentU
             </div>
 
             {/* Employees Table */}
-            {company.users && company.users.length > 0 && (
+            {company && (
                 <EmployeeTable
-                    employees={company.users}
-                    loading={false}
+                    employees={company.users || []}
+                    loading={loading}
+                    currentUserRole={currentUser?.role as 'super_admin' | 'manager' | 'employee'}
+                    currentUserId={currentUser?.id}
+                    currentUserCompanyId={currentUser?.companyId}
+                    onError={(error) => setError(error)}
+                    onSuccess={(message) => setSuccess(message)}
                 />
             )}
 

@@ -5,6 +5,8 @@ import { userService } from '../services/users';
 import { Header } from '../components/layout/Header';
 import { ProfileView } from '../components/profile/ProfileView';
 import { ProfileEdit } from '../components/profile/ProfileEdit';
+import { useSearchParams } from 'react-router-dom';
+
 
 export default function ProfilePage() {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -16,8 +18,9 @@ export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
     const navigate = useNavigate();
     const { userId } = useParams<{ userId?: string }>();
+    const [searchParams] = useSearchParams();
 
-    // ✅ Check if viewing own profile
+    // Check if viewing own profile
     const isOwnProfile = currentUser && profileUser && currentUser.id === profileUser.id;
 
     // Fetch current user data
@@ -69,9 +72,35 @@ export default function ProfilePage() {
         fetchProfileUser();
     }, [currentUser, userId]);
 
+    useEffect(() => {
+        const editFromQuery = searchParams.get('edit') === 'true';
+        if (editFromQuery && isOwnProfile) {
+            setIsEditing(true);
+        }
+    }, [searchParams, isOwnProfile]);
+
+    // Check if current user can edit this profile
+    const canEditProfile = () => {
+        if (!currentUser || !profileUser) return false;
+
+        // Can always edit own profile
+        if (isOwnProfile) return true;
+
+        // Super admin can edit anyone
+        if (currentUser.role === 'super_admin') return true;
+
+        // Manager can edit employees in their company
+        if (currentUser.role === 'manager') {
+            return profileUser.companyId === currentUser.companyId &&
+                profileUser.role === 'employee';
+        }
+
+        return false;
+    };
+
     const handleEditClick = () => {
-        if (!isOwnProfile) {
-            setError('You can only edit your own profile');
+        if (!canEditProfile()) {
+            setError('You do not have permission to edit this profile');
             return;
         }
         setIsEditing(true);
@@ -86,8 +115,8 @@ export default function ProfilePage() {
     };
 
     const handleSaveProfile = async (updateData: UpdateProfileRequest) => {
-        if (!profileUser || !isOwnProfile) {
-            setError('You can only edit your own profile');
+        if (!profileUser || !canEditProfile()) {
+            setError('You do not have permission to edit this profile');
             return;
         }
 
@@ -102,18 +131,24 @@ export default function ProfilePage() {
         setSuccess('');
 
         try {
-            const result = await auth.updateProfile(profileUser.id, updateData);
+            // Use different services based on whether editing own profile or others
+            let result;
+
+            if (isOwnProfile) {
+                result = await auth.updateProfile(profileUser.id, updateData);
+            } else {
+                result = await userService.updateUser(profileUser.id, updateData);
+            }
 
             if (result.success) {
                 setSuccess('Profile updated successfully!');
                 setProfileUser(result.user);
-                // ✅ Also update current user if it's own profile
+
                 if (isOwnProfile) {
                     setCurrentUser(result.user);
                 }
-                setIsEditing(false);
 
-                // Clear success message after 3 seconds
+                setIsEditing(false);
                 setTimeout(() => setSuccess(''), 3000);
             } else {
                 setError(result.error || 'Update failed');
@@ -176,7 +211,7 @@ export default function ProfilePage() {
         );
     }
 
-    // ✅ Get appropriate title based on viewing own profile or not
+    // Get appropriate title based on viewing own profile or not
     const getPageTitle = () => {
         if (isEditing) return "Edit Profile";
         if (isOwnProfile) return "My Profile";
@@ -218,18 +253,18 @@ export default function ProfilePage() {
                             )}
                         </div>
 
-                        {/* ✅ Only show edit button for own profile */}
-                        {!isEditing && isOwnProfile && (
+                        {/* Show edit button */}
+                        {!isEditing && canEditProfile() && (
                             <button
                                 onClick={handleEditClick}
                                 className="btn btn-primary"
                             >
-                                Edit Profile
+                                {isOwnProfile ? 'Edit Profile' : 'Edit User'}
                             </button>
                         )}
                     </div>
 
-                    {/* ✅ Show access notice if viewing someone else's profile */}
+                    {/* Show access notice if viewing someone else's profile */}
                     {!isOwnProfile && (
                         <div className="alert alert-info mb-6">
                             <div className="flex items-center space-x-2">
@@ -256,7 +291,7 @@ export default function ProfilePage() {
                     )}
 
                     {/* Profile Content */}
-                    {isEditing && isOwnProfile ? (
+                    {isEditing && canEditProfile() ? (
                         <ProfileEdit
                             user={profileUser}
                             onSave={handleSaveProfile}
@@ -267,7 +302,7 @@ export default function ProfilePage() {
                     ) : (
                         <ProfileView
                             user={profileUser}
-                            onEditClick={isOwnProfile ? handleEditClick : () => { }}
+                            onEditClick={canEditProfile() ? handleEditClick : () => { }}
                         />
                     )}
                 </div>

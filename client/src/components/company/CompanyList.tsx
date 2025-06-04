@@ -81,13 +81,15 @@ export function CompanyList({
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between border-t pt-6" style={{ borderColor: 'var(--border-color)' }}>
+                <div className="flex items-center justify-between border-t pt-6">
+                    {/* Results info */}
                     <div className="text-sm text-gray-700">
                         Showing {((pagination.currentPage - 1) * pagination.companiesPerPage) + 1} to{' '}
                         {Math.min(pagination.currentPage * pagination.companiesPerPage, pagination.totalCompanies)} of{' '}
                         {pagination.totalCompanies} companies
                     </div>
 
+                    {/* Pagination buttons */}
                     <div className="flex space-x-2">
                         <button
                             onClick={() => onPageChange?.(pagination.currentPage - 1)}
@@ -97,26 +99,16 @@ export function CompanyList({
                             Previous
                         </button>
 
-                        {/* Page Numbers */}
+                        {/* page numbers (max 5) */}
                         {[...Array(Math.min(pagination.totalPages, 5))].map((_, index) => {
-                            let page;
-                            if (pagination.totalPages <= 5) {
-                                page = index + 1;
-                            } else if (pagination.currentPage <= 3) {
-                                page = index + 1;
-                            } else if (pagination.currentPage >= pagination.totalPages - 2) {
-                                page = pagination.totalPages - 4 + index;
-                            } else {
-                                page = pagination.currentPage - 2 + index;
-                            }
-
+                            const page = index + 1;
                             return (
                                 <button
                                     key={page}
                                     onClick={() => onPageChange?.(page)}
                                     className={`btn ${page === pagination.currentPage
-                                            ? 'btn-primary'
-                                            : 'btn-secondary'
+                                        ? 'btn-primary'
+                                        : 'btn-secondary'
                                         }`}
                                 >
                                     {page}

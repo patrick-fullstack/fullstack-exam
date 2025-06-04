@@ -182,4 +182,106 @@ export const userService = {
       };
     }
   },
+
+  /**
+   * Update user
+   */
+  async updateUser(
+    userId: string,
+    userData: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      phone?: string;
+      role?: string;
+      isActive?: boolean;
+      avatar?: File;
+      password?: string;
+    }
+  ) {
+    try {
+      const formData = new FormData();
+
+      // Add fields that are provided
+      Object.entries(userData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (key === "avatar" && value instanceof File) {
+            formData.append(key, value);
+          } else if (key !== "avatar") {
+            formData.append(key, String(value));
+          }
+        }
+      });
+
+      const response = await api.put(`/users/${userId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.data.success) {
+        return {
+          success: true,
+          user: response.data.data.user as User,
+          message: response.data.message,
+        };
+      }
+
+      return {
+        success: false,
+        error: response.data.message || "User update failed",
+      };
+    } catch (error) {
+      console.error("Update user error:", error);
+
+      if (error instanceof AxiosError && error.response?.data) {
+        const apiError = error.response.data as ApiErrorResponse;
+        return {
+          success: false,
+          error: apiError.message || "User update failed",
+        };
+      }
+
+      return {
+        success: false,
+        error: "User update failed",
+      };
+    }
+  },
+
+  /**
+   * Delete user
+   */
+  async deleteUser(userId: string) {
+    try {
+      const response = await api.delete(`/users/${userId}`);
+
+      if (response.data.success) {
+        return {
+          success: true,
+          message: response.data.message,
+        };
+      }
+
+      return {
+        success: false,
+        error: response.data.message || "User deletion failed",
+      };
+    } catch (error) {
+      console.error("Delete user error:", error);
+
+      if (error instanceof AxiosError && error.response?.data) {
+        const apiError = error.response.data as ApiErrorResponse;
+        return {
+          success: false,
+          error: apiError.message || "User deletion failed",
+        };
+      }
+
+      return {
+        success: false,
+        error: "User deletion failed",
+      };
+    }
+  },
 };

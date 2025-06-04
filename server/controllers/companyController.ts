@@ -35,7 +35,7 @@ const formatCompany = (company: any) => ({
 export const getAllCompanies = asyncHandler(
   async (req: Request, res: Response) => {
     const currentUser = req.user!;
-    const { page = 1, limit = 10, search } = req.query;
+    const { page = 1, limit = 6, search } = req.query;
 
     let filter: any = {};
     if (currentUser.role === UserRole.SUPER_ADMIN) {
