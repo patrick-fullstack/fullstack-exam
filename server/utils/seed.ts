@@ -17,10 +17,10 @@ const seedAdmin = async () => {
     
     // Create admin
     await User.create({
-      email: 'admin@admin.com',
-      password: 'SecuredPass@123',
-      firstName: 'Super',
-      lastName: 'Admin',
+      email: env.SUPER_EMAIL,
+      password: env.SUPER_PASSWORD,
+      firstName: env.SUPER_FIRSTNAME,
+      lastName: env.SUPER_LASTNAME,
       role: UserRole.SUPER_ADMIN,
       isActive: true
     });
