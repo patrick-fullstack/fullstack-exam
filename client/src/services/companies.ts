@@ -52,6 +52,14 @@ interface CompanyResponse {
   message: string;
   data: {
     company: Company;
+    userPagination?: {
+      currentPage: number;
+      totalPages: number;
+      totalUsers: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+      usersPerPage: number;
+    };
   };
 }
 
@@ -131,18 +139,30 @@ export const companyService = {
   /**
    * Get company by ID with employees
    */
-  async getCompanyById(companyId: string): Promise<CompanyResponse> {
-    try {
-      const response = await api.get(`/company/${companyId}`);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        throw new Error(
-          error.response.data?.message || "Failed to fetch company"
-        );
-      }
-      throw new Error("Network error occurred");
+  async getCompanyById(
+    companyId: string,
+    params?: {
+      userPage?: number;
+      userLimit?: number;
+      userSearch?: string;
+      userRole?: string;
+      userStatus?: boolean;
     }
+  ): Promise<CompanyResponse> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.userPage)
+      queryParams.append("userPage", params.userPage.toString());
+    if (params?.userLimit)
+      queryParams.append("userLimit", params.userLimit.toString());
+    if (params?.userSearch) queryParams.append("userSearch", params.userSearch);
+    if (params?.userRole) queryParams.append("userRole", params.userRole);
+    if (params?.userStatus !== undefined)
+      queryParams.append("userStatus", params.userStatus.toString());
+
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
+    const response = await api.get(`/company/${companyId}${query}`);
+    return response.data;
   },
 
   /**

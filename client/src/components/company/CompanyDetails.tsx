@@ -10,7 +10,7 @@ interface CompanyDetailsProps {
     companyId: string;
     loading?: boolean;
     onUpdate?: (updatedCompany: Company) => void;
-    currentUser?: User; // Accept currentUser as prop
+    currentUser?: User;
 }
 
 interface User {
@@ -26,19 +26,15 @@ export function CompanyDetails({ company, companyId, loading, onUpdate, currentU
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [userLoading, setUserLoading] = useState(!currentUser);
-
-    // Only fetch user if not provided as prop
     const [internalUser, setInternalUser] = useState<User | null>(currentUser || null);
 
     useEffect(() => {
-        // Skip user fetch if currentUser is provided as prop
         if (currentUser) {
             setInternalUser(currentUser);
             setUserLoading(false);
             return;
         }
 
-        // Only fetch if user not provided
         const fetchUser = async () => {
             try {
                 const user = await auth.getCurrentUser();
@@ -63,13 +59,11 @@ export function CompanyDetails({ company, companyId, loading, onUpdate, currentU
         }
     };
 
-    // Check if user can edit this company (instant if user provided)
     const canEdit = internalUser && (
         internalUser.role === 'super_admin' ||
         (internalUser.role === 'manager' && internalUser.companyId === companyId)
     );
 
-    // Handle edit mode toggle
     const handleEditClick = () => {
         setIsEditing(true);
         setError('');
@@ -82,7 +76,6 @@ export function CompanyDetails({ company, companyId, loading, onUpdate, currentU
         setSuccess('');
     };
 
-    // Handle company update
     const handleUpdateCompany = async (updateData: UpdateCompanyData) => {
         setUpdating(true);
         setError('');
@@ -120,7 +113,6 @@ export function CompanyDetails({ company, companyId, loading, onUpdate, currentU
         );
     }
 
-    // Show edit form if in editing mode
     if (isEditing && canEdit) {
         return (
             <div className="space-y-6">
@@ -215,9 +207,7 @@ export function CompanyDetails({ company, companyId, loading, onUpdate, currentU
                         </div>
                     </div>
 
-                    {/* Edit Button - Shows immediately if user provided, or with minimal loading */}
                     {userLoading ? (
-                        // Small loading state for edit button area
                         <div className="w-24 h-10 bg-gray-200 rounded animate-pulse"></div>
                     ) : canEdit ? (
                         <button
@@ -247,13 +237,6 @@ export function CompanyDetails({ company, companyId, loading, onUpdate, currentU
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Total Employees</label>
-                        <div className="text-gray-900">
-                            {company.users ? company.users.length : 0} employees
-                        </div>
-                    </div>
-
-                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Created Date</label>
                         <div className="text-gray-900">
                             {new Date(company.createdAt).toLocaleDateString()}
@@ -269,30 +252,14 @@ export function CompanyDetails({ company, companyId, loading, onUpdate, currentU
                 </div>
             </div>
 
-            {/* Employees Table */}
-            {company && (
-                <EmployeeTable
-                    employees={company.users || []}
-                    loading={loading}
-                    currentUserRole={currentUser?.role as 'super_admin' | 'manager' | 'employee'}
-                    currentUserId={currentUser?.id}
-                    currentUserCompanyId={currentUser?.companyId}
-                    onError={(error) => setError(error)}
-                    onSuccess={(message) => setSuccess(message)}
-                />
-            )}
-
-            {/* No Employees Message */}
-            {(!company.users || company.users.length === 0) && (
-                <div className="card">
-                    <div className="text-center py-12">
-                        <div className="text-gray-500 text-lg mb-4">No employees found</div>
-                        <p className="text-gray-400">
-                            This company doesn't have any employees yet
-                        </p>
-                    </div>
-                </div>
-            )}
+            {/* ✅ Self-contained EmployeeTable (like CompanyList) */}
+            <EmployeeTable
+                companyId={companyId}
+                currentUserRole={internalUser?.role as 'super_admin' | 'manager' | 'employee'}
+                currentUserId={internalUser?.id}
+                onError={setError}
+                onSuccess={setSuccess}
+            />
         </div>
     );
 }

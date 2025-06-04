@@ -1,27 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { auth, type User } from '../../services/auth';
-import { companyService, type Company } from '../../services/companies';
 import { Header } from '../../components/layout/Header';
 import { CompanyList } from '../../components/company/CompanyList';
 
-interface PaginationData {
-    currentPage: number;
-    totalPages: number;
-    totalCompanies: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-    companiesPerPage: number;
-}
-
 export default function CompaniesPage() {
     const [user, setUser] = useState<User | null>(null);
-    const [companies, setCompanies] = useState<Company[]>([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pagination, setPagination] = useState<PaginationData | undefined>(undefined);
     const navigate = useNavigate();
 
     // Fetch user data
@@ -49,70 +34,6 @@ export default function CompaniesPage() {
         fetchUser();
     }, [navigate]);
 
-    // Fetch companies
-    const fetchCompanies = async (page = 1, search = '') => {
-        if (!user) return;
-
-        setLoading(true);
-        setError('');
-
-        try {
-            const response = await companyService.getCompanies({
-                page,
-                limit: 6,
-                search: search.trim() || undefined,
-            });
-
-            setCompanies(response.data.companies);
-            setPagination(response.data.pagination);
-        } catch (error) {
-            console.error('Failed to fetch companies:', error);
-            setError(error instanceof Error ? error.message : 'Failed to load companies');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Fetch companies when user or page changes
-    useEffect(() => {
-        if (user) {
-            fetchCompanies(currentPage, searchTerm);
-        }
-    }, [user, currentPage]);
-
-    // Handle search
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (user) {
-                setCurrentPage(1); // Reset to first page
-                fetchCompanies(1, searchTerm);
-            }
-        }, 500);
-
-        return () => clearTimeout(timeoutId);
-    }, [searchTerm, user]);
-
-
-
-    // Handle delete company
-    const handleDeleteCompany = async (companyId: string) => {
-        try {
-            await companyService.deleteCompany(companyId);
-
-            // Refresh current page
-            await fetchCompanies(currentPage, searchTerm);
-
-            // If current page is empty after deletion, go to previous page
-            if (companies.length === 1 && currentPage > 1) {
-                setCurrentPage(currentPage - 1);
-            }
-        } catch (error) {
-            console.error('Failed to delete company:', error);
-            setError(error instanceof Error ? error.message : 'Failed to delete company');
-        }
-    };
-
-
     // Handle logout
     const handleLogout = async () => {
         try {
@@ -122,11 +43,6 @@ export default function CompaniesPage() {
             console.error('Logout error:', error);
             navigate('/admin-login', { replace: true });
         }
-    };
-
-    // Handle page change
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
     };
 
     if (!user) {
@@ -183,29 +99,6 @@ export default function CompaniesPage() {
                         </div>
                     </div>
 
-                    {/* Search Bar */}
-                    <div className="card">
-                        <div className="flex gap-4">
-                            <div className="flex-1">
-                                <input
-                                    type="text"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    placeholder="Search companies by name, email, or website..."
-                                    className="input w-full"
-                                />
-                            </div>
-                            {searchTerm && (
-                                <button
-                                    onClick={() => setSearchTerm('')}
-                                    className="btn btn-secondary"
-                                >
-                                    Clear
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
                     {/* Error Message */}
                     {error && (
                         <div className="alert alert-error">
@@ -213,14 +106,10 @@ export default function CompaniesPage() {
                         </div>
                     )}
 
-                    {/* Companies List */}
+                    {/* Companies List*/}
                     <CompanyList
-                        companies={companies}
-                        onDelete={user.role === 'super_admin' ? handleDeleteCompany : undefined}
-                        loading={loading}
                         userRole={user.role as 'super_admin' | 'manager' | 'employee'}
-                        pagination={pagination}
-                        onPageChange={handlePageChange}
+                        onError={setError}
                     />
                 </div>
             </main>

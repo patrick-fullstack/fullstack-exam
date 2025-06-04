@@ -1,27 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { auth, type User } from '../../services/auth';
-import { companyService, type Company } from '../../services/companies';
 import { Header } from '../../components/layout/Header';
 import { CompanyList } from '../../components/company/CompanyList';
 
-interface PaginationData {
-    currentPage: number;
-    totalPages: number;
-    totalCompanies: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-    companiesPerPage: number;
-}
-
 export default function ManagerCompaniesPage() {
     const [user, setUser] = useState<User | null>(null);
-    const [companies, setCompanies] = useState<Company[]>([]);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pagination, setPagination] = useState<PaginationData | undefined>(undefined);
     const navigate = useNavigate();
 
     // Fetch user data
@@ -36,7 +21,7 @@ export default function ManagerCompaniesPage() {
                     return;
                 }
 
-                // ✅ Only allow managers
+                // Only allow managers
                 if (userData.role !== 'manager') {
                     navigate('/manager-login', { replace: true });
                     return;
@@ -50,44 +35,6 @@ export default function ManagerCompaniesPage() {
         fetchUser();
     }, [navigate]);
 
-    // Fetch companies
-    const fetchCompanies = async (page = 1, search = '') => {
-        if (!user) return;
-
-        setLoading(true);
-        setError('');
-
-        try {
-            const response = await companyService.getCompanies({
-                page,
-                limit: 9,
-                search: search.trim() || undefined,
-            });
-
-            setCompanies(response.data.companies);
-            setPagination(response.data.pagination);
-        } catch (error) {
-            console.error('Failed to fetch companies:', error);
-            setError(error instanceof Error ? error.message : 'Failed to load companies');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Fetch companies when user or page changes
-    useEffect(() => {
-        if (user) {
-            fetchCompanies(currentPage, searchTerm);
-        }
-    }, [user, currentPage]);
-
-    // Handle search
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setCurrentPage(1);
-        await fetchCompanies(1, searchTerm);
-    };
-
     // Handle logout
     const handleLogout = async () => {
         try {
@@ -97,11 +44,6 @@ export default function ManagerCompaniesPage() {
             console.error('Logout error:', error);
             navigate('/manager-login', { replace: true });
         }
-    };
-
-    // Handle page change
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
     };
 
     if (!user) {
@@ -149,37 +91,6 @@ export default function ManagerCompaniesPage() {
                         </div>
                     </div>
 
-                    {/* Search Bar */}
-                    <div className="card">
-                        <form onSubmit={handleSearch} className="flex gap-4">
-                            <div className="flex-1">
-                                <input
-                                    type="text"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    placeholder="Search companies by name, email, or website..."
-                                    className="input w-full"
-                                />
-                            </div>
-                            <button type="submit" className="btn btn-primary">
-                                Search
-                            </button>
-                            {searchTerm && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setSearchTerm('');
-                                        setCurrentPage(1);
-                                        fetchCompanies(1, '');
-                                    }}
-                                    className="btn btn-secondary"
-                                >
-                                    Clear
-                                </button>
-                            )}
-                        </form>
-                    </div>
-
                     {/* Error Message */}
                     {error && (
                         <div className="alert alert-error">
@@ -187,14 +98,11 @@ export default function ManagerCompaniesPage() {
                         </div>
                     )}
 
-                    {/* Companies List */}
+                    {/* Companies List*/}
                     <CompanyList
-                        companies={companies}
-                        onDelete={undefined} // ✅ No delete access for managers
-                        loading={loading}
+                        onDelete={undefined}
                         userRole={user.role as 'super_admin' | 'manager' | 'employee'}
-                        pagination={pagination}
-                        onPageChange={handlePageChange}
+                        onError={setError}
                     />
                 </div>
             </main>

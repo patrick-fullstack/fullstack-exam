@@ -28,7 +28,8 @@ const formatCompany = (company: any) => ({
   website: company.website,
   createdAt: company.createdAt,
   updatedAt: company.updatedAt,
-  users: company.users ? company.users.map(formatUserData) : undefined,
+  users: company.users ? company.users : undefined,
+  userPagination: company.userPagination,
 });
 
 // Get all companies - super admin sees all, manager sees their company
@@ -99,6 +100,15 @@ export const getCompanyById = asyncHandler(
     const { companyId } = req.params;
     const currentUser = req.user!;
 
+    // Get query params for user pagination
+    const {
+      userPage = 1,
+      userLimit = 10,
+      userSearch,
+      userRole,
+      userStatus,
+    } = req.query;
+
     const company = await Company.findById(companyId);
 
     if (!company) {
@@ -108,74 +118,86 @@ export const getCompanyById = asyncHandler(
       });
     }
 
+    // Build user filter based on permissions and queries
+    let userFilter: any = { companyId: companyId };
+
     // Check access permissions
     if (currentUser.role === UserRole.SUPER_ADMIN) {
       // Super admin can see any company with all users
-      const users = await User.find({ companyId: companyId })
-        .select("-password")
-        .sort({ createdAt: -1 });
-
-      // Response object
-      const responseData = {
-        ...company.toObject(),
-        users: users,
-      };
-
-      return res.status(200).json({
-        success: true,
-        message: "Company retrieved successfully",
-        data: { company: formatCompany(responseData) },
-      });
+      // Add role filter if specified
+      if (userRole && Object.values(UserRole).includes(userRole as UserRole)) {
+        userFilter.role = userRole;
+      }
     } else if (currentUser.role === UserRole.MANAGER) {
-      // Manager can view any company with all users
-      const users = await User.find({ companyId: companyId })
-        .select("-password")
-        .sort({ createdAt: -1 });
-
-      // Response object
-      const responseData = {
-        ...company.toObject(),
-        users: users,
-      };
-
-      return res.status(200).json({
-        success: true,
-        message: "Company retrieved successfully",
-        data: { company: formatCompany(responseData) },
-      });
+      // Manager can view any company with all users (NO RESTRICTION)
+      // Add role filter if specified
+      if (userRole && Object.values(UserRole).includes(userRole as UserRole)) {
+        userFilter.role = userRole;
+      }
     } else if (currentUser.role === UserRole.EMPLOYEE) {
+      // Employee can only view their own company
       if (currentUser.companyId?.toString() !== companyId) {
         return res.status(403).json({
           success: false,
           message: "You can only view your own company",
         });
       }
-
-      // For managers/employees, show company with filtered users
-      const users = await User.find({
-        companyId: companyId,
-        role: UserRole.EMPLOYEE, // Only show employees
-      })
-        .select("-password")
-        .sort({ createdAt: -1 });
-
-      const responseData = {
-        ...company.toObject(),
-        users: users,
-      };
-
-      return res.status(200).json({
-        success: true,
-        message: "Company retrieved successfully",
-        data: { company: formatCompany(responseData) },
-      });
+      // Employees see all colleagues (including managers)
     }
 
-    // Fallback - should not reach here
-    res.status(200).json({
+    // Search filter
+    if (userSearch) {
+      userFilter.$or = [
+        { firstName: { $regex: userSearch, $options: "i" } },
+        { lastName: { $regex: userSearch, $options: "i" } },
+        { email: { $regex: userSearch, $options: "i" } },
+      ];
+    }
+
+    // Status filter
+    if (userStatus !== undefined) {
+      userFilter.isActive = userStatus === "true";
+    }
+
+    // Pagination for users
+    const userPageNumber = Math.max(1, parseInt(userPage as string));
+    const userLimitNumber = Math.max(1, parseInt(userLimit as string));
+    const userSkip = (userPageNumber - 1) * userLimitNumber;
+
+    // Get total user count and paginated users
+    const [totalUsers, users] = await Promise.all([
+      User.countDocuments(userFilter),
+      User.find(userFilter)
+        .select("-password")
+        .sort({ createdAt: -1 })
+        .skip(userSkip)
+        .limit(userLimitNumber),
+    ]);
+
+    // Calculate user pagination metadata
+    const userPagination = {
+      currentPage: userPageNumber,
+      totalPages: Math.ceil(totalUsers / userLimitNumber),
+      totalUsers,
+      hasNextPage: userPageNumber < Math.ceil(totalUsers / userLimitNumber),
+      hasPrevPage: userPageNumber > 1,
+      usersPerPage: userLimitNumber,
+    };
+
+    // Response object
+    const responseData = {
+      ...company.toObject(),
+      users: users.map(formatUserData),
+      userPagination,
+    };
+
+    return res.status(200).json({
       success: true,
       message: "Company retrieved successfully",
-      data: { company: formatCompany(company) },
+      data: {
+        company: formatCompany(responseData),
+        userPagination,
+      },
     });
   }
 );

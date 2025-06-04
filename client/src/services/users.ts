@@ -11,7 +11,7 @@ interface ApiErrorResponse {
 }
 
 // User response interface
-interface User {
+export interface User {
   id: string;
   email: string;
   firstName: string;
@@ -156,8 +156,17 @@ export const userService = {
       if (response.data.success) {
         return {
           success: true,
-          users: response.data.data.users as User[],
-          pagination: response.data.data.pagination,
+          data: {
+            users: response.data.data.users as User[],
+            pagination: {
+              currentPage: response.data.data.pagination.currentPage,
+              totalPages: response.data.data.pagination.totalPages,
+              totalUsers: response.data.data.pagination.totalUsers,
+              hasNextPage: response.data.data.pagination.hasNextPage,
+              hasPrevPage: response.data.data.pagination.hasPrevPage,
+              usersPerPage: response.data.data.pagination.usersPerPage,
+            },
+          },
         };
       }
 
