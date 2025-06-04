@@ -164,6 +164,8 @@ export default function ManagerCompanyDetailPage() {
                         company={company}
                         loading={false}
                         companyId={companyId || ''}
+                        currentUser={user}
+                        onUpdate={(updatedCompany) => setCompany(updatedCompany)}
                     />
                 )}
             </main>

@@ -156,12 +156,14 @@ export default function CompanyDetailPage() {
                     </div>
                 )}
 
-                {/* ✅ Success State - Use CompanyDetails Component */}
+                {/* Success State - Use CompanyDetails Component */}
                 {company && !loading && !error && (
                     <CompanyDetails
                         company={company}
                         loading={false}
                         companyId={companyId || ''}
+                        currentUser={user}
+                        onUpdate={(updatedCompany) => setCompany(updatedCompany)}
                     />
                 )}
             </main>
