@@ -10,7 +10,6 @@ import {
 import { authenticate, authorize } from "../middlewares/auth";
 import { upload } from "../middlewares/upload";
 import { UserRole } from "../models/User";
-import { globalLimiter } from "../middlewares/security";
 
 const router = express.Router();
 // All routes require authentication
@@ -23,7 +22,6 @@ router.get(
 );
 router.get(
   "/export/:companyId",
-  globalLimiter,
   authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER),
   exportCompanyData
 );
@@ -35,22 +33,15 @@ router.get(
 router.post(
   "/",
   upload.single("logo"),
-  globalLimiter,
   authorize(UserRole.SUPER_ADMIN),
   createCompany
 );
 router.put(
   "/:companyId",
   upload.single("logo"),
-  globalLimiter,
   authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER),
   updateCompany
 );
-router.delete(
-  "/:companyId",
-  authorize(UserRole.SUPER_ADMIN),
-  globalLimiter,
-  deleteCompany
-);
+router.delete("/:companyId", authorize(UserRole.SUPER_ADMIN), deleteCompany);
 
 export default router;

@@ -11,6 +11,7 @@ export default function CreateUserPage() {
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [resetForm, setResetForm] = useState(false);
     const navigate = useNavigate();
 
     // Check authentication and permissions
@@ -46,16 +47,20 @@ export default function CreateUserPage() {
         setError('');
         setSuccess('');
         setCreating(true);
+        setResetForm(false); // Reset form state
 
         try {
             const result = await userService.createUser(userData);
 
             if (result.success) {
                 setSuccess(`User ${result.user?.firstName} ${result.user?.lastName} created successfully!`);
+                // Reset form state after successful creation
+                setResetForm(true);
 
                 // Optionally redirect to user list or reset form
                 setTimeout(() => {
                     setSuccess('');
+                    setResetForm(false);
                 }, 5000);
             } else {
                 setError(result.error || 'Failed to create user');
@@ -124,6 +129,7 @@ export default function CreateUserPage() {
                         onSubmit={handleCreateUser}
                         loading={creating}
                         error={error}
+                        resetForm={resetForm}
                     />
                 </div>
             </main>

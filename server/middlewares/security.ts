@@ -1,5 +1,5 @@
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 // Configure global rate limiter
 export const globalLimiter = rateLimit({
@@ -35,9 +35,9 @@ export const configureSecurity = (app: any) => {
   // Apply global rate limiter
   app.use(globalLimiter);
 
-//   // Sanitize data against NoSQL injection
-//   app.use(mongoSanitize());
+  //   // Sanitize data against NoSQL injection
+  //   app.use(mongoSanitize());
 
-//   // Force HTTPS in production
-//   app.use(forceHttps);
+  //   // Force HTTPS in production
+  //   app.use(forceHttps);
 };

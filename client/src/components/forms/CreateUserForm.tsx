@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { AvatarUpload } from '../ui/AvatarUpload';
@@ -19,14 +19,16 @@ interface CreateUserFormProps {
     onSubmit: (userData: CreateUserData) => Promise<void>;
     loading?: boolean;
     error?: string;
+    resetForm?: boolean;
 }
 
 export const CreateUserForm: React.FC<CreateUserFormProps> = ({
     onSubmit,
     loading = false,
-    error
+    error,
+    resetForm = false
 }) => {
-    const [formData, setFormData] = useState<CreateUserData>({
+    const initialFormState: CreateUserData = {
         email: '',
         password: '',
         confirmPassword: '',
@@ -35,10 +37,23 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
         phone: '',
         role: 'employee',
         companyId: '',
-    });
+    };
 
+    const [formData, setFormData] = useState<CreateUserData>(initialFormState);
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Partial<CreateUserData>>({});
+    const [avatarKey, setAvatarKey] = useState(0);
+
+    useEffect(() => {
+        if (resetForm) {
+            // Reset all form data to initial state
+            setFormData(initialFormState);
+            setAvatarFile(null);
+            setFieldErrors({});
+            setAvatarKey(prev => prev + 1);
+
+        }
+    }, [resetForm]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -119,6 +134,7 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
         });
         setAvatarFile(null);
         setFieldErrors({});
+        setAvatarKey(prev => prev + 1);
     };
 
     return (
@@ -134,8 +150,11 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
             <div className="text-center">
                 <h3 className="mb-4">Profile Picture (Optional)</h3>
                 <AvatarUpload
+                    key={avatarKey}
                     onAvatarChange={setAvatarFile}
                     disabled={loading}
+                    currentAvatar={undefined}
+
                 />
             </div>
 
