@@ -37,7 +37,7 @@ class EmailScheduler {
         { sendNow: true }, // Immediate emails
         { sendNow: false, scheduledFor: { $lte: now } }, // Scheduled emails due now
       ],
-    }).limit(100); // Process max 5 emails per minute to avoid overwhelming
+    }).limit(100);
 
     if (emailsToSend.length === 0) {
       return; // Nothing to do
