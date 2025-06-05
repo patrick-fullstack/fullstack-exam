@@ -201,8 +201,8 @@ export function CompanyList({ onDelete, userRole, onError }: CompanyListProps) {
                                     Previous
                                 </button>
 
-                                {/* page numbers (max 5) */}
-                                {[...Array(Math.min(pagination.totalPages, 5))].map((_, index) => {
+                                {/* page numbers */}
+                                {[...Array(pagination.totalPages)].map((_, index) => {
                                     const page = index + 1;
                                     return (
                                         <button

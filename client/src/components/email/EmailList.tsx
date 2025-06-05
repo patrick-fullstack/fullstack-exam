@@ -276,8 +276,8 @@ export const EmailList: React.FC<EmailListProps> = ({ onError, refreshTrigger })
                                     Previous
                                 </button>
 
-                                {/* Page numbers (max 5) - Made consistent with EmployeeTable */}
-                                {[...Array(Math.min(pagination.totalPages, 5))].map((_, index) => {
+                                {/* Page numbers - Show all pages */}
+                                {[...Array(pagination.totalPages)].map((_, index) => {
                                     const page = index + 1;
                                     return (
                                         <button

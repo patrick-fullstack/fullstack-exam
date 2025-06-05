@@ -389,8 +389,8 @@ export function EmployeeTable({
                                     Previous
                                 </button>
 
-                                {/* Page numbers (max 5) - Made consistent with CompanyList */}
-                                {[...Array(Math.min(pagination.totalPages, 5))].map((_, index) => {
+                                {/* Page numbers */}
+                                {[...Array(pagination.totalPages)].map((_, index) => {
                                     const page = index + 1;
                                     return (
                                         <button
