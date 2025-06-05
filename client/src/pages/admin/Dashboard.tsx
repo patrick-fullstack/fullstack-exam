@@ -187,6 +187,48 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
                             </Link>
+
+                            {/* Email Management */}
+                            <Link
+                                to="/admin/emails"
+                                className="group block p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md transition-all duration-200"
+                                style={{ textDecoration: 'none', color: 'inherit' }}
+                            >
+                                <div className="flex items-start space-x-4">
+                                    <div className="flex-shrink-0">
+                                        <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                                            <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 mb-1">Email Management</h3>
+                                        <p className="text-sm text-gray-600">Send and manage email communications</p>
+                                    </div>
+                                </div>
+                            </Link>
+
+                            {/* Create Email */}
+                            <Link
+                                to="/admin/emails/create"
+                                className="group block p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:shadow-md transition-all duration-200"
+                                style={{ textDecoration: 'none', color: 'inherit' }}
+                            >
+                                <div className="flex items-start space-x-4">
+                                    <div className="flex-shrink-0">
+                                        <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                                            <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 mb-1">Send Email</h3>
+                                        <p className="text-sm text-gray-600">Compose and send a new email</p>
+                                    </div>
+                                </div>
+                            </Link>
                         </div>
                     </div>
                 </div>

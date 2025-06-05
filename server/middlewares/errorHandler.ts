@@ -6,7 +6,7 @@ export interface ExpressError extends Error {
   status?: number;
 }
 
-// Handle asynchronous route handlers - inside routes for better error handling
+// Handle asynchronous route handlers - inside controllers for better error handling
 export const asyncHandler = (fn: Function) => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
@@ -14,7 +14,7 @@ export const asyncHandler = (fn: Function) => {
 };
 
 // 404 handler
-export const notFoundHandler = (req: Request, res: Response, ) => {
+export const notFoundHandler = (req: Request, res: Response) => {
   res.status(404).json({ success: false, message: "Endpoint not found" });
 };
 

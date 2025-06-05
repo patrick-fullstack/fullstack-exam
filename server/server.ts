@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
 import companyRoutes from "./routes/companyRoutes";
+import emailRoutes from "./routes/emailRoutes";
 import { env } from "./config/env";
 import { configureCors } from "./config/cors";
 import { configureSecurity } from "./middlewares/security";
@@ -40,6 +41,7 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/company", companyRoutes);
+app.use("/api/emails", emailRoutes);
 
 // Configure error handling middleware
 configureErrorHandlers(app);

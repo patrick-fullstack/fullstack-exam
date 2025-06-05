@@ -20,6 +20,11 @@ import CompanyDetailPage from './pages/admin/CompanyDetail';
 import CompanyEmployeeDetailPage from './pages/employee/CompanyDetail';
 import ManagerCompaniesPage from './pages/manager/Companies';
 import ManagerCompanyDetailPage from './pages/manager/CompanyDetail';
+import AdminEmailManagement from './pages/admin/EmailManagement';
+import AdminCreateEmail from './pages/admin/CreateEmail';
+import ManagerEmailManagement from './pages/manager/EmailManagement';
+import ManagerCreateEmail from './pages/manager/CreateEmail';
+
 
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
@@ -173,6 +178,23 @@ function AppContent() {
             <Navigate to="/admin-login" replace />
         }
       />
+      <Route
+        path="/admin/emails"
+        element={
+          isAuthenticated && user?.role === 'super_admin' ?
+            <AdminEmailManagement /> :
+            <Navigate to="/admin-login" replace />
+        }
+      />
+      <Route
+        path="/admin/emails/create"
+        element={
+          isAuthenticated && user?.role === 'super_admin' ?
+            <AdminCreateEmail /> :
+            <Navigate to="/admin-login" replace />
+        }
+      />
+
       {/* MANAGER */}
       <Route
         path="/manager-dashboard"
@@ -195,6 +217,22 @@ function AppContent() {
         element={
           isAuthenticated && user?.role === 'manager' ?
             <ManagerCompanyDetailPage /> :
+            <Navigate to="/manager-login" replace />
+        }
+      />
+      <Route
+        path="/manager/emails"
+        element={
+          isAuthenticated && user?.role === 'manager' ?
+            <ManagerEmailManagement /> :
+            <Navigate to="/manager-login" replace />
+        }
+      />
+      <Route
+        path="/manager/emails/create"
+        element={
+          isAuthenticated && user?.role === 'manager' ?
+            <ManagerCreateEmail /> :
             <Navigate to="/manager-login" replace />
         }
       />
