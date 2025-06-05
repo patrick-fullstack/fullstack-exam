@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { EmployeeTable } from './EmployeeTable';
-import { CompanyForm } from './CompanyForm';
+import { CompanyForm } from '../forms/CompanyForm';
 import type { Company, UpdateCompanyData } from '../../services/companies';
 import { companyService } from '../../services/companies';
 import { auth } from '../../services/auth';

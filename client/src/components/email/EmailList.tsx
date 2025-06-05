@@ -117,19 +117,12 @@ export const EmailList: React.FC<EmailListProps> = ({ onError, refreshTrigger })
     };
 
     const formatDate = (dateString: string) => {
-        // Create date from UTC string and convert to Philippine time
-        const date = new Date(dateString);
-
-        // Convert UTC to Philippine time (UTC+8)
-        const philippineTime = new Date(date.getTime() + (8 * 60 * 60 * 1000));
-
-        return philippineTime.toLocaleString('en-PH', {
+        return new Date(dateString).toLocaleString('en-US', {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-            hour12: true, // 12-hour format (AM/PM)
         });
     };
 

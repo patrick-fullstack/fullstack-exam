@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { auth, type User } from '../../services/auth';
 import { companyService, type CreateCompanyData } from '../../services/companies';
 import { Header } from '../../components/layout/Header';
-import { CompanyForm } from '../../components/company/CompanyForm';
+import { CompanyForm } from '../../components/forms/CompanyForm';
 
 export default function CreateCompanyPage() {
     const [user, setUser] = useState<User | null>(null);
