@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { env } from "./env";
-import { initializeEmailScheduler } from "../services/emailScheduler";
 
 const connectDB = async (): Promise<typeof mongoose> => {
   // If already connected, return
@@ -21,12 +20,5 @@ const connectDB = async (): Promise<typeof mongoose> => {
   return conn;
 };
 
-export const initializeDB = async () => {
-  await connectDB().catch(error => {
-    console.error("Database connection failed:", error);
-    process.exit(1);
-  });
-  initializeEmailScheduler();
-};
 
 export default connectDB;

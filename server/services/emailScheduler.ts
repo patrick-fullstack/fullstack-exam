@@ -2,6 +2,7 @@ import cron from "node-cron";
 import { ScheduledEmail } from "../models/Email";
 import { emailService } from "./emailService";
 import mongoose from "mongoose";
+import connectDB from "../config/database";
 
 class EmailScheduler {
   private isProcessing = false;
@@ -17,6 +18,9 @@ class EmailScheduler {
       if (this.isProcessing) {
         return; // Skip if already processing to avoid overlaps
       }
+
+      // Connect to database before processing
+      await connectDB();
 
       if (mongoose.connection.readyState !== 1) {
         console.log("Database not connected, skipping email processing");
@@ -74,6 +78,8 @@ class EmailScheduler {
 
 // Create and export scheduler instance
 export const emailScheduler = new EmailScheduler();
+
+emailScheduler.start();
 
 export const scheduleEmailJob = async (email: any): Promise<string> => {
   // With this approach, we just log - the cron job will pick it up
