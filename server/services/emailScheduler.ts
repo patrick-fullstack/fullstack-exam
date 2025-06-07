@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { ScheduledEmail } from "../models/Email";
 import { emailService } from "./emailService";
+import mongoose from "mongoose";
 
 class EmailScheduler {
   private isProcessing = false;
@@ -17,9 +18,17 @@ class EmailScheduler {
         return; // Skip if already processing to avoid overlaps
       }
 
+      if (mongoose.connection.readyState !== 1) {
+        console.log("Database not connected, skipping email processing");
+        return;
+      }
+
       this.isProcessing = true;
-      await this.processEmails();
-      this.isProcessing = false;
+      
+      setImmediate(async () => {
+        await this.processEmails();
+        this.isProcessing = false;
+      });
     });
 
     this.isInitialized = true;
@@ -28,53 +37,38 @@ class EmailScheduler {
 
   // Process emails that are ready to be sent
   private async processEmails() {
-    const now = new Date();
-
     // Find emails that should be sent now
     const emailsToSend = await ScheduledEmail.find({
       status: "pending",
       $or: [
-        { sendNow: true }, // Immediate emails
-        { sendNow: false, scheduledFor: { $lte: now } }, // Scheduled emails due now
+        { sendNow: true },
+        { sendNow: false, scheduledFor: { $lte: new Date() } },
       ],
-    }).limit(100);
+    })
+    .limit(100)
+    .lean();
 
     if (emailsToSend.length === 0) {
       return; // Nothing to do
     }
 
-    await this.sendEmailsInParallel(emailsToSend);
-  }
-
-  //   Send emails in parallel, 10 at a time
-  private async sendEmailsInParallel(emails: any[]) {
-    const CONCURRENT_EMAILS = 10; // Send 10 emails simultaneously
-
-    // Split emails into chunks of 10
-    for (let i = 0; i < emails.length; i += CONCURRENT_EMAILS) {
-      const chunk = emails.slice(i, i + CONCURRENT_EMAILS);
-
-      // Send this chunk in parallel
-      const promises = chunk.map((email) => this.sendSingleEmail(email));
-      await Promise.allSettled(promises); // Won't fail if one email fails
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < emailsToSend.length; i += BATCH_SIZE) {
+      const batch = emailsToSend.slice(i, i + BATCH_SIZE);
+      
+      const promises = batch.map(email => this.sendSingleEmail(email));
+      await Promise.allSettled(promises);
     }
   }
 
-  // Send a single email and update its status
   private async sendSingleEmail(email: any) {
-    const result = await emailService.sendEmail(email);
+    const result = await emailService.sendEmail(email).catch(() => ({ success: false }));
+    
+    const updateData = result.success 
+      ? { status: "sent", sentAt: new Date(), $unset: { errorMessage: 1 } }
+      : { status: "failed", failedAt: new Date(), errorMessage: "Failed to send email" };
 
-    // Update email status based on result
-    if (result.success) {
-      email.status = "sent";
-      email.sentAt = new Date();
-    } else {
-      email.status = "failed";
-      email.failedAt = new Date();
-      email.errorMessage = "Failed to send email";
-    }
-
-    await email.save();
+    await ScheduledEmail.findByIdAndUpdate(email._id, updateData);
   }
 }
 
@@ -110,6 +104,3 @@ export const retryEmailJob = async (emailId: string): Promise<string> => {
 export const initializeEmailScheduler = () => {
   emailScheduler.start();
 };
-
-// This starts the scheduler when the module is imported
-emailScheduler.start();

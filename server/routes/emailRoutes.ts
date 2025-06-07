@@ -9,7 +9,6 @@ import {
 } from "../controllers/emailController";
 import { authenticate, authorize } from "../middlewares/auth";
 import { UserRole } from "../models/User";
-import "../services/emailScheduler"; // initialize scheduler
 
 const router = express.Router();
 
@@ -46,5 +45,6 @@ router.put(
   authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER),
   retryEmail
 );
+
 
 export default router;

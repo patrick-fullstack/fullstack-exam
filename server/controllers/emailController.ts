@@ -69,19 +69,33 @@ export const createScheduledEmail = asyncHandler(
     // Save to database
     const scheduledEmail = await ScheduledEmail.create(emailData);
 
-    // Schedule the job
-    const jobId = await scheduleEmailJob(scheduledEmail);
+    if (sendNow) {
+      // Send immediately in background
+      setImmediate(async () => {
+        const result = await emailService.sendEmail(scheduledEmail).catch(() => ({ success: false }));
+        
+        const updateData = result.success 
+          ? { status: "sent", sentAt: new Date() }
+          : { status: "failed", failedAt: new Date(), errorMessage: "Failed to send email" };
 
-    res.status(201).json({
-      success: true,
-      message: sendNow
-        ? "Email queued for immediate sending"
-        : "Email scheduled successfully",
-      data: {
-        email: scheduledEmail,
-        jobId,
-      },
-    });
+        await ScheduledEmail.findByIdAndUpdate(scheduledEmail._id, updateData);
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "Email sent immediately",
+        data: { email: scheduledEmail },
+      });
+      // For scheduled emails
+    } else {
+      const jobId = await scheduleEmailJob(scheduledEmail);
+      
+      res.status(201).json({
+        success: true,
+        message: "Email scheduled successfully",
+        data: { email: scheduledEmail, jobId },
+      });
+    }
   }
 );
 

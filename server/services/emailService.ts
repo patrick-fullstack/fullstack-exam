@@ -276,22 +276,6 @@ const emailTemplates = {
                     <p class="signature-name">${data.fromName}</p>
                 </div>
             </div>
-
-            <!-- Footer Section -->
-            <div class="footer">
-                <div class="footer-content">
-                    <span class="footer-logo">Mini CRM</span>
-                    <span class="footer-divider">•</span>
-                    <span class="footer-date">${new Date().toLocaleDateString(
-                      "en-US",
-                      {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      }
-                    )}</span>
-                </div>
-            </div>
         </div>
     </body>
     </html>
@@ -642,20 +626,6 @@ const emailTemplates = {
                     </div>
                 </div>
             </div>
-            
-            <!-- Professional Footer -->
-            <div class="footer">
-                <div class="footer-content">
-                    <div class="footer-left">
-                        <span class="footer-logo">MINI CRM</span>
-                        <span class="footer-divider">|</span>
-                        <span>Professional Business Solutions</span>
-                    </div>
-                    <div class="footer-right">
-                        ${new Date().getFullYear()} © All Rights Reserved
-                    </div>
-                </div>
-            </div>
         </div>
     </body>
     </html>
@@ -696,6 +666,7 @@ class EmailService {
     };
 
     const result = await this.transporter.sendMail(mailOptions);
+    console.log(`Email sent successfully to ${emailData.toEmail}`);
 
     return {
       success: true,

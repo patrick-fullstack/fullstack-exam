@@ -7,8 +7,7 @@ import { env } from "./config/env";
 import { configureCors } from "./config/cors";
 import { configureSecurity } from "./middlewares/security";
 import { configureErrorHandlers } from "./middlewares/errorHandler";
-import connectDB from "./config/database";
-
+import { initializeDB } from "./config/database";
 const app = express();
 
 // Trust proxy for Vercel deployment - error in vercel deployment if not set " The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false (default)."
@@ -24,10 +23,7 @@ configureCors(app);
 app.use(express.json());
 
 // Connect to the database
-app.use(async (req, res, next) => {
-  await connectDB();
-  next();
-});
+initializeDB()
 
 app.get("/", (req: Request, res: Response) => {
   res.json({
