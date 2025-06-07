@@ -24,7 +24,10 @@ configureCors(app);
 app.use(express.json());
 
 // Connect to the database
-connectDB()
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 app.get("/", (req: Request, res: Response) => {
   res.json({
