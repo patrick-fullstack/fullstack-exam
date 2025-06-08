@@ -1,0 +1,160 @@
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { auth, authEvents, type User } from '../services/auth';
+
+interface AuthContextType {
+  // State
+  user: User | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  
+  // Actions
+  login: (email: string, password: string) => Promise<LoginResult>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+}
+
+interface LoginResult {
+  success: boolean;
+  user?: User;
+  error?: string;
+}
+
+// Create the context
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Props for the provider
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+// The main Auth Provider component
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // LOGIN FUNCTION - Called from login pages
+  const login = async (email: string, password: string): Promise<LoginResult> => {
+    try {
+      const result = await auth.login(email, password);
+      
+      if (result.success && result.user) {
+        setUser(result.user);
+        setIsAuthenticated(true);
+        return { success: true, user: result.user };
+      } else {
+        return { success: false, error: result.error || 'Login failed' };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: 'An unexpected error occurred' };
+    }
+  };
+
+  // LOGOUT FUNCTION - Called from any component
+  const logout = async (): Promise<void> => {
+    try {
+      await auth.logout();
+      setUser(null);
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still clear local state even if server logout fails
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+  };
+
+  // REFRESH USER - Called when user data might have changed
+  const refreshUser = async (): Promise<void> => {
+    try {
+      if (auth.isLoggedIn()) {
+        const userData = await auth.getCurrentUser();
+        if (userData) {
+          setUser(userData);
+          setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    } catch (error) {
+      console.error('Refresh user error:', error);
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+  };
+
+  // CHECK AUTH STATUS ON APP START
+  useEffect(() => {
+    const checkInitialAuth = async () => {
+      setLoading(true);
+      try {
+        const isLoggedIn = auth.isLoggedIn();
+        
+        if (isLoggedIn) {
+          const userData = await auth.getCurrentUser();
+          if (userData) {
+            setUser(userData);
+            setIsAuthenticated(true);
+          } else {
+            setUser(null);
+            setIsAuthenticated(false);
+            await auth.logout(); // Clear invalid token
+          }
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Initial auth check failed:', error);
+        setUser(null);
+        setIsAuthenticated(false);
+        await auth.logout();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkInitialAuth();
+  }, []);
+
+  // LISTEN TO AUTH EVENTS (login, logout, token expiration)
+  useEffect(() => {
+    const unsubscribe = authEvents.subscribe(() => {
+      refreshUser();
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // PROVIDE CONTEXT VALUE
+  const contextValue: AuthContextType = {
+    user,
+    isAuthenticated,
+    loading,
+    login,
+    logout,
+    refreshUser
+  };
+
+  return (
+    <AuthContext.Provider value={contextValue}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// CUSTOM HOOK - This is what components will use
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  
+  return context;
+};
