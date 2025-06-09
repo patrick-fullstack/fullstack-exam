@@ -6,9 +6,9 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  
+
   // Actions
-  login: (email: string, password: string) => Promise<LoginResult>;
+  login: (email: string, password: string, allowedRole?: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -17,6 +17,7 @@ interface LoginResult {
   success: boolean;
   user?: User;
   error?: string;
+  actualRole?: string;
 }
 
 // Create the context
@@ -34,14 +35,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // LOGIN FUNCTION - Called from login pages
-  const login = async (email: string, password: string): Promise<LoginResult> => {
+  const login = async (email: string, password: string, allowedRole?: string): Promise<LoginResult> => {
     try {
-      const result = await auth.login(email, password);
-      
+      const result = await auth.login(email, password, allowedRole);
+
       if (result.success && result.user) {
         setUser(result.user);
         setIsAuthenticated(true);
-        return { success: true, user: result.user };
+        return { success: true, user: result.user, actualRole: result.actualRole };
       } else {
         return { success: false, error: result.error || 'Login failed' };
       }
@@ -94,7 +95,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       try {
         const isLoggedIn = auth.isLoggedIn();
-        
+
         if (isLoggedIn) {
           const userData = await auth.getCurrentUser();
           if (userData) {
@@ -151,10 +152,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 // CUSTOM HOOK - This is what components will use
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  
+
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
+
   return context;
 };

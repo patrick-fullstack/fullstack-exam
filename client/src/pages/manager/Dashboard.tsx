@@ -5,7 +5,6 @@ import { Header } from "../../components/layout/Header";
 export default function ManagerDashboard() {
   const { user, logout } = useAuth();
 
-  // All your existing UI - NO CHANGES
   return (
     <div
       style={{ minHeight: "100vh", backgroundColor: "var(--background-gray)" }}

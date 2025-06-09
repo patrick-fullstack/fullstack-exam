@@ -14,23 +14,23 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const result = await login(email, password);
+      // Pass the required role to enforce role-based login
+      const result = await login(email, password, 'super_admin');
 
       if (result.success && result.user) {
-        // Check if user is actually a super admin
-        if (result.user.role !== "super_admin") {
-          setError(
-            `Access denied. You are a ${result.user.role.replace(
-              "_",
-              " "
-            )}. This is the Admin portal.`
-          );
-          return;
-        }
+        console.log('Admin login successful');
       } else {
-        setError(result.error || "Login failed");
+        // Check if we got the actual role (role mismatch)
+        if (result.actualRole) {
+          setError(
+            `Access denied. You are a ${result.actualRole.replace('_', ' ')}.`
+          );
+        } else {
+          setError(result.error || "Login failed");
+        }
       }
     } catch (err) {
+      console.error("Login error:", err);
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);

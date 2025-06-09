@@ -14,24 +14,23 @@ export default function EmployeeLogin() {
     setLoading(true);
 
     try {
-      const result = await login(email, password);
+      // Pass the required role to enforce role-based login
+      const result = await login(email, password, 'employee');
 
       if (result.success && result.user) {
-        // Added type guard
-        // Check if user is actually an employee
-        if (result.user.role !== "employee") {
-          setError(
-            `Access denied. You are a ${result.user.role.replace(
-              "_",
-              " "
-            )}. This is the Employee portal.`
-          );
-          return;
-        }
+        console.log('Employee login successful');
       } else {
-        setError(result.error || "Login failed");
+        // Check if we got the actual role (role mismatch)
+        if (result.actualRole) {
+          setError(
+            `Access denied. You are a ${result.actualRole.replace('_', ' ')}. Redirecting to correct portal...`
+          );
+        } else {
+          setError(result.error || "Login failed");
+        }
       }
     } catch (err) {
+      console.error("Login error:", err);
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);

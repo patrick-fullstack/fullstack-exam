@@ -1,55 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { auth } from '../../services/auth';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { Header } from '../../components/layout/Header';
 import { EmailList } from '../../components/email/EmailList';
-import type { User } from '../../services/auth';
 
 export default function EmailManagementPage() {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { user, logout } = useAuth();
     const [error, setError] = useState('');
     const [refreshTrigger, setRefreshTrigger] = useState(0);
-    const navigate = useNavigate();
-
-    // Check authentication and permissions
-    useEffect(() => {
-        const checkPermissions = async () => {
-            try {
-                const userData = await auth.getCurrentUser();
-
-                if (!userData) {
-                    navigate('/admin-login', { replace: true });
-                    return;
-                }
-
-                // Only managers can access this page
-                if (userData.role !== 'manager') {
-                    navigate('/manager-dashboard', { replace: true });
-                    return;
-                }
-
-                setUser(userData);
-            } catch (error) {
-                console.error('Failed to check permissions:', error);
-                navigate('/admin-login', { replace: true });
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkPermissions();
-    }, [navigate]);
-
-    const handleLogout = async () => {
-        try {
-            await auth.logout();
-            navigate('/admin-login', { replace: true });
-        } catch (error) {
-            console.error('Logout error:', error);
-            navigate('/admin-login', { replace: true });
-        }
-    };
 
     const handleError = (errorMessage: string) => {
         setError(errorMessage);
@@ -64,24 +22,13 @@ export default function EmailManagementPage() {
         clearError();
     };
 
-    if (loading) {
-        return (
-            <div className="flex-center" style={{ minHeight: '100vh' }}>
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading...</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-gray)' }}>
             {/* Header */}
             <Header
                 title="Email Management"
                 variant="dashboard"
-                onLogout={handleLogout}
+                onLogout={logout}
                 userAvatar={user?.avatar}
                 userName={user?.firstName}
             />

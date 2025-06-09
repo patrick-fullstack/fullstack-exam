@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -6,8 +5,6 @@ import {
   Navigate,
 } from "react-router-dom";
 import "./App.css";
-import { auth, authEvents } from "./services/auth";
-import type { User } from "./services/auth";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoutes";
 

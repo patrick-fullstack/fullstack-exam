@@ -10,6 +10,7 @@ interface ProfileEditProps {
     onCancel: () => void;
     loading?: boolean;
     error?: string;
+    currentUser?: User | null;
 }
 
 export const ProfileEdit: React.FC<ProfileEditProps> = ({
@@ -17,7 +18,8 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
     onSave,
     onCancel,
     loading = false,
-    error
+    error,
+    currentUser
 }) => {
     const [formData, setFormData] = useState({
         firstName: user.firstName || '',
@@ -29,6 +31,46 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
     });
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+    // Check if current user can edit email
+    const canEditEmail = () => {
+        if (!currentUser) return false;
+
+        // Users can always edit their own email
+        if (currentUser.id === user.id) return true;
+
+        // Super admin can edit anyone's email
+        if (currentUser.role === 'super_admin') return true;
+
+        // Manager can edit employee emails in their company
+        if (currentUser.role === 'manager') {
+            return user.role === 'employee' &&
+                user.companyId === currentUser.companyId;
+        }
+
+        return false;
+    };
+
+    // Get email field configuration
+    const getEmailFieldConfig = () => {
+        const editable = canEditEmail();
+
+        if (editable) {
+            return {
+                label: "Email Address *",
+                disabled: false,
+                helpText: null
+            };
+        }
+
+        return {
+            label: "Email Address * (Read Only)",
+            disabled: true,
+            helpText: user.role === 'employee' && currentUser?.role === 'employee'
+                ? "Contact your manager to change your email"
+                : "Email can only be changed by authorized personnel"
+        };
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -88,12 +130,19 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
         if (formData.firstName !== user.firstName) updateData.firstName = formData.firstName;
         if (formData.lastName !== user.lastName) updateData.lastName = formData.lastName;
         if (formData.phone !== user.phone) updateData.phone = formData.phone;
-        if (formData.email !== user.email) updateData.email = formData.email;
+
+        // Only include email if user has permission to edit it AND it's changed
+        if (canEditEmail() && formData.email !== user.email) {
+            updateData.email = formData.email;
+        }
+
         if (formData.password) updateData.password = formData.password;
         if (avatarFile) updateData.avatar = avatarFile;
 
         await onSave(updateData);
     };
+
+    const emailConfig = getEmailFieldConfig();
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -142,18 +191,18 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
                         <Input
-                            label={`Email Address * ${user.role === 'employee' ? '(Read Only)' : ''}`}
+                            label={emailConfig.label}
                             name="email"
                             type="email"
                             value={formData.email}
                             onChange={handleInputChange}
-                            disabled={loading || user.role === 'employee'}
+                            disabled={loading || emailConfig.disabled}
                             error={validationErrors.email}
                             required
                         />
-                        {user.role === 'employee' && (
+                        {emailConfig.helpText && (
                             <p className="text-xs text-gray-500 mt-1">
-                                Contact your manager to change your email
+                                {emailConfig.helpText}
                             </p>
                         )}
                     </div>
@@ -188,14 +237,19 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
                     {user.companyId && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Company ID
+                                Company
                             </label>
                             <input
                                 type="text"
-                                value={user.companyId}
+                                value={user.company?.name || `Company ID: ${user.companyId}`}
                                 disabled
                                 className="input-field bg-gray-50"
                             />
+                            {user.company?.website && (
+                                <div className="text-sm text-gray-500 mt-1">
+                                    Website: {user.company.website}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

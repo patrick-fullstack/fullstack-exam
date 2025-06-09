@@ -1,49 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../../services/auth';
+import { useAuth } from '../../contexts/AuthContext';
 import { emailService } from '../../services/email';
 import { Header } from '../../components/layout/Header';
 import { EmailForm } from '../../components/forms/EmailForm';
-import type { User } from '../../services/auth';
 import type { CreateEmailData } from '../../services/email';
 
 export default function CreateEmailPage() {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { user, logout } = useAuth();
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [resetForm, setResetForm] = useState(false);
     const navigate = useNavigate();
-
-    // Check authentication and permissions
-    useEffect(() => {
-        const checkPermissions = async () => {
-            try {
-                const userData = await auth.getCurrentUser();
-
-                if (!userData) {
-                    navigate('/admin-login', { replace: true });
-                    return;
-                }
-
-                // Only super admins and managers can access this page
-                if (userData.role !== 'super_admin' && userData.role !== 'manager') {
-                    navigate('/admin-dashboard', { replace: true });
-                    return;
-                }
-
-                setUser(userData);
-            } catch (error) {
-                console.error('Failed to check permissions:', error);
-                navigate('/admin-login', { replace: true });
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkPermissions();
-    }, [navigate]);
 
     const handleCreateEmail = async (emailData: CreateEmailData) => {
         setError('');
@@ -78,16 +47,6 @@ export default function CreateEmailPage() {
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await auth.logout();
-            navigate('/admin-login', { replace: true });
-        } catch (error) {
-            console.error('Logout error:', error);
-            navigate('/admin-login', { replace: true });
-        }
-    };
-
     const getDashboardPath = () => {
         if (user?.role === 'super_admin') return '/admin-dashboard';
         if (user?.role === 'manager') return '/manager-dashboard';
@@ -100,24 +59,13 @@ export default function CreateEmailPage() {
         return '/admin/emails';
     };
 
-    if (loading) {
-        return (
-            <div className="flex-center" style={{ minHeight: '100vh' }}>
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading...</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-gray)' }}>
             {/* Header */}
             <Header
                 title="Create Email"
                 variant="dashboard"
-                onLogout={handleLogout}
+                onLogout={logout}
                 userAvatar={user?.avatar}
                 userName={user?.firstName}
             />

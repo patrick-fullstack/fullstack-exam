@@ -1,15 +1,14 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { auth, type User, type UpdateProfileRequest } from '../services/auth';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { userService } from '../services/users';
 import { Header } from '../components/layout/Header';
 import { ProfileView } from '../components/profile/ProfileView';
 import { ProfileEdit } from '../components/profile/ProfileEdit';
-import { useSearchParams } from 'react-router-dom';
-
+import { useAuth } from '../contexts/AuthContext';
+import { auth, type User, type UpdateProfileRequest } from '../services/auth';
 
 export default function ProfilePage() {
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const { user: currentUser, logout, refreshUser } = useAuth();
     const [profileUser, setProfileUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
@@ -23,25 +22,24 @@ export default function ProfilePage() {
     // Check if viewing own profile
     const isOwnProfile = currentUser && profileUser && currentUser.id === profileUser.id;
 
-    // Fetch current user data
-    useEffect(() => {
-        const fetchCurrentUser = async () => {
-            try {
-                const userData = await auth.getCurrentUser();
-                if (userData) {
-                    setCurrentUser(userData || null);
-                } else {
-                    navigate('/');
-                }
-            } catch (error) {
-                console.error('Failed to fetch current user:', error);
-                setCurrentUser(null);
-                navigate('/');
-            }
-        };
+    // Memoized permission check function to prevent infinite re-renders
+    const canEditProfile = useCallback(() => {
+        if (!currentUser || !profileUser) return false;
 
-        fetchCurrentUser();
-    }, [navigate]);
+        // Can always edit own profile
+        if (currentUser.id === profileUser.id) return true;
+
+        // Super admin can edit anyone
+        if (currentUser.role === 'super_admin') return true;
+
+        // Manager can edit employees in their company
+        if (currentUser.role === 'manager') {
+            return profileUser.companyId === currentUser.companyId &&
+                profileUser.role === 'employee';
+        }
+
+        return false;
+    }, [currentUser, profileUser]);
 
     // Fetch profile user data (either own profile or specific user)
     useEffect(() => {
@@ -52,9 +50,15 @@ export default function ProfilePage() {
             setError('');
 
             try {
-                // getUserById from userService
-                const targetUserId = userId || currentUser.id;
-                const result = await userService.getUserById(targetUserId);
+                // Use current user data if viewing own profile and no userId specified
+                if (!userId) {
+                    setProfileUser(currentUser);
+                    setLoading(false);
+                    return;
+                }
+
+                // Fetch specific user by ID
+                const result = await userService.getUserById(userId);
 
                 if (result.success && result.user) {
                     setProfileUser(result.user);
@@ -72,31 +76,13 @@ export default function ProfilePage() {
         fetchProfileUser();
     }, [currentUser, userId]);
 
+    // Handle edit mode from URL query parameter - Fixed dependency array
     useEffect(() => {
         const editFromQuery = searchParams.get('edit') === 'true';
-        if (editFromQuery && isOwnProfile) {
+        if (editFromQuery && canEditProfile()) {
             setIsEditing(true);
         }
-    }, [searchParams, isOwnProfile]);
-
-    // Check if current user can edit this profile
-    const canEditProfile = () => {
-        if (!currentUser || !profileUser) return false;
-
-        // Can always edit own profile
-        if (isOwnProfile) return true;
-
-        // Super admin can edit anyone
-        if (currentUser.role === 'super_admin') return true;
-
-        // Manager can edit employees in their company
-        if (currentUser.role === 'manager') {
-            return profileUser.companyId === currentUser.companyId &&
-                profileUser.role === 'employee';
-        }
-
-        return false;
-    };
+    }, [searchParams, canEditProfile]);
 
     const handleEditClick = () => {
         if (!canEditProfile()) {
@@ -131,23 +117,24 @@ export default function ProfilePage() {
         setSuccess('');
 
         try {
-            // Use different services based on whether editing own profile or others
             let result;
 
             if (isOwnProfile) {
+                // Use auth service for own profile
                 result = await auth.updateProfile(profileUser.id, updateData);
+
+                // Refresh user in context after updating own profile
+                if (result.success) {
+                    await refreshUser();
+                }
             } else {
+                // Use user service for other users
                 result = await userService.updateUser(profileUser.id, updateData);
             }
 
             if (result.success) {
                 setSuccess('Profile updated successfully!');
                 setProfileUser(result.user);
-
-                if (isOwnProfile) {
-                    setCurrentUser(result.user);
-                }
-
                 setIsEditing(false);
                 setTimeout(() => setSuccess(''), 3000);
             } else {
@@ -158,16 +145,6 @@ export default function ProfilePage() {
             setError('An unexpected error occurred');
         } finally {
             setUpdating(false);
-        }
-    };
-
-    const handleLogout = async () => {
-        try {
-            await auth.logout();
-            navigate('/', { replace: true });
-        } catch (error) {
-            console.error('Logout error:', error);
-            navigate('/', { replace: true });
         }
     };
 
@@ -182,6 +159,14 @@ export default function ProfilePage() {
         }
     };
 
+    // Get appropriate title based on viewing own profile or not
+    const getPageTitle = () => {
+        if (isEditing) return "Edit Profile";
+        if (isOwnProfile) return "My Profile";
+        return `${profileUser?.firstName} ${profileUser?.lastName}'s Profile`;
+    };
+
+    // Loading state
     if (loading) {
         return (
             <div className="flex-center" style={{ minHeight: '100vh' }}>
@@ -193,7 +178,8 @@ export default function ProfilePage() {
         );
     }
 
-    if (!currentUser || !profileUser) {
+    // Error state - no profile user found
+    if (!profileUser) {
         return (
             <div className="flex-center" style={{ minHeight: '100vh' }}>
                 <div className="card text-center">
@@ -211,22 +197,15 @@ export default function ProfilePage() {
         );
     }
 
-    // Get appropriate title based on viewing own profile or not
-    const getPageTitle = () => {
-        if (isEditing) return "Edit Profile";
-        if (isOwnProfile) return "My Profile";
-        return `${profileUser.firstName} ${profileUser.lastName}'s Profile`;
-    };
-
     return (
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-gray)' }}>
             {/* Header */}
             <Header
                 title={getPageTitle()}
                 variant="dashboard"
-                onLogout={handleLogout}
-                userAvatar={currentUser.avatar}
-                userName={currentUser.firstName}
+                onLogout={logout}
+                userAvatar={currentUser?.avatar}
+                userName={currentUser?.firstName}
             />
 
             {/* Content */}
@@ -271,7 +250,7 @@ export default function ProfilePage() {
                                 <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                 </svg>
-                                <span>You are viewing another user's profile (read-only)</span>
+                                <span>You are viewing another user's profile</span>
                             </div>
                         </div>
                     )}
@@ -294,6 +273,7 @@ export default function ProfilePage() {
                     {isEditing && canEditProfile() ? (
                         <ProfileEdit
                             user={profileUser}
+                            currentUser={currentUser}
                             onSave={handleSaveProfile}
                             onCancel={handleCancelEdit}
                             loading={updating}

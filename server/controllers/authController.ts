@@ -9,6 +9,7 @@ import { validateFileUpload } from "../middlewares/upload";
 interface LoginRequest {
   email: string;
   password: string;
+  requiredRole?: UserRole;
 }
 
 // Login response interface
@@ -67,7 +68,7 @@ function formatCompanyData(companyId: any) {
 
 // Login controller
 export const login = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password }: LoginRequest = req.body;
+  const { email, password, requiredRole }: LoginRequest = req.body;
 
   // Validate input
   if (!email || !password) {
@@ -97,6 +98,18 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     return res
       .status(401)
       .json({ success: false, message: "Invalid email or password" });
+  }
+
+  // Check role before issueing token - NEW FEATURE FOR ROLE-BASED LOGIN IN FRONTEND
+  if (requiredRole && user.role !== requiredRole) {
+    return res.status(403).json({
+      success: false,
+      message: `Access denied. This portal is for ${requiredRole.replace(
+        "_",
+        " "
+      )}s only. You are a ${user.role.replace("_", " ")}.`,
+      actualRole: user.role,
+    });
   }
 
   // Generate token and respond

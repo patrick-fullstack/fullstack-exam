@@ -1,31 +1,9 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { Link } from "react-router-dom";
 import { Header } from "../../components/layout/Header";
-import { companyService } from "../../services/companies";
-import type { Company } from "../../services/companies";
 
 export default function EmployeeDashboard() {
   const { user, logout } = useAuth();
-  const [company, setCompany] = useState<Company | null>(null);
-  // fetch company details based on user.companyId
-  useEffect(() => {
-    const fetchCompany = async () => {
-      if (user?.companyId) {
-        try {
-          const companyResponse = await companyService.getCompanyById(
-            user.companyId
-          );
-          setCompany(companyResponse.data.company);
-        } catch (error) {
-          console.error("Failed to fetch company:", error);
-        }
-      }
-    };
-
-    fetchCompany();
-  }, [user?.companyId]);
-
   return (
     <div
       style={{ minHeight: "100vh", backgroundColor: "var(--background-gray)" }}
@@ -70,7 +48,7 @@ export default function EmployeeDashboard() {
                       Company
                     </div>
                     <div className="text-gray-900">
-                      {company?.name ||
+                      {user?.company?.name ||
                         (user?.companyId
                           ? `Company ID: ${user.companyId}`
                           : "No Company Assigned")}
