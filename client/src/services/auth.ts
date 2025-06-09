@@ -38,6 +38,7 @@ export interface UpdateProfileRequest {
   email?: string;
   password?: string;
   avatar?: File;
+  companyId?: string;
 }
 
 // API Error response interface
