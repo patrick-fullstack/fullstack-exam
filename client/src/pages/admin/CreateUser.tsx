@@ -1,63 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, type User } from '../../services/auth';
+import { useAuth } from '../../contexts/AuthContext';
 import { userService } from '../../services/users';
 import { Header } from '../../components/layout/Header';
 import { CreateUserForm, type CreateUserData } from '../../components/forms/CreateUserForm';
 
 export default function CreateUserPage() {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { user, logout } = useAuth();
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [resetForm, setResetForm] = useState(false);
     const navigate = useNavigate();
 
-    // Check authentication and permissions
-    useEffect(() => {
-        const checkPermissions = async () => {
-            try {
-                const userData = await auth.getCurrentUser();
-
-                if (!userData) {
-                    navigate('/admin-login', { replace: true });
-                    return;
-                }
-
-                // Only super admins can access this page
-                if (userData.role !== 'super_admin') {
-                    navigate('/admin-dashboard', { replace: true });
-                    return;
-                }
-
-                setUser(userData);
-            } catch (error) {
-                console.error('Failed to check permissions:', error);
-                navigate('/admin-login', { replace: true });
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkPermissions();
-    }, [navigate]);
-
     const handleCreateUser = async (userData: CreateUserData) => {
         setError('');
         setSuccess('');
         setCreating(true);
-        setResetForm(false); // Reset form state
+        setResetForm(false);
 
         try {
             const result = await userService.createUser(userData);
 
             if (result.success) {
                 setSuccess(`User ${result.user?.firstName} ${result.user?.lastName} created successfully!`);
-                // Reset form state after successful creation
                 setResetForm(true);
 
-                // Optionally redirect to user list or reset form
+                // Clear success message after 5 seconds
                 setTimeout(() => {
                     setSuccess('');
                     setResetForm(false);
@@ -73,31 +42,13 @@ export default function CreateUserPage() {
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await auth.logout();
-            navigate('/admin-login', { replace: true });
-        } catch (error) {
-            console.error('Logout error:', error);
-            navigate('/admin-login', { replace: true });
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="flex-center" style={{ minHeight: '100vh' }}>
-                <p>Loading...</p>
-            </div>
-        );
-    }
-
     return (
         <div style={{ minHeight: '100vh', backgroundColor: 'var(--background-gray)' }}>
             {/* Header */}
             <Header
                 title="Create New User"
                 variant="dashboard"
-                onLogout={handleLogout}
+                onLogout={logout}
                 userAvatar={user?.avatar}
                 userName={user?.firstName}
             />
@@ -115,12 +66,38 @@ export default function CreateUserPage() {
                         </button>
                     </div>
 
-                    <h2 className="mb-6">Create New User</h2>
+                    {/* Page Header */}
+                    <div className="mb-6">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Create New User</h2>
+                        <p className="text-gray-600">
+                            Add a new user to the system with appropriate role and permissions
+                        </p>
+
+                        {/* Role Badge */}
+                        {user?.role === 'super_admin' && (
+                            <div className="mt-3">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    Super Admin Access
+                                </span>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Success Message */}
                     {success && (
                         <div className="alert alert-success mb-6">
-                            {success}
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="ml-3">
+                                    <p className="text-sm font-medium text-green-800">
+                                        {success}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     )}
 

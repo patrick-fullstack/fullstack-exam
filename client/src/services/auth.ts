@@ -7,6 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 export interface LoginRequest {
   email: string;
   password: string;
+  requiredRole?: string;
 }
 
 export interface User {
@@ -21,6 +22,13 @@ export interface User {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  company?: {
+    id: string;
+    name: string;
+    email: string;
+    website: string;
+    logo?: string;
+  };
 }
 
 export interface UpdateProfileRequest {
@@ -30,12 +38,14 @@ export interface UpdateProfileRequest {
   email?: string;
   password?: string;
   avatar?: File;
+  companyId?: string;
 }
 
 // API Error response interface
 interface ApiErrorResponse {
   success: false;
   message: string;
+  actualRole?: string;
 }
 
 // Event emitter for auth events
@@ -88,19 +98,20 @@ api.interceptors.response.use(
 );
 
 export const auth = {
-  async login(email: string, password: string) {
+  async login(email: string, password: string, requiredRole?: string) {
     try {
-      const response = await api.post("/auth/login", {
-        email,
-        password,
-      });
+      const requestBody: LoginRequest = { email, password };
+
+      // Include required role in request so server can validate before issuing token
+      if (requiredRole) {
+        requestBody.requiredRole = requiredRole;
+      }
+
+      const response = await api.post("/auth/login", requestBody);
 
       if (response.data.success) {
         Cookies.set("token", response.data.data.token, { expires: 1 });
-
-        // Emit event to trigger App.tsx to re-check auth
         authEvents.emit();
-
         return { success: true, user: response.data.data.user };
       }
 
@@ -108,19 +119,17 @@ export const auth = {
     } catch (error) {
       console.error("Login error:", error);
 
-      // Type guard for AxiosError
       if (error instanceof AxiosError && error.response?.data) {
         const apiError = error.response.data as ApiErrorResponse;
         return {
           success: false,
           error: apiError.message || "Login failed",
+          // Include actual user role if it's a role mismatch
+          actualRole: apiError.actualRole,
         };
       }
 
-      return {
-        success: false,
-        error: "Login failed",
-      };
+      return { success: false, error: "Login failed" };
     }
   },
 

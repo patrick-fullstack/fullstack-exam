@@ -23,6 +23,13 @@ export interface User {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  company?: {
+    id: string;
+    name: string;
+    email: string;
+    website: string;
+    logo?: string;
+  };
 }
 
 const api = axios.create({

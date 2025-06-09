@@ -10,6 +10,7 @@ interface ProfileEditProps {
     onCancel: () => void;
     loading?: boolean;
     error?: string;
+    currentUser?: User | null;
 }
 
 export const ProfileEdit: React.FC<ProfileEditProps> = ({
@@ -17,70 +18,59 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
     onSave,
     onCancel,
     loading = false,
-    error
+    error,
+    currentUser
 }) => {
     const [formData, setFormData] = useState({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         phone: user.phone || '',
         email: user.email || '',
+        companyId: user.companyId || '',
         password: '',
         confirmPassword: ''
     });
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
-    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Permission checks
+    const canEditEmail = () => {
+        if (!currentUser) return false;
+        return currentUser.id === user.id ||
+            currentUser.role === 'super_admin' ||
+            (currentUser.role === 'manager' && user.role === 'employee' && user.companyId === currentUser.companyId);
+    };
+
+    const canEditCompany = () => {
+        return currentUser?.role === 'super_admin';
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-
-        // Clear validation error when user starts typing
-        if (validationErrors[name]) {
-            setValidationErrors(prev => ({
-                ...prev,
-                [name]: ''
-            }));
-        }
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     };
 
     const validateForm = () => {
-        const errors: Record<string, string> = {};
+        const newErrors: Record<string, string> = {};
 
-        if (!formData.firstName.trim()) {
-            errors.firstName = 'First name is required';
+        if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+        if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+        if (!formData.email.trim()) newErrors.email = 'Email is required';
+        else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Please enter a valid email address';
+
+        if (formData.password) {
+            if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+            if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
         }
 
-        if (!formData.lastName.trim()) {
-            errors.lastName = 'Last name is required';
-        }
-
-        if (!formData.email.trim()) {
-            errors.email = 'Email is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            errors.email = 'Please enter a valid email address';
-        }
-
-        if (formData.password && formData.password.length < 6) {
-            errors.password = 'Password must be at least 6 characters';
-        }
-
-        if (formData.password && formData.password !== formData.confirmPassword) {
-            errors.confirmPassword = 'Passwords do not match';
-        }
-
-        setValidationErrors(errors);
-        return Object.keys(errors).length === 0;
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!validateForm()) {
-            return;
-        }
+        if (!validateForm()) return;
 
         const updateData: UpdateProfileRequest = {};
 
@@ -88,12 +78,16 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
         if (formData.firstName !== user.firstName) updateData.firstName = formData.firstName;
         if (formData.lastName !== user.lastName) updateData.lastName = formData.lastName;
         if (formData.phone !== user.phone) updateData.phone = formData.phone;
-        if (formData.email !== user.email) updateData.email = formData.email;
+        if (canEditEmail() && formData.email !== user.email) updateData.email = formData.email;
+        if (canEditCompany() && formData.companyId !== user.companyId) updateData.companyId = formData.companyId;
         if (formData.password) updateData.password = formData.password;
         if (avatarFile) updateData.avatar = avatarFile;
 
         await onSave(updateData);
     };
+
+    const emailEditable = canEditEmail();
+    const companyEditable = canEditCompany();
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -124,7 +118,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
                         value={formData.firstName}
                         onChange={handleInputChange}
                         disabled={loading}
-                        error={validationErrors.firstName}
+                        error={errors.firstName}
                         required
                     />
 
@@ -134,7 +128,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
                         value={formData.lastName}
                         onChange={handleInputChange}
                         disabled={loading}
-                        error={validationErrors.lastName}
+                        error={errors.lastName}
                         required
                     />
                 </div>
@@ -142,18 +136,21 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
                         <Input
-                            label={`Email Address * ${user.role === 'employee' ? '(Read Only)' : ''}`}
+                            label={`Email Address *${!emailEditable ? ' (Read Only)' : ''}`}
                             name="email"
                             type="email"
                             value={formData.email}
                             onChange={handleInputChange}
-                            disabled={loading || user.role === 'employee'}
-                            error={validationErrors.email}
+                            disabled={loading || !emailEditable}
+                            error={errors.email}
                             required
                         />
-                        {user.role === 'employee' && (
+                        {!emailEditable && (
                             <p className="text-xs text-gray-500 mt-1">
-                                Contact your manager to change your email
+                                {user.role === 'employee' && currentUser?.role === 'employee'
+                                    ? "Contact your manager to change your email"
+                                    : "Email can only be changed by authorized personnel"
+                                }
                             </p>
                         )}
                     </div>
@@ -169,7 +166,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
                 </div>
             </div>
 
-            {/* Account Information (Read Only) */}
+            {/* Account Information */}
             <div>
                 <h3 className="mb-4">Account Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -185,19 +182,47 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
                         />
                     </div>
 
-                    {user.companyId && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Company ID
-                            </label>
-                            <input
-                                type="text"
-                                value={user.companyId}
-                                disabled
-                                className="input-field bg-gray-50"
-                            />
-                        </div>
-                    )}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Company {companyEditable ? '*' : ''}
+                        </label>
+
+                        {companyEditable ? (
+                            <div>
+                                <Input
+                                    label=""
+                                    name="companyId"
+                                    value={formData.companyId}
+                                    onChange={handleInputChange}
+                                    disabled={loading}
+                                    placeholder="Enter Company ID"
+                                    error={errors.companyId}
+                                />
+                                <p className="text-xs text-blue-600 mt-1">
+                                    ✓ Super Admin can edit Company ID
+                                </p>
+                                {user.company?.name && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Current: {user.company.name}
+                                    </p>
+                                )}
+                            </div>
+                        ) : (
+                            <div>
+                                <input
+                                    type="text"
+                                    value={user.company?.name || `Company ID: ${user.companyId || 'None'}`}
+                                    disabled
+                                    className="input-field bg-gray-50"
+                                />
+                                {user.company?.website && (
+                                    <div className="text-sm text-gray-500 mt-1">
+                                        Website: {user.company.website}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -212,7 +237,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
                         value={formData.password}
                         onChange={handleInputChange}
                         disabled={loading}
-                        error={validationErrors.password}
+                        error={errors.password}
                         placeholder="Leave blank to keep current password"
                     />
 
@@ -223,7 +248,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
                         disabled={loading}
-                        error={validationErrors.confirmPassword}
+                        error={errors.confirmPassword}
                         placeholder="Confirm new password"
                     />
                 </div>
