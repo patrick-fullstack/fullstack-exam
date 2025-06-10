@@ -7,6 +7,7 @@ import {
 import "./App.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoutes";
+import { NotificationProvider } from './contexts/NotificationContext';
 
 // Pages
 import PortalSelector from "./pages/PortalSelector";
@@ -298,7 +299,9 @@ export default function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppRoutes />
+        <NotificationProvider>
+          <AppRoutes />
+        </NotificationProvider>
       </AuthProvider>
     </Router>
   );

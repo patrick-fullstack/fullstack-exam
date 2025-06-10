@@ -4,6 +4,7 @@ import { generateUserToken } from "../utils/jwt";
 import { asyncHandler } from "../middlewares/errorHandler";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import { validateFileUpload } from "../middlewares/upload";
+import { notifyUsersOfNewUser } from "../services/notificationService";
 
 // Login request interface
 interface LoginRequest {
@@ -215,6 +216,9 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const newUser = await User.create(userData);
+
+  // SEnd notifications to managers and employees
+  await notifyUsersOfNewUser(newUser);
 
   // Return user data (excluding password)
   res.status(201).json({

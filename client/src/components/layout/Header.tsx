@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { NotificationBell } from '../ui/NotificationBell';
+
 
 interface HeaderProps {
     title: string;
@@ -72,6 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
 
                 {/* Right side - Profile and Logout */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <NotificationBell />
                     {/* Profile Link */}
                     <Link
                         to="/profile"
