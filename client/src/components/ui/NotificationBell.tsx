@@ -67,13 +67,6 @@ export const NotificationBell: React.FC = () => {
                         {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                 )}
-
-                {/* Connection Status Indicator */}
-                <span
-                    className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${isConnected ? 'bg-green-400' : 'bg-gray-400'
-                        }`}
-                    title={isConnected ? 'Connected' : 'Disconnected'}
-                />
             </button>
 
             {/* Dropdown */}
