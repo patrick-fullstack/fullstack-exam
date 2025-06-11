@@ -19,22 +19,27 @@ export default function CreateUserPage() {
         setCreating(true);
         setResetForm(false);
 
-        const result = await userService.createUser(userData);
+        try {
+            const result = await userService.createUser(userData);
 
-        if (result.success) {
-            setSuccess(`User ${result.user?.firstName} ${result.user?.lastName} created successfully!`);
-            setResetForm(true);
+            if (result.success) {
+                setSuccess(`User ${result.user?.firstName} ${result.user?.lastName} created successfully!`);
+                setResetForm(true);
 
-            // Clear success message after 5 seconds
-            setTimeout(() => {
-                setSuccess('');
-                setResetForm(false);
-            }, 5000);
-        } else {
-            setError(result.error || 'Failed to create user');
+                // Clear success message after 5 seconds
+                setTimeout(() => {
+                    setSuccess('');
+                    setResetForm(false);
+                }, 5000);
+            } else {
+                setError(result.error || 'Failed to create user');
+            }
+        } catch (error) {
+            console.error('Create user error:', error);
+            setError('An unexpected error occurred');
+        } finally {
+            setCreating(false);
         }
-
-        setCreating(false);
     };
 
     return (

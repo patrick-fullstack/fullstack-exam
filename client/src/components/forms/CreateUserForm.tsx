@@ -16,7 +16,7 @@ export interface CreateUserData {
 }
 
 interface CreateUserFormProps {
-    onSubmit: (userData: CreateUserData) => Promise<void>;
+    onSubmit: (userData: CreateUserData) => void;
     loading?: boolean;
     error?: string;
     resetForm?: boolean;
@@ -118,7 +118,7 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
             avatar: avatarFile || undefined
         };
 
-        await onSubmit(submitData);
+        onSubmit(submitData);
     };
 
     const handleReset = () => {
