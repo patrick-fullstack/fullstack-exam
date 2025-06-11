@@ -4,7 +4,7 @@ import { CompanyForm } from '../forms/CompanyForm';
 import { companyService } from '../../services/companies';
 import { auth } from '../../services/auth';
 import type { CompanyDetailsProps, UpdateCompanyData } from '../../types/companies';
-import type { User } from '../../types/User';
+import type { User } from '../../types/user';
 
 export function CompanyDetails({ company, companyId, loading, onUpdate, currentUser }: CompanyDetailsProps) {
     const [copied, setCopied] = useState(false);

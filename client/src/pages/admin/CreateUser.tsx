@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { userService } from '../../services/users';
 import { Header } from '../../components/layout/Header';
 import { CreateUserForm } from '../../components/forms/CreateUserForm';
-import type { CreateUserData } from '../../types/User';
+import type { CreateUserData } from '../../types/user';
 
 export default function CreateUserPage() {
     const { user, logout } = useAuth();

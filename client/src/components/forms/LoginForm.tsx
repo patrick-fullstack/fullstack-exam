@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import type { LoginFormProps } from '../../types/User';
+import type { LoginFormProps } from '../../types/user';
 
 export const LoginForm: React.FC<LoginFormProps> = ({
     onSubmit,

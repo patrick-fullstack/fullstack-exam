@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { AvatarUpload } from '../ui/AvatarUpload';
-import type { CreateUserData, CreateUserFormProps } from '../../types/User';
+import type { CreateUserData, CreateUserFormProps } from '../../types/user';
 
 
 export const CreateUserForm: React.FC<CreateUserFormProps> = ({

@@ -5,7 +5,7 @@ import type {
   LoginRequest,
   UpdateProfileRequest,
   ApiErrorResponse,
-} from "../types/User";
+} from "../types/user";
 
 const API_URL = import.meta.env.VITE_API_URL;
 // Event emitter for auth events

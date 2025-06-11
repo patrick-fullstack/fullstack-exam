@@ -1,4 +1,4 @@
-import type { User } from "./User";
+import type { User } from "./user";
 
 // API Error response interface
 export interface ApiErrorResponse {

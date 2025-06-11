@@ -6,7 +6,7 @@ import { ProfileView } from '../components/profile/ProfileView';
 import { ProfileEdit } from '../components/profile/ProfileEdit';
 import { useAuth } from '../contexts/AuthContext';
 import { auth } from '../services/auth';
-import type { User, UpdateProfileRequest } from '../types/User';
+import type { User, UpdateProfileRequest } from '../types/user';
 
 export default function ProfilePage() {
     const { user: currentUser, logout, refreshUser } = useAuth();

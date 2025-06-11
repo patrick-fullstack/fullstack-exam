@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ProfileViewProps } from '../../types/User';
+import type { ProfileViewProps } from '../../types/user';
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
     const formatRole = (role: string) => {

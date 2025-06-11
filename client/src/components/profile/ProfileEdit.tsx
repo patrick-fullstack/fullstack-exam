@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { UpdateProfileRequest, ProfileEditProps } from '../../types/User';
+import type { UpdateProfileRequest, ProfileEditProps } from '../../types/user';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { AvatarUpload } from '../ui/AvatarUpload';

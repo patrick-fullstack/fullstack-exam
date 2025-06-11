@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
 import Cookies from "js-cookie";
-import type { User, ApiErrorResponse } from "../types/User";
-import type { CreateUserData } from "../types/User";
+import type { User, ApiErrorResponse } from "../types/user";
+import type { CreateUserData } from "../types/user";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const api = axios.create({
