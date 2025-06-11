@@ -49,9 +49,8 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
             // Reset all form data to initial state
             setFormData(initialFormState);
             setAvatarFile(null);
-            setFieldErrors({});
+            setFieldErrors({}); // Clear all field errors
             setAvatarKey(prev => prev + 1);
-
         }
     }, [resetForm]);
 
