@@ -3,12 +3,11 @@ import { CompanyCard } from './CompanyCard';
 import { companyService, type Company } from '../../services/companies';
 
 interface CompanyListProps {
-    onDelete?: (companyId: string) => void;
     userRole: 'super_admin' | 'manager' | 'employee';
     onError?: (error: string) => void;
 }
 
-export function CompanyList({ onDelete, userRole, onError }: CompanyListProps) {
+export function CompanyList({ userRole, onError }: CompanyListProps) {
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -69,13 +68,13 @@ export function CompanyList({ onDelete, userRole, onError }: CompanyListProps) {
     // Handle delete
     const handleDelete = async (companyId: string) => {
         setDeletingId(companyId);
-        try {
-            await onDelete?.(companyId);
-            // Refresh current page after delete
+        const result = await companyService.deleteCompany(companyId);
+        if (result.success) {
             fetchCompanies(pagination.currentPage, searchTerm);
-        } finally {
-            setDeletingId(null);
+        } else {
+            onError?.(result.message || 'Failed to delete company');
         }
+        setDeletingId(null);
     };
 
     return (
