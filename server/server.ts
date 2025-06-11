@@ -3,6 +3,7 @@ import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
 import companyRoutes from "./routes/companyRoutes";
 import emailRoutes from "./routes/emailRoutes";
+import notificationRoutes from "./routes/notificationRoutes";
 import { env } from "./config/env";
 import { configureCors } from "./config/cors";
 import { configureSecurity } from "./middlewares/security";
@@ -22,6 +23,8 @@ configureCors(app);
 
 // Body parsing middleware - parses JSON requests to req.body (without it, req.body will be undefined)
 app.use(express.json());
+// Body parsing middleware - parses URL-encoded requests to req.body since the notif endpoint requests are urlencoded
+app.use(express.urlencoded({ extended: true }));
 
 // Connect to the database
 app.use(async (req, res, next) => {
@@ -42,6 +45,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/company", companyRoutes);
 app.use("/api/emails", emailRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Configure error handling middleware
 configureErrorHandlers(app);
