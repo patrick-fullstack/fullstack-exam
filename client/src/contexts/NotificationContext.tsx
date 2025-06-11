@@ -95,8 +95,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             return;
         }
 
-        const pusherInstance = new Pusher(import.meta.env.VITE_PUSHER_KEY, {
-            cluster: import.meta.env.VITE_PUSHER_CLUSTER,
+        const pusherInstance = new Pusher(import.meta.env.PUSHER_KEY, {
+            cluster: import.meta.env.PUSHER_CLUSTER,
             authEndpoint: `${import.meta.env.VITE_API_URL}/notifications/pusher/auth`,
             auth: {
                 headers: { 'Authorization': `Bearer ${token}` }
