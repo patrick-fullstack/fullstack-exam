@@ -2,16 +2,7 @@ import { Request, Response } from "express";
 import { pusher } from "../services/pusherService";
 import Notification from "../models/Notification";
 
-/**
- * Notification Controller
- *
- * Handles all notification-related business logic and database operations.
- * Separates concerns from route definitions for better maintainability.
- */
-
-/**
- * Authenticates users for Pusher private channel subscriptions
- */
+// Authenticates users for Pusher private channel subscriptions
 export const authenticatePusher = (req: Request, res: Response) => {
   const socketId = req.body.socket_id;
   const channel = req.body.channel_name;
@@ -26,9 +17,7 @@ export const authenticatePusher = (req: Request, res: Response) => {
   }
 };
 
-/**
- * Retrieves all notifications for the authenticated user
- */
+//  Retrieves all notifications for the authenticated user
 export const getNotifications = async (req: Request, res: Response) => {
   const notifications = await Notification.find({
     userId: req.user!._id,
@@ -51,9 +40,7 @@ export const getNotifications = async (req: Request, res: Response) => {
   res.json({ success: true, data });
 };
 
-/**
- * Marks a specific notification as read
- */
+//  Marks a specific notification as read
 export const markNotificationAsRead = async (req: Request, res: Response) => {
   await Notification.findOneAndUpdate(
     {
@@ -66,9 +53,7 @@ export const markNotificationAsRead = async (req: Request, res: Response) => {
   res.json({ success: true });
 };
 
-/**
- * Marks all unread notifications as read for the authenticated user
- */
+//  Marks all unread notifications as read for the authenticated user
 export const markAllNotificationsAsRead = async (
   req: Request,
   res: Response
