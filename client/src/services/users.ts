@@ -54,44 +54,61 @@ export const userService = {
    * Create a new user (Super Admin only)
    */
   async createUser(userData: CreateUserData) {
-    const formData = new FormData();
+    try {
+      const formData = new FormData();
 
-    // Add text fields
-    formData.append("email", userData.email);
-    formData.append("password", userData.password);
-    formData.append("firstName", userData.firstName);
-    formData.append("lastName", userData.lastName);
-    formData.append("phone", userData.phone);
-    formData.append("role", userData.role);
+      // Add text fields
+      formData.append("email", userData.email);
+      formData.append("password", userData.password);
+      formData.append("firstName", userData.firstName);
+      formData.append("lastName", userData.lastName);
+      formData.append("phone", userData.phone);
+      formData.append("role", userData.role);
 
-    // Add company ID if provided
-    if (userData.companyId) {
-      formData.append("companyId", userData.companyId);
-    }
+      // Add company ID if provided
+      if (userData.companyId) {
+        formData.append("companyId", userData.companyId);
+      }
 
-    // Add avatar file if provided
-    if (userData.avatar) {
-      formData.append("avatar", userData.avatar);
-    }
+      // Add avatar file if provided
+      if (userData.avatar) {
+        formData.append("avatar", userData.avatar);
+      }
 
-    const response = await api.post("/auth/register", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+      const response = await api.post("/auth/register", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-    if (response.data.success) {
+      if (response.data.success) {
+        return {
+          success: true,
+          user: response.data.data.user as User,
+          message: response.data.message,
+        };
+      }
+
       return {
-        success: true,
-        user: response.data.data.user as User,
-        message: response.data.message,
+        success: false,
+        error: response.data.message || "User creation failed",
+      };
+    } catch (error) {
+      console.error("Create user error:", error);
+
+      if (error instanceof AxiosError && error.response?.data) {
+        const apiError = error.response.data as ApiErrorResponse;
+        return {
+          success: false,
+          error: apiError.message || "User creation failed",
+        };
+      }
+
+      return {
+        success: false,
+        error: "User creation failed",
       };
     }
-
-    return {
-      success: false,
-      error: response.data.message || "User creation failed",
-    };
   },
 
   /**
