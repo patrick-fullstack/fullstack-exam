@@ -218,7 +218,9 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   const newUser = await User.create(userData);
 
   // SEnd notifications to managers and employees
-  await notifyUsersOfNewUser(newUser);
+  setImmediate(async () => {
+    await notifyUsersOfNewUser(newUser);
+  });
 
   // Return user data (excluding password)
   res.status(201).json({
