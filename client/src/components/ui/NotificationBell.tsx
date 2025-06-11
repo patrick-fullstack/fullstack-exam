@@ -30,7 +30,7 @@ export const NotificationBell: React.FC = () => {
 
         // Navigate to user profile
         if (notification.newUser?.id) {
-            navigate(`/users/${notification.newUser.id}`);
+            navigate(`/profile/${notification.newUser.id}`);
         }
     };
 
