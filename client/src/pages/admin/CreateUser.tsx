@@ -14,22 +14,29 @@ export default function CreateUserPage() {
     const navigate = useNavigate();
 
     const handleCreateUser = async (userData: CreateUserData) => {
-        setCreating(true);
         setError('');
+        setSuccess('');
+        setCreating(true);
+        setResetForm(false);
 
         try {
             const result = await userService.createUser(userData);
-            setSuccess(`User ${result.data.user.firstName} ${result.data.user.lastName} created successfully!`);
-            setResetForm(true);
 
-            // Clear success message after 5 seconds
-            setTimeout(() => {
-                setSuccess('');
-                setResetForm(false);
-            }, 5000);
+            if (result.success) {
+                setSuccess(`User ${result.user?.firstName} ${result.user?.lastName} created successfully!`);
+                setResetForm(true);
+
+                // Clear success message after 5 seconds
+                setTimeout(() => {
+                    setSuccess('');
+                    setResetForm(false);
+                }, 5000);
+            } else {
+                setError(result.error || 'Failed to create user');
+            }
         } catch (error) {
-            console.error('Failed to create user:', error);
-            setError(error instanceof Error ? error.message : 'Failed to create user');
+            console.error('Create user error:', error);
+            setError('An unexpected error occurred');
         } finally {
             setCreating(false);
         }
