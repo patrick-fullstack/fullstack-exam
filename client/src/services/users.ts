@@ -81,33 +81,14 @@ export const userService = {
         },
       });
 
-      if (response.data.success) {
-        return {
-          success: true,
-          user: response.data.data.user as User,
-          message: response.data.message,
-        };
-      }
-
-      return {
-        success: false,
-        error: response.data.message || "User creation failed",
-      };
+      return response.data; // Return the response data directly
     } catch (error) {
-      console.error("Create user error:", error);
-
-      if (error instanceof AxiosError && error.response?.data) {
-        const apiError = error.response.data as ApiErrorResponse;
-        return {
-          success: false,
-          error: apiError.message || "User creation failed",
-        };
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data?.message || "Failed to create user"
+        );
       }
-
-      return {
-        success: false,
-        error: "User creation failed",
-      };
+      throw new Error("Network error occurred");
     }
   },
 
