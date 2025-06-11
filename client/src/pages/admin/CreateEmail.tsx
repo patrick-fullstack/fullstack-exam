@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { emailService } from '../../services/email';
 import { Header } from '../../components/layout/Header';
 import { EmailForm } from '../../components/forms/EmailForm';
-import type { CreateEmailData } from '../../services/email';
+import type { CreateEmailData } from '../../types/emails';
 
 export default function CreateEmailPage() {
     const { user, logout } = useAuth();

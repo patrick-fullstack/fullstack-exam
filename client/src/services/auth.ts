@@ -1,53 +1,13 @@
 import axios, { AxiosError } from "axios";
 import Cookies from "js-cookie";
+import type {
+  User,
+  LoginRequest,
+  UpdateProfileRequest,
+  ApiErrorResponse,
+} from "../types/User";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
-// Define interfaces
-export interface LoginRequest {
-  email: string;
-  password: string;
-  requiredRole?: string;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  avatar?: string;
-  role: string;
-  companyId?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  company?: {
-    id: string;
-    name: string;
-    email: string;
-    website: string;
-    logo?: string;
-  };
-}
-
-export interface UpdateProfileRequest {
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  email?: string;
-  password?: string;
-  avatar?: File;
-  companyId?: string;
-}
-
-// API Error response interface
-interface ApiErrorResponse {
-  success: false;
-  message: string;
-  actualRole?: string;
-}
-
 // Event emitter for auth events
 class AuthEventEmitter {
   private listeners: (() => void)[] = [];

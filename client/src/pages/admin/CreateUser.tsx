@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { userService } from '../../services/users';
 import { Header } from '../../components/layout/Header';
-import { CreateUserForm, type CreateUserData } from '../../components/forms/CreateUserForm';
+import { CreateUserForm } from '../../components/forms/CreateUserForm';
+import type { CreateUserData } from '../../types/User';
 
 export default function CreateUserPage() {
     const { user, logout } = useAuth();

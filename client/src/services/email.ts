@@ -1,100 +1,16 @@
 import axios, { AxiosError } from "axios";
 import Cookies from "js-cookie";
+import type {
+  CreateEmailData,
+  CreateEmailResponse,
+  ScheduledEmail,
+  EmailsResponse,
+  TemplatesResponse,
+  EmailActionResponse,
+  ApiErrorResponse,
+} from "../types/emails";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
-// Email interfaces
-export interface CreateEmailData {
-  fromName: string;
-  toName: string;
-  toEmail: string;
-  subject: string;
-  message: string;
-  template: string;
-  sendNow: boolean;
-  scheduledFor?: string;
-}
-
-export interface ScheduledEmail {
-  _id: string;
-  fromName: string;
-  fromEmail: string;
-  toName: string;
-  toEmail: string;
-  subject: string;
-  message: string;
-  template: string;
-  sendNow: boolean;
-  scheduledFor?: string;
-  status: "pending" | "sent" | "failed" | "cancelled";
-  sentAt?: string;
-  failedAt?: string;
-  errorMessage?: string;
-  createdBy: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  companyId?: {
-    _id: string;
-    name: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface EmailTemplate {
-  id: string;
-  name: string;
-}
-
-// API Response interfaces
-interface EmailsResponse {
-  success: boolean;
-  message: string;
-  data: {
-    emails: ScheduledEmail[];
-    pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalEmails: number;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-      limit: number;
-    };
-  };
-}
-
-interface CreateEmailResponse {
-  success: boolean;
-  message: string;
-  data: {
-    email: ScheduledEmail;
-  };
-}
-
-interface TemplatesResponse {
-  success: boolean;
-  message: string;
-  data: {
-    templates: EmailTemplate[];
-  };
-}
-
-interface EmailActionResponse {
-  success: boolean;
-  message: string;
-  data?: {
-    email: ScheduledEmail;
-  };
-}
-
-interface ApiErrorResponse {
-  success: false;
-  message: string;
-}
-
 const api = axios.create({
   baseURL: API_URL,
   timeout: 10000,

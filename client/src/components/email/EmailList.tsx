@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { emailService } from '../../services/email';
-import type { ScheduledEmail } from '../../services/email';
-
-interface EmailListProps {
-    onError: (error: string) => void;
-    refreshTrigger?: number;
-}
+import type { ScheduledEmail, EmailListProps } from '../../types/emails';
 
 export const EmailList: React.FC<EmailListProps> = ({ onError, refreshTrigger }) => {
     const [emails, setEmails] = useState<ScheduledEmail[]>([]);

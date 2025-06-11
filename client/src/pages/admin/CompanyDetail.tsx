@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { companyService, type Company } from '../../services/companies';
+import { companyService } from '../../services/companies';
 import { Header } from '../../components/layout/Header';
 import { CompanyDetails } from '../../components/company/CompanyDetails';
+import type { Company } from '../../types/companies';
 
 export default function CompanyDetailPage() {
     const { user, logout } = useAuth(); //

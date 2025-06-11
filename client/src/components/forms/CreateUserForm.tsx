@@ -2,25 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { AvatarUpload } from '../ui/AvatarUpload';
+import type { CreateUserData, CreateUserFormProps } from '../../types/User';
 
-export interface CreateUserData {
-    email: string;
-    password: string;
-    confirmPassword: string;
-    firstName: string;
-    lastName: string;
-    phone: string;
-    role: 'super_admin' | 'manager' | 'employee';
-    companyId?: string;
-    avatar?: File;
-}
-
-interface CreateUserFormProps {
-    onSubmit: (userData: CreateUserData) => Promise<void>;
-    loading?: boolean;
-    error?: string;
-    resetForm?: boolean;
-}
 
 export const CreateUserForm: React.FC<CreateUserFormProps> = ({
     onSubmit,

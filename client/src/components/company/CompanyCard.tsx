@@ -1,13 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Company } from '../../services/companies';
-
-interface CompanyCardProps {
-    company: Company;
-    onDelete?: (companyId: string) => void;
-    isDeleting?: boolean;
-    userRole: 'super_admin' | 'manager' | 'employee';
-}
+import type { CompanyCardProps } from '../../types/companies';
 
 export function CompanyCard({ company, onDelete, isDeleting, userRole }: CompanyCardProps) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

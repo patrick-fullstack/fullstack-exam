@@ -1,23 +1,10 @@
 import { useState, useEffect } from 'react';
 import { EmployeeTable } from './EmployeeTable';
 import { CompanyForm } from '../forms/CompanyForm';
-import type { Company, UpdateCompanyData } from '../../services/companies';
 import { companyService } from '../../services/companies';
 import { auth } from '../../services/auth';
-
-interface CompanyDetailsProps {
-    company: Company;
-    companyId: string;
-    loading?: boolean;
-    onUpdate?: (updatedCompany: Company) => void;
-    currentUser?: User;
-}
-
-interface User {
-    id: string;
-    role: string;
-    companyId?: string;
-}
+import type { CompanyDetailsProps, UpdateCompanyData } from '../../types/companies';
+import type { User } from '../../types/User';
 
 export function CompanyDetails({ company, companyId, loading, onUpdate, currentUser }: CompanyDetailsProps) {
     const [copied, setCopied] = useState(false);

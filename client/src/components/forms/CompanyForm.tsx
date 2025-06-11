@@ -1,22 +1,5 @@
 import { useState } from 'react';
-import type { CreateCompanyData, UpdateCompanyData, Company } from '../../services/companies';
-
-// Create separate interfaces for each mode
-interface CreateCompanyFormProps {
-    onSubmit: (data: CreateCompanyData) => Promise<void>;
-    loading?: boolean;
-    error?: string;
-    mode: 'create';
-    company?: never; // Not allowed in create mode
-}
-
-interface EditCompanyFormProps {
-    onSubmit: (data: UpdateCompanyData) => Promise<void>;
-    loading?: boolean;
-    error?: string;
-    mode: 'edit';
-    company: Company; // Required in edit mode
-}
+import type { CreateCompanyData, UpdateCompanyData, CreateCompanyFormProps, EditCompanyFormProps } from '../../types/companies';
 
 // Union type for props
 type CompanyFormProps = CreateCompanyFormProps | EditCompanyFormProps;

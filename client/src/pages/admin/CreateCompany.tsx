@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { companyService, type CreateCompanyData } from '../../services/companies';
+import { companyService } from '../../services/companies';
 import { Header } from '../../components/layout/Header';
 import { CompanyForm } from '../../components/forms/CompanyForm';
+import type { CreateCompanyData } from '../../types/companies';
 
 export default function CreateCompanyPage() {
     const { user, logout } = useAuth();

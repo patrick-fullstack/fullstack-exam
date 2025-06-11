@@ -2,14 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { emailService } from '../../services/email';
-import type { CreateEmailData, EmailTemplate } from '../../services/email';
-
-interface EmailFormProps {
-    onSubmit: (emailData: CreateEmailData) => Promise<void>;
-    loading?: boolean;
-    error?: string;
-    resetForm?: boolean;
-}
+import type { CreateEmailData, EmailTemplate, EmailFormProps } from '../../types/emails';
 
 export const EmailForm: React.FC<EmailFormProps> = ({
     onSubmit,
@@ -32,13 +25,13 @@ export const EmailForm: React.FC<EmailFormProps> = ({
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [validationErrors, setValidationErrors] = useState<Partial<CreateEmailData>>({});
     const formatDateTimeForServer = (dateTimeLocal: string | undefined): string | undefined => {
-    if (!dateTimeLocal) return undefined;
-    const localDate = new Date(dateTimeLocal);
-    
-    // Convert to UTC ISO string
-    // This will convert Philippines time to UTC (6:40 PM PHT is 10:40 AM UTC)
-    return localDate.toISOString();
-};
+        if (!dateTimeLocal) return undefined;
+        const localDate = new Date(dateTimeLocal);
+
+        // Convert to UTC ISO string
+        // This will convert Philippines time to UTC (6:40 PM PHT is 10:40 AM UTC)
+        return localDate.toISOString();
+    };
 
     // Load templates when component mounts
     useEffect(() => {
@@ -130,11 +123,11 @@ export const EmailForm: React.FC<EmailFormProps> = ({
 
         // Clean up data before submitting
         const submitData = {
-        ...formData,
-        scheduledFor: formData.sendNow 
-            ? undefined 
-            : formatDateTimeForServer(formData.scheduledFor),
-    };
+            ...formData,
+            scheduledFor: formData.sendNow
+                ? undefined
+                : formatDateTimeForServer(formData.scheduledFor),
+        };
 
         await onSubmit(submitData);
     };

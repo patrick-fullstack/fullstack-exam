@@ -1,17 +1,8 @@
 import React, { useState } from 'react';
-import { type User, type UpdateProfileRequest } from '../../services/auth';
+import type { UpdateProfileRequest, ProfileEditProps } from '../../types/User';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { AvatarUpload } from '../ui/AvatarUpload';
-
-interface ProfileEditProps {
-    user: User;
-    onSave: (updateData: UpdateProfileRequest) => Promise<void>;
-    onCancel: () => void;
-    loading?: boolean;
-    error?: string;
-    currentUser?: User | null;
-}
 
 export const ProfileEdit: React.FC<ProfileEditProps> = ({
     user,

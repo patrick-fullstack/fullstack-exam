@@ -2,48 +2,8 @@ import React, { createContext, useContext, useState, useEffect, type ReactNode }
 import Pusher from 'pusher-js';
 import { useAuth } from './AuthContext';
 import { auth } from '../services/auth';
-
-interface Notification {
-    id: string;
-    type: 'user_created' | 'user_updated' | 'user_deleted';
-    title: string;
-    message: string;
-    newUser?: {
-        id: string;
-        firstName: string;
-        lastName: string;
-        role: string;
-        avatar?: string;
-    };
-    profileUrl: string;
-    timestamp: string;
-    isRead: boolean;
-}
-
-interface NotificationData {
-    id?: string;
-    type: string;
-    title: string;
-    message: string;
-    newUser?: {
-        id: string;
-        firstName: string;
-        lastName: string;
-        role: string;
-        avatar?: string;
-    };
-    profileUrl: string;
-    timestamp: string;
-}
-
-interface NotificationContextType {
-    notifications: Notification[];
-    unreadCount: number;
-    isConnected: boolean;
-    markAsRead: (id: string) => void;
-    markAllAsRead: () => void;
-    clearNotifications: () => void;
-}
+import { notificationService } from '../services/notification';
+import type { Notification, NotificationData, NotificationContextType } from '../types/notification';
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
@@ -67,15 +27,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }, [isAuthenticated, user]);
 
     const fetchNotifications = async () => {
-        const token = auth.getToken();
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/notifications`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        const result = await response.json();
-        if (result.success) {
-            setNotifications(result.data);
-        }
+        const data = await notificationService.fetchNotifications();
+        setNotifications(data);
     };
 
     // Pusher real-time connection
@@ -172,24 +125,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }, [isAuthenticated]);
 
     const markAsRead = async (id: string) => {
-        const token = auth.getToken();
-        await fetch(`${import.meta.env.VITE_API_URL}/notifications/${id}/read`, {
-            method: 'PATCH',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
+        await notificationService.markAsRead(id);
         setNotifications(prev =>
             prev.map(n => n.id === id ? { ...n, isRead: true } : n)
         );
     };
 
     const markAllAsRead = async () => {
-        const token = auth.getToken();
-        await fetch(`${import.meta.env.VITE_API_URL}/notifications/mark-all-read`, {
-            method: 'PATCH',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
+        await notificationService.markAllAsRead();
         setNotifications(prev =>
             prev.map(n => ({ ...n, isRead: true }))
         );

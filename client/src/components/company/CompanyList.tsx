@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CompanyCard } from './CompanyCard';
-import { companyService, type Company } from '../../services/companies';
-
-interface CompanyListProps {
-    userRole: 'super_admin' | 'manager' | 'employee';
-    onError?: (error: string) => void;
-}
+import { companyService } from '../../services/companies';
+import type { Company, CompanyListProps } from '../../types/companies';
 
 export function CompanyList({ userRole, onError }: CompanyListProps) {
     const [companies, setCompanies] = useState<Company[]>([]);

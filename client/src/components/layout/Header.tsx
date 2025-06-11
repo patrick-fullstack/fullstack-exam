@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { NotificationBell } from '../ui/NotificationBell';
 
-
 interface HeaderProps {
     title: string;
     subtitle?: string;

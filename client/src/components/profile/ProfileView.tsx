@@ -1,10 +1,5 @@
 import React from 'react';
-import { type User } from '../../services/auth';
-
-interface ProfileViewProps {
-    user: User;
-    onEditClick: () => void;
-}
+import type { ProfileViewProps } from '../../types/User';
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
     const formatRole = (role: string) => {

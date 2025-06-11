@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { auth, authEvents, type User } from '../services/auth';
+import { auth, authEvents } from '../services/auth';
+import type { User, LoginResult } from '../types/User';
 
 interface AuthContextType {
   // State
@@ -13,16 +14,8 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
 }
 
-interface LoginResult {
-  success: boolean;
-  user?: User;
-  error?: string;
-  actualRole?: string;
-}
 
-// Create the context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 // Props for the provider
 interface AuthProviderProps {
   children: ReactNode;
@@ -36,54 +29,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // LOGIN FUNCTION - Called from login pages
   const login = async (email: string, password: string, allowedRole?: string): Promise<LoginResult> => {
-    try {
-      const result = await auth.login(email, password, allowedRole);
+    const result = await auth.login(email, password, allowedRole);
 
-      if (result.success && result.user) {
-        setUser(result.user);
-        setIsAuthenticated(true);
-        return { success: true, user: result.user, actualRole: result.actualRole };
-      } else {
-        return { success: false, error: result.error || 'Login failed' };
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: 'An unexpected error occurred' };
+    if (result.success && result.user) {
+      setUser(result.user);
+      setIsAuthenticated(true);
+      return { success: true, user: result.user, actualRole: result.actualRole };
+    } else {
+      return { success: false, error: result.error || 'Login failed' };
     }
   };
 
   // LOGOUT FUNCTION - Called from any component
   const logout = async (): Promise<void> => {
-    try {
-      await auth.logout();
-      setUser(null);
-      setIsAuthenticated(false);
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Still clear local state even if server logout fails
-      setUser(null);
-      setIsAuthenticated(false);
-    }
+    await auth.logout();
+    setUser(null);
+    setIsAuthenticated(false);
   };
 
   // REFRESH USER - Called when user data might have changed
   const refreshUser = async (): Promise<void> => {
-    try {
-      if (auth.isLoggedIn()) {
-        const userData = await auth.getCurrentUser();
-        if (userData) {
-          setUser(userData);
-          setIsAuthenticated(true);
-        } else {
-          setUser(null);
-          setIsAuthenticated(false);
-        }
+    if (auth.isLoggedIn()) {
+      const userData = await auth.getCurrentUser();
+      if (userData) {
+        setUser(userData);
+        setIsAuthenticated(true);
       } else {
         setUser(null);
         setIsAuthenticated(false);
       }
-    } catch (error) {
-      console.error('Refresh user error:', error);
+    } else {
       setUser(null);
       setIsAuthenticated(false);
     }
@@ -93,31 +68,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkInitialAuth = async () => {
       setLoading(true);
-      try {
-        const isLoggedIn = auth.isLoggedIn();
 
-        if (isLoggedIn) {
-          const userData = await auth.getCurrentUser();
-          if (userData) {
-            setUser(userData);
-            setIsAuthenticated(true);
-          } else {
-            setUser(null);
-            setIsAuthenticated(false);
-            await auth.logout(); // Clear invalid token
-          }
+      const isLoggedIn = auth.isLoggedIn();
+
+      if (isLoggedIn) {
+        const userData = await auth.getCurrentUser();
+        if (userData) {
+          setUser(userData);
+          setIsAuthenticated(true);
         } else {
           setUser(null);
           setIsAuthenticated(false);
+          await auth.logout(); // Clear invalid token
         }
-      } catch (error) {
-        console.error('Initial auth check failed:', error);
+      } else {
         setUser(null);
         setIsAuthenticated(false);
-        await auth.logout();
-      } finally {
-        setLoading(false);
       }
+
+      setLoading(false);
     };
 
     checkInitialAuth();

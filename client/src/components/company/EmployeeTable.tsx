@@ -1,15 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { companyService, type CompanyEmployee } from '../../services/companies';
+import { companyService } from '../../services/companies';
 import { userService } from '../../services/users';
-
-interface EmployeeTableProps {
-    companyId: string;
-    currentUserRole: 'super_admin' | 'manager' | 'employee';
-    currentUserId?: string;
-    onError?: (error: string) => void;
-    onSuccess?: (message: string) => void;
-}
+import type { CompanyEmployee, EmployeeTableProps } from '../../types/companies';
 
 export function EmployeeTable({
     companyId,
