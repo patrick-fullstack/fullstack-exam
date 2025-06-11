@@ -54,42 +54,33 @@ export const userService = {
    * Create a new user (Super Admin only)
    */
   async createUser(userData: CreateUserData) {
-    try {
-      const formData = new FormData();
+    const formData = new FormData();
 
-      // Add text fields
-      formData.append("email", userData.email);
-      formData.append("password", userData.password);
-      formData.append("firstName", userData.firstName);
-      formData.append("lastName", userData.lastName);
-      formData.append("phone", userData.phone);
-      formData.append("role", userData.role);
+    // Add text fields
+    formData.append("email", userData.email);
+    formData.append("password", userData.password);
+    formData.append("firstName", userData.firstName);
+    formData.append("lastName", userData.lastName);
+    formData.append("phone", userData.phone);
+    formData.append("role", userData.role);
 
-      // Add company ID if provided
-      if (userData.companyId) {
-        formData.append("companyId", userData.companyId);
-      }
-
-      // Add avatar file if provided
-      if (userData.avatar) {
-        formData.append("avatar", userData.avatar);
-      }
-
-      const response = await api.post("/auth/register", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      return response.data; // Return the response data directly
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        throw new Error(
-          error.response.data?.message || "Failed to create user"
-        );
-      }
-      throw new Error("Network error occurred");
+    // Add company ID if provided
+    if (userData.companyId) {
+      formData.append("companyId", userData.companyId);
     }
+
+    // Add avatar file if provided
+    if (userData.avatar) {
+      formData.append("avatar", userData.avatar);
+    }
+
+    const response = await api.post("/auth/register", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return response.data; // Return the response data directly
   },
 
   /**
