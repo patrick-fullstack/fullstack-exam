@@ -79,9 +79,9 @@ export interface CompaniesResponse {
 export interface CompanyDetailsProps {
   company: Company;
   companyId: string;
-  loading?: boolean;
-  onUpdate?: (updatedCompany: Company) => void;
-  currentUser?: User;
+  loading: boolean;
+  onUpdate?: (company: Company) => void; // Make optional
+  currentUser?: User; // Make optional since we have AuthContext
 }
 
 export interface CreateCompanyFormProps {
@@ -109,8 +109,6 @@ export interface CompanyCardProps {
 
 export interface EmployeeTableProps {
   companyId: string;
-  currentUserRole: "super_admin" | "manager" | "employee";
-  currentUserId?: string;
   onError?: (error: string) => void;
   onSuccess?: (message: string) => void;
 }
