@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import Pusher from 'pusher-js';
 import { useAuth } from './AuthContext';
 import { auth } from '../services/auth';
@@ -7,17 +7,17 @@ import type { Notification, NotificationData, NotificationContextType } from '..
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-interface NotificationProviderProps {
-    children: ReactNode;
-}
-
-export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
+export function NotificationProvider({ children }: { children: ReactNode }) {
     const { user, isAuthenticated } = useAuth();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [pusher, setPusher] = useState<Pusher | null>(null);
     const [isConnected, setIsConnected] = useState(false);
 
-    // Fetch notifications from database when user logs in
+    const fetchNotifications = async () => {
+        const data = await notificationService.fetchNotifications();
+        setNotifications(data);
+    };
+
     useEffect(() => {
         if (isAuthenticated && user) {
             fetchNotifications();
@@ -26,12 +26,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         }
     }, [isAuthenticated, user]);
 
-    const fetchNotifications = async () => {
-        const data = await notificationService.fetchNotifications();
-        setNotifications(data);
-    };
-
-    // Pusher real-time connection
     useEffect(() => {
         if (!isAuthenticated || !user) {
             if (pusher) {
@@ -56,30 +50,16 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             }
         });
 
-        pusherInstance.connection.bind('connected', () => {
-            setIsConnected(true);
-        });
-
-        pusherInstance.connection.bind('disconnected', () => {
-            setIsConnected(false);
-        });
-
-        pusherInstance.connection.bind('error', () => {
-            setIsConnected(false);
-        });
+        pusherInstance.connection.bind('connected', () => setIsConnected(true));
+        pusherInstance.connection.bind('disconnected', () => setIsConnected(false));
+        pusherInstance.connection.bind('error', () => setIsConnected(false));
 
         const channelName = `private-user-${user.id}`;
         const channel = pusherInstance.subscribe(channelName);
 
-        channel.bind('pusher:subscription_succeeded', () => {
-            setIsConnected(true);
-        });
+        channel.bind('pusher:subscription_succeeded', () => setIsConnected(true));
+        channel.bind('pusher:subscription_error', () => setIsConnected(false));
 
-        channel.bind('pusher:subscription_error', () => {
-            setIsConnected(false);
-        });
-
-        // Listen for new notifications from Pusher
         channel.bind('new-user-notification', (data: NotificationData) => {
             const notification: Notification = {
                 id: data.id || `${Date.now()}-${Math.random()}`,
@@ -94,16 +74,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
             setNotifications(prev => [notification, ...prev]);
 
-            // Browser notification
             if (Notification.permission === 'granted') {
                 const browserNotification = new Notification(data.title, {
                     body: data.message,
                     icon: data.newUser?.avatar || '/vite.svg'
                 });
 
-                setTimeout(() => {
-                    browserNotification.close();
-                }, 5000);
+                setTimeout(() => browserNotification.close(), 5000);
             }
         });
 
@@ -133,14 +110,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const markAllAsRead = async () => {
         await notificationService.markAllAsRead();
-        setNotifications(prev =>
-            prev.map(n => ({ ...n, isRead: true }))
-        );
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     };
 
-    const clearNotifications = () => {
-        setNotifications([]);
-    };
+    const clearNotifications = () => setNotifications([]);
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -158,12 +131,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             {children}
         </NotificationContext.Provider>
     );
-};
+}
 
-export const useNotifications = (): NotificationContextType => {
+export function useNotifications() {
     const context = useContext(NotificationContext);
     if (context === undefined) {
         throw new Error('useNotifications must be used within a NotificationProvider');
     }
     return context;
-};
+}

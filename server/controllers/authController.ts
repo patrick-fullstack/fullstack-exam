@@ -5,6 +5,7 @@ import { asyncHandler } from "../middlewares/errorHandler";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import { validateFileUpload } from "../middlewares/upload";
 import { notifyUsersOfNewUser } from "../services/notificationService";
+import { Company } from "../models/Company";
 
 // Login request interface
 interface LoginRequest {
@@ -182,6 +183,33 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
+  // Check if company exists (for manager and employee roles)
+  if (companyId) {
+    const company = await Company.findById(companyId);
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: "Company not found",
+      });
+    }
+
+    // Check if company already has a manager when registering a manager
+    if (role === UserRole.MANAGER) {
+      const existingManager = await User.findOne({
+        companyId: companyId,
+        role: UserRole.MANAGER,
+      });
+
+      if (existingManager) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "This company already has a manager. Each company can only have one manager.",
+        });
+      }
+    }
+  }
+
   // Check if user already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
@@ -333,8 +361,6 @@ export const getCurrentUser = asyncHandler(
 
 // Logout controller (optional - for token blacklisting in future)
 export const logout = asyncHandler(async (req: Request, res: Response) => {
-  // For now, just send success response
-  // will create a token blacklist in future to invalidate tokens
   res.status(200).json({
     success: true,
     message: "Logout successful",

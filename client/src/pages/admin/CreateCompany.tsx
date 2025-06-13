@@ -11,7 +11,6 @@ export default function CreateCompanyPage() {
   const {
     createCompany,
     companiesLoading: creating,
-    error,
     success,
     clearMessages,
   } = useCompany();
@@ -75,7 +74,6 @@ export default function CreateCompanyPage() {
           <CompanyForm
             onSubmit={createCompany}
             loading={creating}
-            error={error}
             mode="create"
           />
         </div>

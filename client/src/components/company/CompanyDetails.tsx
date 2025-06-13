@@ -13,11 +13,9 @@ export function CompanyDetails({
   companyId,
   loading,
   onUpdate,
-  currentUser,
 }: CompanyDetailsProps) {
   const [copied, setCopied] = useState(false);
-  const { user: authUser } = useAuth();
-  const user = currentUser || authUser;
+  const { user } = useAuth();
   const {
     isEditing,
     updating,
@@ -32,13 +30,9 @@ export function CompanyDetails({
   } = useCompany();
 
   const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(companyId);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error("Failed to copy:", error);
-    }
+    await navigator.clipboard.writeText(companyId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const canEdit =
@@ -46,7 +40,6 @@ export function CompanyDetails({
     (user.role === "super_admin" ||
       (user.role === "manager" && user.companyId === companyId));
 
-  // Use context methods - much simpler!
   const handleExportCSV = () => {
     exportCompanyCSV(companyId);
   };
@@ -101,7 +94,6 @@ export function CompanyDetails({
             mode="edit"
             onSubmit={handleUpdateCompany}
             loading={updating}
-            error={error}
           />
         </div>
       </div>
@@ -114,10 +106,8 @@ export function CompanyDetails({
       {error && <div className="alert alert-error">{error}</div>}
 
       <div className="card">
-        {/* Mobile-first header layout */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 md:mb-6 gap-4">
           <div className="flex items-start space-x-3 md:space-x-4">
-            {/* Smaller logo on mobile */}
             <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
               {company.logo ? (
                 <img
@@ -146,11 +136,10 @@ export function CompanyDetails({
                 </span>
                 <button
                   onClick={copyToClipboard}
-                  className={`p-0.5 rounded transition-colors flex-shrink-0 ${
-                    copied
+                  className={`p-0.5 rounded transition-colors flex-shrink-0 ${copied
                       ? "text-green-600"
                       : "text-gray-400 hover:text-gray-600"
-                  }`}
+                    }`}
                   title="Copy Company ID"
                 >
                   <svg
@@ -175,7 +164,6 @@ export function CompanyDetails({
             </div>
           </div>
 
-          {/* Mobile-friendly action buttons */}
           {canEdit && (
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3">
               <button
@@ -235,7 +223,6 @@ export function CompanyDetails({
           )}
         </div>
 
-        {/* Company Details Grid - Stack on mobile */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -275,12 +262,7 @@ export function CompanyDetails({
         </div>
       </div>
 
-      {/* EmployeeTable - Already responsive */}
-      <EmployeeTable
-        companyId={companyId}
-        onError={() => {}}
-        onSuccess={() => {}}
-      />
+      <EmployeeTable companyId={companyId} />
     </div>
   );
 }

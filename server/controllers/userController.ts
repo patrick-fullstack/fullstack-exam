@@ -172,6 +172,32 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
     if (password) {
       updateData.password = await bcrypt.hash(password, 12);
     }
+    // Handle role and company changes with one manager per company rule
+    if (role !== undefined || companyId !== undefined) {
+      const newRole = role !== undefined ? role : targetUser.role;
+      const newCompanyId =
+        companyId !== undefined ? companyId : targetUser.companyId;
+
+      // If assigning manager role, check if company already has a manager
+      if (newRole === UserRole.MANAGER && newCompanyId) {
+        const existingManager = await User.findOne({
+          companyId: newCompanyId,
+          role: UserRole.MANAGER,
+          _id: { $ne: userId },
+        });
+
+        if (existingManager) {
+          return res.status(409).json({
+            success: false,
+            message:
+              "This company already has a manager. Each company can only have one manager.",
+          });
+        }
+      }
+
+      if (role !== undefined) updateData.role = role;
+      if (companyId !== undefined) updateData.companyId = companyId;
+    }
   } else if (currentUser.role === UserRole.MANAGER) {
     // Manager can update employees in their company OR their own profile
     if (currentUser._id.toString() === userId) {

@@ -9,31 +9,25 @@ export function CompanyList({ userRole }: CompanyListProps) {
     companiesLoading: loading,
     companiesPagination: pagination,
     companiesSearchTerm: searchTerm,
-    deletingCompanyId,
     fetchCompanies,
     searchCompanies,
     clearCompaniesSearch,
-    deleteCompany,
   } = useCompany();
 
-  // Initial fetch
   useEffect(() => {
     fetchCompanies();
   }, [fetchCompanies]);
 
-  // Handle search
   const handleSearch = (value: string) => {
     searchCompanies(value);
   };
 
-  // Handle page change
   const handlePageChange = (page: number) => {
     fetchCompanies(page, searchTerm);
   };
 
   return (
     <div className="px-2 sm:px-4">
-      {/* Search Bar */}
       <div className="mb-6">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -83,19 +77,16 @@ export function CompanyList({ userRole }: CompanyListProps) {
           )}
         </div>
 
-        {/* Search Stats */}
         {searchTerm && (
           <div className="mt-2 text-sm text-gray-500">
             {companies.length > 0
-              ? `Found ${pagination?.totalCompanies || 0} company${
-                  (pagination?.totalCompanies || 0) !== 1 ? "s" : ""
-                } matching "${searchTerm}"`
+              ? `Found ${pagination?.totalCompanies || 0} company${(pagination?.totalCompanies || 0) !== 1 ? "s" : ""
+              } matching "${searchTerm}"`
               : `No companies found matching "${searchTerm}"`}
           </div>
         )}
       </div>
 
-      {/* Loading State */}
       {loading && (
         <div className="text-center py-8">
           <div className="loading loading-spinner loading-lg"></div>
@@ -103,7 +94,6 @@ export function CompanyList({ userRole }: CompanyListProps) {
         </div>
       )}
 
-      {/* No Companies */}
       {!loading && companies.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg mb-4">
@@ -117,7 +107,6 @@ export function CompanyList({ userRole }: CompanyListProps) {
         </div>
       )}
 
-      {/* Companies Grid */}
       {!loading && companies.length > 0 && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
@@ -125,16 +114,11 @@ export function CompanyList({ userRole }: CompanyListProps) {
               <CompanyCard
                 key={company.id}
                 company={company}
-                onDelete={
-                  userRole === "super_admin" ? deleteCompany : undefined
-                }
-                isDeleting={deletingCompanyId === company.id}
                 userRole={userRole}
               />
             ))}
           </div>
 
-          {/* Pagination */}
           {pagination && pagination.totalPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-between border-t pt-6 gap-4 mb-6">
               <div className="text-sm text-gray-700 text-center sm:text-left">
@@ -163,11 +147,10 @@ export function CompanyList({ userRole }: CompanyListProps) {
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`btn min-w-[40px] ${
-                        page === pagination.currentPage
+                      className={`btn min-w-[40px] ${page === pagination.currentPage
                           ? "btn-primary"
                           : "btn-secondary"
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>

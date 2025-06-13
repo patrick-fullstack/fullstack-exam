@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { AvatarUpload } from "../ui/AvatarUpload";
+import { companyService } from "../../services/companies";
 import type { CreateUserData, CreateUserFormProps } from "../../types/user";
+import type { Company } from "../../types/companies";
 
 export const CreateUserForm: React.FC<CreateUserFormProps> = ({
   onSubmit,
@@ -25,6 +27,34 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<CreateUserData>>({});
   const [avatarKey, setAvatarKey] = useState(0);
+
+  // Company dropdown state
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companiesLoading, setCompaniesLoading] = useState(false);
+  const [companiesError, setCompaniesError] = useState("");
+
+  // Fetch companies on component mount
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      setCompaniesLoading(true);
+      setCompaniesError("");
+
+      const response = await companyService.getCompanies({
+        page: 1,
+        limit: 100, // Get all companies
+      });
+
+      if (response.success) {
+        setCompanies(response.data.companies || []);
+      } else {
+        setCompaniesError("Failed to load companies");
+      }
+
+      setCompaniesLoading(false);
+    };
+
+    fetchCompanies();
+  }, []);
 
   useEffect(() => {
     if (resetForm) {
@@ -83,7 +113,7 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
 
     // Company ID validation for non-super admin roles
     if (formData.role !== "super_admin" && !formData.companyId) {
-      errors.companyId = "Company ID is required for managers and employees";
+      errors.companyId = "Please select a company";
     }
 
     setFieldErrors(errors);
@@ -125,6 +155,7 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Alert Messages */}
       {error && <div className="alert alert-error">{error}</div>}
+      {companiesError && <div className="alert alert-error">{companiesError}</div>}
 
       {/* Avatar Upload */}
       <div className="text-center">
@@ -207,17 +238,35 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
           </select>
         </div>
 
-        {/* Company ID (conditional) */}
+        {/* Company Selection */}
         {formData.role !== "super_admin" && (
-          <Input
-            label="Company ID *"
-            name="companyId"
-            value={formData.companyId}
-            onChange={handleInputChange}
-            disabled={loading}
-            error={fieldErrors.companyId}
-            placeholder="Enter company ID"
-          />
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Company *
+            </label>
+            <select
+              name="companyId"
+              value={formData.companyId}
+              onChange={handleInputChange}
+              disabled={loading || companiesLoading}
+              className={`input-field ${fieldErrors.companyId ? "border-red-500" : ""}`}
+            >
+              <option value="">
+                {companiesLoading ? "Loading companies..." : "Select a company"}
+              </option>
+              {companies.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name} - {company.email}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.companyId && (
+              <p className="text-sm text-red-600 mt-1">{fieldErrors.companyId}</p>
+            )}
+            {companies.length === 0 && !companiesLoading && !companiesError && (
+              <p className="text-sm text-gray-500 mt-1">No companies available</p>
+            )}
+          </div>
         )}
       </div>
 

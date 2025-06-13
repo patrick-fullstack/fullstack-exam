@@ -1,22 +1,24 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useCompany } from "../../contexts/CompanyContext";
 import type { CompanyCardProps } from "../../types/companies";
 
 export function CompanyCard({
   company,
-  onDelete,
-  isDeleting,
   userRole,
 }: CompanyCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { deleteCompany, deletingCompanyId } = useCompany();
+
+  const isDeleting = deletingCompanyId === company.id;
 
   const handleDeleteClick = () => {
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     setShowDeleteConfirm(false);
-    onDelete?.(company.id);
+    await deleteCompany(company.id);
   };
 
   const cancelDelete = () => {
@@ -25,7 +27,6 @@ export function CompanyCard({
 
   return (
     <>
-      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -72,10 +73,8 @@ export function CompanyCard({
       )}
 
       <div className="card hover:shadow-md transition-shadow">
-        {/* Company Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
-            {/* Company Logo */}
             <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
               {company.logo ? (
                 <img
@@ -90,7 +89,6 @@ export function CompanyCard({
               )}
             </div>
 
-            {/* Company Info */}
             <div>
               <h3 className="font-semibold text-lg text-gray-900">
                 {company.name}
@@ -99,8 +97,7 @@ export function CompanyCard({
             </div>
           </div>
 
-          {/* Actions for Super Admin */}
-          {userRole === "super_admin" && onDelete && (
+          {userRole === "super_admin" && (
             <button
               onClick={handleDeleteClick}
               disabled={isDeleting}
@@ -113,7 +110,6 @@ export function CompanyCard({
           )}
         </div>
 
-        {/* Company Details */}
         <div className="space-y-3 mb-4">
           <div>
             <span className="text-sm font-medium text-gray-700">Website:</span>
@@ -151,7 +147,6 @@ export function CompanyCard({
           </div>
         </div>
 
-        {/* View Details Button */}
         <div
           className="pt-4 border-t"
           style={{ borderColor: "var(--border-color)" }}
