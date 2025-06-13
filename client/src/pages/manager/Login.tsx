@@ -13,28 +13,23 @@ export default function ManagerLogin() {
     setError("");
     setLoading(true);
 
-    try {
-      // Pass the required role to enforce role-based login
-      const result = await login(email, password, 'manager');
+    // Pass the required role to enforce role-based login
+    const result = await login(email, password, 'manager');
 
-      if (result.success && result.user) {
-        console.log('Manager login successful');
+    if (result.success && result.user) {
+      console.log('Manager login successful');
+    } else {
+      // Check if we got the actual role (role mismatch)
+      if (result.actualRole) {
+        setError(
+          `Access denied. You are a ${result.actualRole.replace('_', ' ')}. Redirecting to correct portal...`
+        );
       } else {
-        // Check if we got the actual role (role mismatch)
-        if (result.actualRole) {
-          setError(
-            `Access denied. You are a ${result.actualRole.replace('_', ' ')}. Redirecting to correct portal...`
-          );
-        } else {
-          setError(result.error || "Login failed");
-        }
+        setError(result.error || "Login failed");
       }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("An unexpected error occurred. Please try again.");
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   return (

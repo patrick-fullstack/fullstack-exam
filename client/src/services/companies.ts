@@ -1,83 +1,14 @@
 import axios, { AxiosError } from "axios";
 import Cookies from "js-cookie";
+import type {
+  CompaniesResponse,
+  CompanyResponse,
+  CreateCompanyData,
+  UpdateCompanyData,
+  ApiErrorResponse,
+} from "../types/companies";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
-// API Error response interface
-interface ApiErrorResponse {
-  success: boolean;
-  message: string;
-}
-
-// Company interfaces
-export interface Company {
-  id: string;
-  name: string;
-  email: string;
-  logo?: string;
-  website: string;
-  createdAt: string;
-  updatedAt: string;
-  users?: CompanyEmployee[];
-}
-
-export interface CompanyEmployee {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: "manager" | "employee";
-  isActive: boolean;
-  avatar?: string;
-  companyId?: string;
-}
-
-export interface CreateCompanyData {
-  name: string;
-  email: string;
-  website: string;
-  logo?: File;
-}
-
-export interface UpdateCompanyData {
-  name?: string;
-  email?: string;
-  website?: string;
-  logo?: File;
-}
-
-// API Response interfaces
-interface CompanyResponse {
-  success: boolean;
-  message: string;
-  data: {
-    company: Company;
-    userPagination?: {
-      currentPage: number;
-      totalPages: number;
-      totalUsers: number;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-      usersPerPage: number;
-    };
-  };
-}
-
-interface CompaniesResponse {
-  success: boolean;
-  message: string;
-  data: {
-    companies: Company[];
-    pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalCompanies: number;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-      companiesPerPage: number;
-    };
-  };
-}
 
 const api = axios.create({
   baseURL: API_URL,

@@ -97,14 +97,10 @@ userSchema.pre("save", async function (next) {
   // Only hash if password is modified
   if (!this.isModified("password")) return next();
 
-  try {
-    // Hash password with salt rounds of 12
-    const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error as Error);
-  }
+  // Hash password with salt rounds of 12
+  const salt = await bcrypt.genSalt(12);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
 // Compare password method

@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-
-interface LoginFormProps {
-    onSubmit: (email: string, password: string) => Promise<void>;
-    loading?: boolean;
-    error?: string;
-}
+import type { LoginFormProps } from '../../types/user';
 
 export const LoginForm: React.FC<LoginFormProps> = ({
     onSubmit,

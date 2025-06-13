@@ -21,7 +21,7 @@ export default function AdminDashboard() {
       {/* Content */}
       <main className="container" style={{ paddingTop: "2rem" }}>
         {/* Welcome Section */}
-        <div className="space-y-6">
+        <div className="space-y-6 mb-7">
           {/* Hero Card */}
           <div className="card">
             <div className="flex items-start justify-between">

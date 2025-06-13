@@ -20,7 +20,7 @@ export default function ManagerDashboard() {
 
       {/* Content */}
       <main className="container" style={{ paddingTop: "2rem" }}>
-        <div className="space-y-6">
+        <div className="space-y-6 mb-7">
           {/* Hero Card */}
           <div className="card">
             <div className="flex items-start justify-between">

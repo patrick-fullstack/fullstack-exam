@@ -1,37 +1,9 @@
 import axios, { AxiosError } from "axios";
 import Cookies from "js-cookie";
-import type { CreateUserData } from "../components/forms/CreateUserForm";
+import type { User, ApiErrorResponse } from "../types/user";
+import type { CreateUserData } from "../types/user";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
-// API Error response interface
-interface ApiErrorResponse {
-  success: false;
-  message: string;
-}
-
-// User response interface
-export interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  avatar?: string;
-  role: string;
-  companyId?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  company?: {
-    id: string;
-    name: string;
-    email: string;
-    website: string;
-    logo?: string;
-  };
-}
-
 const api = axios.create({
   baseURL: API_URL,
   timeout: 30000,

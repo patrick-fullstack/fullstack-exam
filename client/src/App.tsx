@@ -7,8 +7,8 @@ import {
 import "./App.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoutes";
-import { NotificationProvider } from './contexts/NotificationContext';
-
+import { NotificationProvider } from "./contexts/NotificationContext";
+import { CompanyProvider } from "./contexts/CompanyContext";
 // Pages
 import PortalSelector from "./pages/PortalSelector";
 import AdminLogin from "./pages/admin/Login";
@@ -299,9 +299,11 @@ export default function App() {
   return (
     <Router>
       <AuthProvider>
-        <NotificationProvider>
-          <AppRoutes />
-        </NotificationProvider>
+        <CompanyProvider>
+          <NotificationProvider>
+            <AppRoutes />
+          </NotificationProvider>
+        </CompanyProvider>
       </AuthProvider>
     </Router>
   );

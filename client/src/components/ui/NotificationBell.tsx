@@ -1,23 +1,7 @@
 import React, { useState } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
-
-interface Notification {
-    id: string;
-    type: 'user_created' | 'user_updated' | 'user_deleted';
-    title: string;
-    message: string;
-    newUser?: {
-        id: string;
-        firstName: string;
-        lastName: string;
-        role: string;
-        avatar?: string;
-    };
-    profileUrl: string;
-    timestamp: string;
-    isRead: boolean;
-}
+import type { Notification } from '../../types/notification';
 
 export const NotificationBell: React.FC = () => {
     const { notifications, unreadCount, isConnected, markAsRead, markAllAsRead } = useNotifications();

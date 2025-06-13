@@ -1,423 +1,223 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { companyService, type CompanyEmployee } from '../../services/companies';
-import { userService } from '../../services/users';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCompany } from "../../contexts/CompanyContext";
+import { useAuth } from "../../contexts/AuthContext";
+import type { EmployeeTableProps } from "../../types/companies";
 
-interface EmployeeTableProps {
-    companyId: string;
-    currentUserRole: 'super_admin' | 'manager' | 'employee';
-    currentUserId?: string;
-    onError?: (error: string) => void;
-    onSuccess?: (message: string) => void;
-}
+export function EmployeeTable({ companyId }: EmployeeTableProps) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const {
+    employees,
+    employeesLoading: loading,
+    employeesPagination: pagination,
+    employeesSearchTerm: searchTerm,
+    deletingEmployeeId: deletingId,
+    fetchEmployees,
+    searchEmployees,
+    clearEmployeesSearch,
+    deleteEmployee,
+  } = useCompany();
 
-export function EmployeeTable({
-    companyId,
-    currentUserRole,
-    currentUserId,
-    onError,
-    onSuccess
-}: EmployeeTableProps) {
-    const navigate = useNavigate();
+  const [roleFilter, setRoleFilter] = useState<string>("");
 
-    // State management using CompanyEmployee from companies.ts
-    const [employees, setEmployees] = useState<CompanyEmployee[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [deletingId, setDeletingId] = useState<string | null>(null);
-    const [searchTerm, setSearchTerm] = useState<string>('');
-    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>('');
+  useEffect(() => {
+    if (companyId) fetchEmployees(companyId, 1, searchTerm);
+  }, [companyId, fetchEmployees, searchTerm, roleFilter]);
 
-    // Pagination state with explicit typing
-    const [pagination, setPagination] = useState<{
-        currentPage: number;
-        totalPages: number;
-        totalUsers: number;
-        hasNextPage: boolean;
-        hasPrevPage: boolean;
-        usersPerPage: number;
-    }>({
-        currentPage: 1,
-        totalPages: 1,
-        totalUsers: 0,
-        hasNextPage: false,
-        hasPrevPage: false,
-        usersPerPage: 10
-    });
+  const handleSearch = (value: string) => searchEmployees(value);
+  const handleRoleChange = (role: string) => setRoleFilter(role);
+  const handleClearFilters = () => { setRoleFilter(""); clearEmployeesSearch(); };
+  const handlePageChange = (page: number) => fetchEmployees(companyId, page, searchTerm);
+  const handleRowClick = (userId: string) => navigate(`/profile/${userId}`);
+  const handleEditClick = (e: React.MouseEvent, userId: string) => { e.stopPropagation(); navigate(`/profile/${userId}?edit=true`); };
+  const handleDeleteUser = async (e: React.MouseEvent, userId: string) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this user?")) await deleteEmployee(userId);
+  };
 
-    // Debounce search term
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearchTerm(searchTerm);
-        }, 300); // 300ms delay
+  const canEdit = () => user && (user.role === "super_admin" || user.role === "manager");
+  const canDelete = (employeeId: string) => user && user.role === "super_admin" && employeeId !== user.id;
 
-        return () => clearTimeout(timer);
-    }, [searchTerm]);
+  // Filter employees based on role
+  const filteredEmployees = roleFilter ? employees.filter(emp => emp.role === roleFilter) : employees;
 
-    // Fetch employees from backend
-    const fetchEmployees = async (page = 1, search = debouncedSearchTerm): Promise<void> => {
-        setLoading(true);
-        try {
-            const response = await companyService.getCompanyById(companyId, {
-                userPage: page,
-                userLimit: 10,
-                userSearch: search || undefined
-            });
+  if (!companyId) return <div className="card"><div className="text-center py-8 text-gray-500">No company selected</div></div>;
 
-            if (response.success && response.data) {
-                // Set employees from the response - already typed as CompanyEmployee[]
-                const companyUsers = response.data.company.users || [];
-                setEmployees(companyUsers);
+  return (
+    <div className="card">
+      {/* Header */}
+      <div className="mb-6">
+        <h3 className="text-xl font-semibold">Company Employees ({filteredEmployees.length})</h3>
+        <p className="text-sm text-gray-500 mt-1">Click on any employee to view their profile</p>
+      </div>
 
-                // Set pagination from response or create fallback
-                if (response.data.userPagination) {
-                    setPagination(response.data.userPagination);
-                } else {
-                    // Fallback pagination if backend doesn't return userPagination
-                    setPagination({
-                        currentPage: page,
-                        totalPages: 1,
-                        totalUsers: companyUsers.length,
-                        hasNextPage: false,
-                        hasPrevPage: false,
-                        usersPerPage: 10
-                    });
-                }
-            } else {
-                onError?.('Failed to load employees');
-                setEmployees([]);
-            }
-        } catch (error) {
-            console.error('Failed to fetch employees:', error);
-            onError?.('Failed to load employees');
-            setEmployees([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Initial fetch
-    useEffect(() => {
-        if (companyId) {
-            fetchEmployees();
-        }
-    }, [companyId]);
-
-    // Trigger search when debounced search term changes
-    useEffect(() => {
-        if (companyId) {
-            fetchEmployees(1, debouncedSearchTerm); // Reset to page 1 when searching
-        }
-    }, [debouncedSearchTerm, companyId]);
-
-    // Handle search input change - just update the search term, debouncing will handle the actual search
-    const handleSearch = (value: string): void => {
-        setSearchTerm(value);
-    };
-
-    // Clear search - exactly like CompanyList
-    const clearSearch = (): void => {
-        setSearchTerm('');
-        setDebouncedSearchTerm('');
-    };
-
-    // Handle page change
-    const handlePageChange = (page: number): void => {
-        fetchEmployees(page, debouncedSearchTerm);
-    };
-
-    // Handle delete with refresh
-    const handleDeleteUser = async (e: React.MouseEvent, userId: string): Promise<void> => {
-        e.stopPropagation();
-        if (!window.confirm('Are you sure you want to delete this user?')) return;
-
-        setDeletingId(userId);
-        try {
-            const result = await userService.deleteUser(userId);
-            if (result.success) {
-                onSuccess?.('User deleted successfully');
-                // Refresh current page after delete
-                fetchEmployees(pagination.currentPage, debouncedSearchTerm);
-            } else {
-                onError?.(result.error || 'Failed to delete user');
-            }
-        } catch (error) {
-            console.error('Failed to delete user:', error);
-            onError?.('Failed to delete user');
-        } finally {
-            setDeletingId(null);
-        }
-    };
-
-    // Handle row click
-    const handleRowClick = (userId: string): void => {
-        navigate(`/profile/${userId}`);
-    };
-
-    // Handle edit click
-    const handleEditClick = (e: React.MouseEvent, userId: string): void => {
-        e.stopPropagation();
-        navigate(`/profile/${userId}?edit=true`);
-    };
-
-    // Permission checks
-    const canEdit = (): boolean => {
-        return currentUserRole === 'super_admin' || currentUserRole === 'manager';
-    };
-
-    const canDelete = (employee: CompanyEmployee): boolean => {
-        return currentUserRole === 'super_admin' && employee.id !== currentUserId;
-    };
-
-    // Don't render if no companyId
-    if (!companyId) {
-        return (
-            <div className="card">
-                <div className="text-center py-8 text-gray-500">
-                    No company selected
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="card">
-            <div className="mb-6">
-                <h3 className="text-lg font-semibold">
-                    Company Employees ({pagination.totalUsers})
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                    Click on any employee to view their profile
-                </p>
-            </div>
-
-            {/* Search Bar - Exactly like CompanyList */}
-            <div className="mb-6">
-                <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg
-                            className="h-5 w-5 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                        </svg>
-                    </div>
-                    <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        placeholder="Search employees by name or email..."
-                        className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 transition-colors"
-                    />
-                    {searchTerm && (
-                        <div className="absolute inset-y-0 right-0 flex items-center">
-                            <button
-                                onClick={clearSearch}
-                                className="mr-3 p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors"
-                                title="Clear search"
-                            >
-                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Search Stats */}
-                {searchTerm && (
-                    <div className="mt-2 text-sm text-gray-500 flex items-center gap-2">
-                        <span>
-                            {employees.length > 0
-                                ? `Found ${pagination.totalUsers} employee${pagination.totalUsers !== 1 ? 's' : ''} matching "${searchTerm}"`
-                                : `No employees found matching "${searchTerm}"`
-                            }
-                        </span>
-                        {employees.length > 0 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {pagination.totalUsers} result{pagination.totalUsers !== 1 ? 's' : ''}
-                            </span>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {/* Loading State */}
-            {loading && (
-                <div className="text-center py-8">
-                    <div className="loading loading-spinner loading-lg"></div>
-                    <p className="text-gray-500 mt-2">Loading employees...</p>
-                </div>
-            )}
-
-            {/* No Employees */}
-            {!loading && employees.length === 0 && (
-                <div className="text-center py-12">
-                    <div className="text-gray-500 text-lg mb-4">No employees found</div>
-                    <p className="text-gray-400">
-                        {searchTerm
-                            ? 'No employees match your search criteria'
-                            : 'This company doesn\'t have any employees yet'
-                        }
-                    </p>
-                </div>
-            )}
-
-            {/* Employees Table */}
-            {!loading && employees.length > 0 && (
-                <>
-                    <div className="overflow-x-auto mb-6">
-                        <table className="w-full border-collapse">
-                            <thead>
-                                <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
-                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Employee</th>
-                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Email</th>
-                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Role</th>
-                                    <th className="text-left py-3 px-4 font-medium text-gray-700">Status</th>
-                                    {employees.some(emp => canEdit() || canDelete(emp)) && (
-                                        <th className="text-left py-3 px-4 font-medium text-gray-700">Actions</th>
-                                    )}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {employees.map((employee, index) => (
-                                    <tr
-                                        key={employee.id}
-                                        onClick={() => handleRowClick(employee.id)}
-                                        style={{
-                                            borderBottom: index < employees.length - 1 ? '1px solid var(--border-color)' : 'none'
-                                        }}
-                                        className="hover:bg-gray-50 transition-colors cursor-pointer"
-                                        title="Click to view profile"
-                                    >
-                                        <td className="py-4 px-4">
-                                            <div className="flex items-center space-x-3">
-                                                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                                                    {employee.avatar ? (
-                                                        <img
-                                                            src={employee.avatar}
-                                                            alt={`${employee.firstName} ${employee.lastName}`}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <span className="text-sm font-medium text-gray-600">
-                                                            {employee.firstName.charAt(0)}{employee.lastName.charAt(0)}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <div className="font-medium text-gray-900">
-                                                        {employee.firstName} {employee.lastName}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        <td className="py-4 px-4">
-                                            <div className="text-gray-600">{employee.email}</div>
-                                        </td>
-
-                                        <td className="py-4 px-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${employee.role === 'manager' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                                                }`}>
-                                                {employee.role === 'manager' ? 'Manager' : 'Employee'}
-                                            </span>
-                                        </td>
-
-                                        <td className="py-4 px-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${employee.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                                }`}>
-                                                {employee.isActive ? 'Active' : 'Inactive'}
-                                            </span>
-                                        </td>
-
-                                        {employees.some(emp => canEdit() || canDelete(emp)) && (
-                                            <td className="py-4 px-4">
-                                                <div className="flex items-center space-x-2">
-                                                    {canEdit() && (
-                                                        <button
-                                                            onClick={(e) => handleEditClick(e, employee.id)}
-                                                            className="btn btn-sm btn-secondary"
-                                                            title="Edit Employee"
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                    )}
-
-                                                    {canDelete(employee) && (
-                                                        <button
-                                                            onClick={(e) => handleDeleteUser(e, employee.id)}
-                                                            disabled={deletingId === employee.id}
-                                                            className="btn btn-sm btn-error"
-                                                            title="Delete Employee"
-                                                        >
-                                                            {deletingId === employee.id ? 'Deleting...' : 'Delete'}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        )}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Pagination - Made consistent with CompanyList */}
-                    {pagination && pagination.totalPages > 1 && (
-                        <div className="flex items-center justify-between border-t pt-6">
-                            {/* Results info */}
-                            <div className="text-sm text-gray-700">
-                                Showing {((pagination.currentPage - 1) * pagination.usersPerPage) + 1} to{' '}
-                                {Math.min(pagination.currentPage * pagination.usersPerPage, pagination.totalUsers)} of{' '}
-                                {pagination.totalUsers} employees
-                            </div>
-
-                            {/* Pagination buttons */}
-                            <div className="flex space-x-2">
-                                <button
-                                    onClick={() => handlePageChange(pagination.currentPage - 1)}
-                                    disabled={!pagination.hasPrevPage}
-                                    className="btn btn-secondary"
-                                >
-                                    Previous
-                                </button>
-
-                                {/* Page numbers */}
-                                {[...Array(pagination.totalPages)].map((_, index) => {
-                                    const page = index + 1;
-                                    return (
-                                        <button
-                                            key={page}
-                                            onClick={() => handlePageChange(page)}
-                                            className={`btn ${page === pagination.currentPage
-                                                ? 'btn-primary'
-                                                : 'btn-secondary'
-                                                }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    );
-                                })}
-
-                                <button
-                                    onClick={() => handlePageChange(pagination.currentPage + 1)}
-                                    disabled={!pagination.hasNextPage}
-                                    className="btn btn-secondary"
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </>
-            )}
+      {/* Search and Filters */}
+      <div className="mb-6 space-y-3">
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search employees..."
+            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2"
+          />
+          {searchTerm && (
+            <button onClick={clearEmployeesSearch} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
-    );
+
+        <div className="flex items-center gap-3">
+          <select value={roleFilter} onChange={(e) => handleRoleChange(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2">
+            <option value="">All Roles</option>
+            <option value="manager">Manager</option>
+            <option value="employee">Employee</option>
+          </select>
+          {(searchTerm || roleFilter) && (
+            <button onClick={handleClearFilters} className="btn btn-secondary text-sm px-4 py-2">Clear Filters</button>
+          )}
+        </div>
+
+        {(searchTerm || roleFilter) && (
+          <div className="text-sm text-gray-500">
+            {filteredEmployees.length > 0 ? `Found ${filteredEmployees.length} employee${filteredEmployees.length !== 1 ? "s" : ""}` : "No employees found"}
+          </div>
+        )}
+      </div>
+
+      {/* Loading */}
+      {loading && <div className="text-center py-8"><div className="loading loading-spinner loading-lg"></div><p className="text-gray-500 mt-2">Loading...</p></div>}
+
+      {/* Empty State */}
+      {!loading && filteredEmployees.length === 0 && (
+        <div className="text-center py-12">
+          <div className="text-gray-500 text-lg mb-4">No employees found</div>
+          <p className="text-gray-400">{searchTerm || roleFilter ? "No employees match your filters" : "This company doesn't have any employees yet"}</p>
+        </div>
+      )}
+
+      {/* Employee List */}
+      {!loading && filteredEmployees.length > 0 && (
+        <>
+          {/* Mobile View */}
+          <div className="block md:hidden space-y-3 mb-6">
+            {filteredEmployees.map((employee) => (
+              <div key={employee.id} onClick={() => handleRowClick(employee.id)} className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                    {employee.avatar ? (
+                      <img src={employee.avatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-medium text-gray-600">{employee.firstName.charAt(0)}{employee.lastName.charAt(0)}</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium">{employee.firstName} {employee.lastName}</div>
+                    <div className="text-sm text-gray-600 truncate">{employee.email}</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${employee.role === "manager" ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"}`}>
+                    {employee.role === "manager" ? "Manager" : "Employee"}
+                  </span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${employee.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                    {employee.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+                {(canEdit() || canDelete(employee.id)) && (
+                  <div className="flex space-x-2 pt-3 border-t">
+                    {canEdit() && <button onClick={(e) => handleEditClick(e, employee.id)} className="flex-1 btn btn-sm btn-secondary">Edit</button>}
+                    {canDelete(employee.id) && (
+                      <button onClick={(e) => handleDeleteUser(e, employee.id)} disabled={deletingId === employee.id} className="flex-1 btn btn-sm btn-error">
+                        {deletingId === employee.id ? "Deleting..." : "Delete"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto mb-6">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b-2">
+                  <th className="text-left py-3 px-4 font-medium">Employee</th>
+                  <th className="text-left py-3 px-4 font-medium">Email</th>
+                  <th className="text-left py-3 px-4 font-medium">Role</th>
+                  <th className="text-left py-3 px-4 font-medium">Status</th>
+                  {filteredEmployees.some((emp) => canEdit() || canDelete(emp.id)) && <th className="text-left py-3 px-4 font-medium">Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredEmployees.map((employee) => (
+                  <tr key={employee.id} onClick={() => handleRowClick(employee.id)} className="hover:bg-gray-50 cursor-pointer border-b">
+                    <td className="py-4 px-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                          {employee.avatar ? (
+                            <img src={employee.avatar} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-sm font-medium text-gray-600">{employee.firstName.charAt(0)}{employee.lastName.charAt(0)}</span>
+                          )}
+                        </div>
+                        <div className="font-medium">{employee.firstName} {employee.lastName}</div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 text-gray-600">{employee.email}</td>
+                    <td className="py-4 px-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${employee.role === "manager" ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"}`}>
+                        {employee.role === "manager" ? "Manager" : "Employee"}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${employee.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                        {employee.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    {filteredEmployees.some((emp) => canEdit() || canDelete(emp.id)) && (
+                      <td className="py-4 px-4">
+                        <div className="flex space-x-2">
+                          {canEdit() && <button onClick={(e) => handleEditClick(e, employee.id)} className="btn btn-sm btn-secondary">Edit</button>}
+                          {canDelete(employee.id) && (
+                            <button onClick={(e) => handleDeleteUser(e, employee.id)} disabled={deletingId === employee.id} className="btn btn-sm btn-error">
+                              {deletingId === employee.id ? "Deleting..." : "Delete"}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-6">
+              <div className="text-sm text-gray-700">Showing {filteredEmployees.length} of {pagination.totalUsers} employees</div>
+              <div className="flex space-x-2">
+                <button onClick={() => handlePageChange(pagination.currentPage - 1)} disabled={!pagination.hasPrevPage} className="btn btn-secondary px-4">Previous</button>
+                {[...Array(pagination.totalPages)].map((_, index) => (
+                  <button key={index + 1} onClick={() => handlePageChange(index + 1)} className={`btn px-4 ${index + 1 === pagination.currentPage ? "btn-primary" : "btn-secondary"}`}>
+                    {index + 1}
+                  </button>
+                ))}
+                <button onClick={() => handlePageChange(pagination.currentPage + 1)} disabled={!pagination.hasNextPage} className="btn btn-secondary px-4">Next</button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
