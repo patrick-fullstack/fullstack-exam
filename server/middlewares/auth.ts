@@ -16,34 +16,49 @@ declare global {
 // Authentication middleware - verifies if user is logged in
 export const authenticate = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const token = extractTokenFromHeader(req.headers.authorization);
-    const payload = verifyToken(token);
+    try {
+      // 1. Extract token from Authorization header
+      const token = extractTokenFromHeader(req.headers.authorization);
 
-    const user = await User.findById(payload.userId).select("-password");
+      // 2. Verify the token and get payload
+      const payload = verifyToken(token);
 
-    if (!user) {
+      // 3. Find user in database to ensure they still exist and are active
+      const user = await User.findById(payload.userId).select("-password"); // Exclude password
+
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: "User no longer exists",
+        });
+      }
+
+      if (!user.isActive) {
+        return res.status(401).json({
+          success: false,
+          message: "User account is deactivated",
+        });
+      }
+
+      // 4. Attach user and token payload to request object
+      req.user = user;
+      req.tokenPayload = payload;
+
+      // 5. Continue to next middleware/route handler
+      next();
+    } catch (error: any) {
       return res.status(401).json({
         success: false,
-        message: "User no longer exists",
+        message: error.message || "Authentication failed",
       });
     }
-
-    if (!user.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: "User account is deactivated",
-      });
-    }
-
-    req.user = user;
-    req.tokenPayload = payload;
-    next();
   }
 );
 
 // Role-based authorization middleware
 export const authorize = (...allowedRoles: UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
+    // Check if user is authenticated first
     if (!req.user) {
       res.status(401).json({
         success: false,
@@ -52,6 +67,7 @@ export const authorize = (...allowedRoles: UserRole[]) => {
       return;
     }
 
+    // Check if user's role is in allowed roles
     if (!allowedRoles.includes(req.user.role)) {
       res.status(403).json({
         success: false,
@@ -60,6 +76,7 @@ export const authorize = (...allowedRoles: UserRole[]) => {
       return;
     }
 
+    // User has required role, continue - proceed to next middleware/route handler
     next();
   };
 };

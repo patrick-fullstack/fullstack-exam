@@ -9,7 +9,6 @@ export interface JWTPayload {
   email: string;
   role: UserRole;
   companyId?: string;
-  tokenVersion?: number;
 }
 
 // JWT token response interface
@@ -21,38 +20,54 @@ export interface TokenResponse {
 
 // Generate JWT token
 export const generateToken = (payload: JWTPayload): TokenResponse => {
-  const expiresIn = "24h";
+  try {
+    // Token expires in 24 hours
+    const expiresIn = "24h";
 
-  const token = jwt.sign(
-    {
-      userId: payload.userId,
-      email: payload.email,
-      role: payload.role,
-      companyId: payload.companyId,
-      tokenVersion: payload.tokenVersion || 0,
-    },
-    env.JWT_SECRET,
-    {
+    // Generate token with payload and secret
+    const token = jwt.sign(
+      {
+        userId: payload.userId,
+        email: payload.email,
+        role: payload.role,
+        companyId: payload.companyId,
+      },
+      env.JWT_SECRET,
+      {
+        expiresIn,
+        issuer: "exam-api", // Token issuer
+        audience: "exam-client", // Token audience
+      }
+    );
+
+    return {
+      token,
       expiresIn,
-      issuer: "exam-api",
-      audience: "exam-client",
-    }
-  );
-
-  return {
-    token,
-    expiresIn,
-  };
+    };
+  } catch (error) {
+    throw new Error("Failed to generate token");
+  }
 };
 
 // Verify JWT token
 export const verifyToken = (token: string): JWTPayload => {
-  const decoded = jwt.verify(token, env.JWT_SECRET, {
-    issuer: "exam-api",
-    audience: "exam-client",
-  }) as JWTPayload;
+  try {
+    // Verify token with secret and options
+    const decoded = jwt.verify(token, env.JWT_SECRET, {
+      issuer: "exam-api",
+      audience: "exam-client",
+    }) as JWTPayload;
 
-  return decoded;
+    return decoded;
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new Error("Token has expired");
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      throw new Error("Invalid token");
+    } else {
+      throw new Error("Token verification failed");
+    }
+  }
 };
 
 // Extract token from Authorization header
@@ -63,10 +78,12 @@ export const extractTokenFromHeader = (
     throw new Error("Authorization header is missing");
   }
 
+  // Check if header starts with 'Bearer '
   if (!authHeader.startsWith("Bearer ")) {
     throw new Error("Authorization header must start with Bearer");
   }
 
+  // Extract token part (remove 'Bearer ' prefix)
   const token = authHeader.substring(7);
 
   if (!token) {
@@ -82,14 +99,12 @@ export const generateUserToken = (user: {
   email: string;
   role: UserRole;
   companyId?: string;
-  tokenVersion?: number;
 }): TokenResponse => {
   const payload: JWTPayload = {
     userId: user._id,
     email: user.email,
     role: user.role,
     companyId: user.companyId,
-    tokenVersion: user.tokenVersion || 0,
   };
 
   return generateToken(payload);
