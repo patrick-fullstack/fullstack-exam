@@ -63,7 +63,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         channel.bind('new-user-notification', (data: NotificationData) => {
             const notification: Notification = {
                 id: data.id || `${Date.now()}-${Math.random()}`,
-                type: data.type as 'user_created' | 'user_updated' | 'user_deleted',
+                type: data.type as 'user_created',
                 title: data.title,
                 message: data.message,
                 newUser: data.newUser,

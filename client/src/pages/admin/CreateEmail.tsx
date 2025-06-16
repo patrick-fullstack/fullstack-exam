@@ -1,64 +1,24 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { emailService } from "../../services/email";
 import { Header } from "../../components/layout/Header";
 import { EmailForm } from "../../components/forms/EmailForm";
-import type { CreateEmailData } from "../../types/emails";
 
 export default function CreateEmailPage() {
   const { user, logout } = useAuth();
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [resetForm, setResetForm] = useState(false);
   const navigate = useNavigate();
 
-  const handleCreateEmail = async (emailData: CreateEmailData) => {
-    setError("");
-    setSuccess("");
-    setCreating(true);
-    setResetForm(false);
+  const handleSuccess = () => {
+    setSuccess("Email processed successfully!");
+    setResetForm(true);
 
-    try {
-      const result = await emailService.createEmail(emailData);
-
-      if (result.success) {
-        setSuccess(
-          emailData.sendNow
-            ? "Email sent successfully!"
-            : `Email scheduled successfully for ${new Date(
-                emailData.scheduledFor!
-              ).toLocaleString()}!`
-        );
-        setResetForm(true);
-
-        // Clear success message after 5 seconds
-        setTimeout(() => {
-          setSuccess("");
-          setResetForm(false);
-        }, 5000);
-      } else {
-        setError(result.error || "Failed to create email");
-      }
-    } catch (error) {
-      console.error("Create email error:", error);
-      setError("An unexpected error occurred");
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const getDashboardPath = () => {
-    if (user?.role === "super_admin") return "/admin-dashboard";
-    if (user?.role === "manager") return "/manager-dashboard";
-    return "/admin-dashboard";
-  };
-
-  const getEmailManagementPath = () => {
-    if (user?.role === "super_admin") return "/admin/emails";
-    if (user?.role === "manager") return "/manager/emails";
-    return "/admin/emails";
+    // Clear success message after 5 seconds
+    setTimeout(() => {
+      setSuccess("");
+      setResetForm(false);
+    }, 5000);
   };
 
   return (
@@ -83,14 +43,14 @@ export default function CreateEmailPage() {
           {/* Navigation */}
           <div className="flex flex-wrap items-center gap-4">
             <button
-              onClick={() => navigate(getDashboardPath())}
+              onClick={() => navigate("/admin-dashboard")}
               className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               ← Back to Dashboard
             </button>
 
             <button
-              onClick={() => navigate(getEmailManagementPath())}
+              onClick={() => navigate("/admin/emails")}
               className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               📧 View All Emails
@@ -160,9 +120,7 @@ export default function CreateEmailPage() {
           {/* Email Form */}
           <div className="bg-white shadow rounded-lg p-6">
             <EmailForm
-              onSubmit={handleCreateEmail}
-              loading={creating}
-              error={error}
+              onSuccess={handleSuccess}
               resetForm={resetForm}
             />
           </div>

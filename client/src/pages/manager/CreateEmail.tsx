@@ -1,52 +1,24 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { emailService } from "../../services/email";
 import { Header } from "../../components/layout/Header";
 import { EmailForm } from "../../components/forms/EmailForm";
-import type { CreateEmailData } from "../../types/emails";
 
 export default function CreateEmailPage() {
   const { user, logout } = useAuth();
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [resetForm, setResetForm] = useState(false);
   const navigate = useNavigate();
 
-  const handleCreateEmail = async (emailData: CreateEmailData) => {
-    setError("");
-    setSuccess("");
-    setCreating(true);
-    setResetForm(false);
+  const handleSuccess = () => {
+    setSuccess("Email processed successfully!");
+    setResetForm(true);
 
-    try {
-      const result = await emailService.createEmail(emailData);
-
-      if (result.success) {
-        setSuccess(
-          emailData.sendNow
-            ? "Email sent successfully!"
-            : `Email scheduled successfully for ${new Date(
-                emailData.scheduledFor!
-              ).toLocaleString()}!`
-        );
-        setResetForm(true);
-
-        // Clear success message after 5 seconds
-        setTimeout(() => {
-          setSuccess("");
-          setResetForm(false);
-        }, 5000);
-      } else {
-        setError(result.error || "Failed to create email");
-      }
-    } catch (error) {
-      console.error("Create email error:", error);
-      setError("An unexpected error occurred");
-    } finally {
-      setCreating(false);
-    }
+    // Clear success message after 5 seconds
+    setTimeout(() => {
+      setSuccess("");
+      setResetForm(false);
+    }, 5000);
   };
 
   return (
@@ -147,9 +119,7 @@ export default function CreateEmailPage() {
           {/* Email Form */}
           <div className="bg-white shadow rounded-lg p-6">
             <EmailForm
-              onSubmit={handleCreateEmail}
-              loading={creating}
-              error={error}
+              onSuccess={handleSuccess}
               resetForm={resetForm}
             />
           </div>

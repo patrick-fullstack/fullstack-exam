@@ -1,60 +1,42 @@
 import React, { useState, useEffect } from "react";
 import { EmailViewer } from "./EmailView";
-import { emailService } from "../../services/email";
-import type { ScheduledEmail, EmailListProps } from "../../types/emails";
+import { useEmail } from "../../contexts/EmailContext";
+
+interface EmailListProps {
+  onError?: (error: string) => void;
+  refreshTrigger?: number;
+}
 
 export const EmailList: React.FC<EmailListProps> = ({
   onError,
   refreshTrigger,
 }) => {
-  const [emails, setEmails] = useState<ScheduledEmail[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const {
+    emails,
+    loading,
+    error,
+    pagination,
+    loadEmails,
+    cancelEmail,
+    retryEmail,
+    clearError
+  } = useEmail();
+
   const [statusFilter, setStatusFilter] = useState("");
   const [viewingEmailId, setViewingEmailId] = useState<string | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Enhanced pagination state matching EmployeeTable
-  const [pagination, setPagination] = useState<{
-    currentPage: number;
-    totalPages: number;
-    totalEmails: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-    emailsPerPage: number;
-  }>({
-    currentPage: 1,
-    totalPages: 1,
-    totalEmails: 0,
-    hasNextPage: false,
-    hasPrevPage: false,
-    emailsPerPage: 10,
-  });
+  useEffect(() => {
+    loadEmails(1, statusFilter);
+  }, [statusFilter, refreshTrigger, loadEmails]);
 
-  const loadEmails = async () => {
-    try {
-      setLoading(true);
-      const result = await emailService.getEmails({
-        page: currentPage,
-        limit: 10,
-        status: statusFilter || undefined,
-      });
-
-      if (result.success && result.data) {
-        setEmails(result.data.emails);
-        // Update pagination state with full data
-        setPagination(result.data.pagination);
-      } else {
-        onError(result.error || "Failed to load emails");
-      }
-    } catch (error) {
-      console.error("Load emails error:", error);
-      onError("Failed to load emails");
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (error && onError) {
+      onError(error);
+      clearError();
     }
-  };
+  }, [error, onError, clearError]);
 
   const handleViewEmail = (emailId: string) => {
     setViewingEmailId(emailId);
@@ -66,49 +48,31 @@ export const EmailList: React.FC<EmailListProps> = ({
     setViewingEmailId(null);
   };
 
-  useEffect(() => {
-    loadEmails();
-  }, [currentPage, statusFilter, refreshTrigger]);
+  const handlePageChange = (page: number) => {
+    loadEmails(page, statusFilter);
+  };
 
-  // Handle page change - matching EmployeeTable pattern
-  const handlePageChange = (page: number): void => {
-    setCurrentPage(page);
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilter(status);
+    loadEmails(1, status);
   };
 
   const handleCancel = async (emailId: string) => {
-    try {
-      setActionLoading(emailId);
-      const result = await emailService.cancelEmail(emailId);
-
-      if (result.success) {
-        await loadEmails(); // Refresh the list
-      } else {
-        onError(result.error || "Failed to cancel email");
-      }
-    } catch (error) {
-      console.error("Cancel email error:", error);
-      onError("Failed to cancel email");
-    } finally {
-      setActionLoading(null);
+    setActionLoading(emailId);
+    const success = await cancelEmail(emailId);
+    if (!success && error && onError) {
+      onError(error);
     }
+    setActionLoading(null);
   };
 
   const handleRetry = async (emailId: string) => {
-    try {
-      setActionLoading(emailId);
-      const result = await emailService.retryEmail(emailId);
-
-      if (result.success) {
-        await loadEmails(); // Refresh the list
-      } else {
-        onError(result.error || "Failed to retry email");
-      }
-    } catch (error) {
-      console.error("Retry email error:", error);
-      onError("Failed to retry email");
-    } finally {
-      setActionLoading(null);
+    setActionLoading(emailId);
+    const success = await retryEmail(emailId);
+    if (!success && error && onError) {
+      onError(error);
     }
+    setActionLoading(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -121,9 +85,8 @@ export const EmailList: React.FC<EmailListProps> = ({
 
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800"
-        }`}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800"
+          }`}
       >
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
@@ -159,10 +122,7 @@ export const EmailList: React.FC<EmailListProps> = ({
           </label>
           <select
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => handleStatusFilterChange(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">All Status</option>
@@ -173,7 +133,6 @@ export const EmailList: React.FC<EmailListProps> = ({
           </select>
         </div>
 
-        {/* Email count display */}
         <div className="text-sm text-gray-600">
           Total Emails: {pagination.totalEmails}
         </div>
@@ -247,7 +206,6 @@ export const EmailList: React.FC<EmailListProps> = ({
 
                     {/* Actions */}
                     <div className="ml-4 flex-shrink-0 flex space-x-2">
-                      {/* View button - always available */}
                       <button
                         onClick={() => handleViewEmail(email._id)}
                         className="px-3 py-1 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -261,9 +219,7 @@ export const EmailList: React.FC<EmailListProps> = ({
                           disabled={actionLoading === email._id}
                           className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                         >
-                          {actionLoading === email._id
-                            ? "Cancelling..."
-                            : "Cancel"}
+                          {actionLoading === email._id ? "Cancelling..." : "Cancel"}
                         </button>
                       )}
 
@@ -273,9 +229,7 @@ export const EmailList: React.FC<EmailListProps> = ({
                           disabled={actionLoading === email._id}
                           className="px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                         >
-                          {actionLoading === email._id
-                            ? "Retrying..."
-                            : "Retry"}
+                          {actionLoading === email._id ? "Retrying..." : "Retry"}
                         </button>
                       )}
                     </div>
@@ -285,42 +239,34 @@ export const EmailList: React.FC<EmailListProps> = ({
             </ul>
           </div>
 
-          {/* Enhanced Pagination - Copied from EmployeeTable */}
-          {pagination && pagination.totalPages > 1 && (
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t pt-6">
-              {/* Results info */}
               <div className="text-sm text-gray-700">
-                Showing{" "}
-                {(pagination.currentPage - 1) * pagination.emailsPerPage + 1} to{" "}
-                {Math.min(
-                  pagination.currentPage * pagination.emailsPerPage,
-                  pagination.totalEmails
-                )}{" "}
-                of {pagination.totalEmails} emails
+                Showing {(pagination.currentPage - 1) * 10 + 1} to{" "}
+                {Math.min(pagination.currentPage * 10, pagination.totalEmails)} of{" "}
+                {pagination.totalEmails} emails
               </div>
 
-              {/* Pagination buttons */}
               <div className="flex space-x-2">
                 <button
                   onClick={() => handlePageChange(pagination.currentPage - 1)}
                   disabled={!pagination.hasPrevPage}
-                  className="btn btn-secondary"
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
 
-                {/* Page numbers - Show all pages */}
                 {[...Array(pagination.totalPages)].map((_, index) => {
                   const page = index + 1;
                   return (
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`btn ${
-                        page === pagination.currentPage
-                          ? "btn-primary"
-                          : "btn-secondary"
-                      }`}
+                      className={`px-3 py-2 border rounded-md text-sm font-medium ${page === pagination.currentPage
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                        }`}
                     >
                       {page}
                     </button>
@@ -330,7 +276,7 @@ export const EmailList: React.FC<EmailListProps> = ({
                 <button
                   onClick={() => handlePageChange(pagination.currentPage + 1)}
                   disabled={!pagination.hasNextPage}
-                  className="btn btn-secondary"
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -339,6 +285,7 @@ export const EmailList: React.FC<EmailListProps> = ({
           )}
         </>
       )}
+
       <EmailViewer
         emailId={viewingEmailId}
         isOpen={isViewerOpen}
