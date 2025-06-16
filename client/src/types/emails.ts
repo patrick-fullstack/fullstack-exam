@@ -1,6 +1,7 @@
 // Email interfaces
 export interface CreateEmailData {
   fromName: string;
+  fromEmail: string;
   toName: string;
   toEmail: string;
   subject: string;
