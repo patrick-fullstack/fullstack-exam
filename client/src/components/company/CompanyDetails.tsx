@@ -111,7 +111,7 @@ export function CompanyDetails({
             <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
               {company.logo ? (
                 <img
-                  src={company.logo}
+                  src={company.logo.medium}
                   alt={`${company.name} logo`}
                   className="w-full h-full object-cover"
                 />
@@ -136,10 +136,11 @@ export function CompanyDetails({
                 </span>
                 <button
                   onClick={copyToClipboard}
-                  className={`p-0.5 rounded transition-colors flex-shrink-0 ${copied
+                  className={`p-0.5 rounded transition-colors flex-shrink-0 ${
+                    copied
                       ? "text-green-600"
                       : "text-gray-400 hover:text-gray-600"
-                    }`}
+                  }`}
                   title="Copy Company ID"
                 >
                   <svg

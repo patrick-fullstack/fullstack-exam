@@ -30,7 +30,7 @@ export default function CreateEmailPage() {
         title="Create Email"
         variant="dashboard"
         onLogout={logout}
-        userAvatar={user?.avatar}
+        userAvatar={user?.avatar?.small}
         userName={user?.firstName}
       />
 
@@ -118,10 +118,7 @@ export default function CreateEmailPage() {
 
           {/* Email Form */}
           <div className="bg-white shadow rounded-lg p-6">
-            <EmailForm
-              onSuccess={handleSuccess}
-              resetForm={resetForm}
-            />
+            <EmailForm onSuccess={handleSuccess} resetForm={resetForm} />
           </div>
         </div>
       </main>

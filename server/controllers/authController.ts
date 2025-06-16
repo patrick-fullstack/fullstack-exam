@@ -25,7 +25,12 @@ interface LoginResponse {
       firstName: string;
       lastName: string;
       phone?: string;
-      avatar?: string;
+      avatar?: {
+        original?: string;
+        thumbnail?: string;
+        small?: string;
+        medium?: string;
+      };
       role: string;
       companyId?: string;
       isActive: boolean;
@@ -239,8 +244,11 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     // Validate file before uploading
     if (!validateFileUpload(req.file, res)) return;
 
-    const avatarUrl = await uploadToCloudinary(req.file.buffer, "user-avatars");
-    userData.avatar = avatarUrl;
+    const avatarUrls = await uploadToCloudinary(
+      req.file.buffer,
+      "user-avatars"
+    );
+    userData.avatar = avatarUrls;
   }
 
   const newUser = await User.create(userData);

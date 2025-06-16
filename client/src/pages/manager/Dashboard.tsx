@@ -14,7 +14,7 @@ export default function ManagerDashboard() {
         title="Manager Dashboard"
         variant="dashboard"
         onLogout={logout}
-        userAvatar={user?.avatar}
+        userAvatar={user?.avatar?.small}
         userName={user?.firstName}
       />
 
@@ -60,7 +60,7 @@ export default function ManagerDashboard() {
                 <div className="w-16 h-16 bg-green-800 rounded-full flex items-center justify-center">
                   {user?.avatar ? (
                     <img
-                      src={user.avatar}
+                      src={user.avatar.medium}
                       alt={user.firstName}
                       className="w-full h-full object-cover rounded-full"
                     />

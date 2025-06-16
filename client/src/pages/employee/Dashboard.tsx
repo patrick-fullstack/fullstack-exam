@@ -13,7 +13,7 @@ export default function EmployeeDashboard() {
         title="Employee Portal"
         variant="dashboard"
         onLogout={logout}
-        userAvatar={user?.avatar}
+        userAvatar={user?.avatar?.small}
         userName={user?.firstName}
       />
 
@@ -62,7 +62,7 @@ export default function EmployeeDashboard() {
                 <div className="w-16 h-16 bg-green-800 rounded-full flex items-center justify-center">
                   {user?.avatar ? (
                     <img
-                      src={user.avatar}
+                      src={user.avatar.thumbnail}
                       alt={user.firstName}
                       className="w-full h-full object-cover rounded-full"
                     />

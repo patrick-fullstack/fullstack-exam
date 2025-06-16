@@ -3,10 +3,7 @@ import { Link } from "react-router-dom";
 import { useCompany } from "../../contexts/CompanyContext";
 import type { CompanyCardProps } from "../../types/companies";
 
-export function CompanyCard({
-  company,
-  userRole,
-}: CompanyCardProps) {
+export function CompanyCard({ company, userRole }: CompanyCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { deleteCompany, deletingCompanyId } = useCompany();
 
@@ -78,7 +75,7 @@ export function CompanyCard({
             <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
               {company.logo ? (
                 <img
-                  src={company.logo}
+                  src={company.logo.small}
                   alt={`${company.name} logo`}
                   className="w-full h-full object-cover"
                 />

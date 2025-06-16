@@ -54,7 +54,7 @@ export default function CreateUserPage() {
         title="Create New User"
         variant="dashboard"
         onLogout={logout}
-        userAvatar={user?.avatar}
+        userAvatar={user?.avatar?.small}
         userName={user?.firstName}
       />
 

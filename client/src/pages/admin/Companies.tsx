@@ -22,7 +22,7 @@ export default function CompaniesPage() {
         title="Company Management"
         variant="dashboard"
         onLogout={logout}
-        userAvatar={user?.avatar}
+        userAvatar={user?.avatar?.small}
         userName={user?.firstName}
       />
 
