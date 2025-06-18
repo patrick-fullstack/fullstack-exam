@@ -1,10 +1,12 @@
+import type { ImageFormats } from "./image-format";
+
 export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
   phone?: string;
-  avatar?: string;
+  avatar?: ImageFormats;
   role: string;
   companyId?: string;
   isActive: boolean;
@@ -15,7 +17,7 @@ export interface User {
     name: string;
     email: string;
     website: string;
-    logo?: string;
+    logo?: ImageFormats;
   };
 }
 
@@ -46,6 +48,8 @@ export interface UpdateProfileRequest {
   password?: string;
   avatar?: File;
   companyId?: string;
+  role?: string;
+  isActive?: boolean;
 }
 
 export interface CreateUserData {

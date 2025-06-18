@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { emailService } from "../../services/email";
-import type { ScheduledEmail } from "../../types/emails";
+import React, { useEffect } from "react";
+import { useEmail } from "../../contexts/EmailContext";
 
 interface EmailViewerProps {
   emailId: string | null;
   isOpen: boolean;
   onClose: () => void;
-  onError: (error: string) => void;
+  onError?: (error: string) => void;
 }
 
 export const EmailViewer: React.FC<EmailViewerProps> = ({
@@ -15,35 +14,31 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
   onClose,
   onError,
 }) => {
-  const [email, setEmail] = useState<ScheduledEmail | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { currentEmail, getEmailById, setCurrentEmail, error, clearError } = useEmail();
 
   useEffect(() => {
     if (emailId && isOpen) {
       loadEmail();
     }
-  }, [emailId, isOpen]);
+
+    return () => {
+      if (!isOpen) {
+        setCurrentEmail(null);
+      }
+    };
+  }, [emailId, isOpen, getEmailById, setCurrentEmail]);
+
+  useEffect(() => {
+    if (error && onError) {
+      onError(error);
+      clearError();
+      onClose();
+    }
+  }, [error, onError, clearError, onClose]);
 
   const loadEmail = async () => {
     if (!emailId) return;
-
-    try {
-      setLoading(true);
-      const result = await emailService.getEmailById(emailId);
-
-      if (result.success && result.data) {
-        setEmail(result.data);
-      } else {
-        onError(result.error || "Failed to load email details");
-        onClose();
-      }
-    } catch (error) {
-      console.error("Load email details error:", error);
-      onError("Failed to load email details");
-      onClose();
-    } finally {
-      setLoading(false);
-    }
+    await getEmailById(emailId);
   };
 
   const getStatusColor = (status: string) => {
@@ -76,31 +71,35 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
     });
   };
 
+  const getTemplateDisplayName = (template: string) => {
+    const templateNames = {
+      default: "Default",
+      business: "Business Professional",
+    };
+    return templateNames[template as keyof typeof templateNames] || template;
+  };
+
   if (!isOpen) return null;
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black bg-opacity-60 z-50 transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal - Email Layout */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden">
-          {loading ? (
+          {!currentEmail ? (
             <div className="flex items-center justify-center py-32">
               <div className="flex flex-col items-center space-y-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                 <span className="text-gray-600 text-lg">Loading email...</span>
               </div>
             </div>
-          ) : email ? (
+          ) : (
             <>
-              {/* Email Header - Like Gmail */}
               <div className="border-b border-gray-200 bg-white">
-                {/* Top Bar */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100">
                   <div className="flex items-center space-x-3">
                     <button
@@ -118,7 +117,7 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M15 19l-7-7 7-7"
+                          d="M6 18L18 6M6 6l12 12"
                         />
                       </svg>
                     </button>
@@ -129,66 +128,59 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
 
                   <div className="flex items-center space-x-3">
                     <span
-                      className={`text-sm font-medium ${getStatusColor(
-                        email.status
-                      )}`}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(currentEmail.status)} bg-opacity-10`}
                     >
-                      {email.status.charAt(0).toUpperCase() +
-                        email.status.slice(1)}
+                      {currentEmail.status.charAt(0).toUpperCase() +
+                        currentEmail.status.slice(1)}
                     </span>
                     <div className="text-xs text-gray-500 font-mono">
-                      ID: {email._id.slice(-8)}
+                      ID: {currentEmail._id.slice(-8)}
                     </div>
                   </div>
                 </div>
 
-                {/* Email Subject */}
                 <div className="px-6 py-4">
                   <h1 className="text-2xl md:text-3xl font-normal text-gray-900 leading-tight">
-                    {email.subject}
+                    {currentEmail.subject}
                   </h1>
                 </div>
 
-                {/* Email Meta Info */}
                 <div className="px-6 pb-4">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-start space-x-3">
-                      {/* Avatar */}
                       <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-medium text-sm">
-                          {email.fromName.charAt(0).toUpperCase()}
+                          {currentEmail.fromName.charAt(0).toUpperCase()}
                         </span>
                       </div>
 
-                      {/* Sender Info */}
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
                           <span className="font-medium text-gray-900">
-                            {email.fromName}
+                            {currentEmail.fromName}
                           </span>
                           <span className="text-gray-500 text-sm">
-                            &lt;{email.fromEmail}&gt;
+                            &lt;{currentEmail.fromEmail}&gt;
                           </span>
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
                           <span>to </span>
-                          <span className="font-medium">{email.toName}</span>
+                          <span className="font-medium">{currentEmail.toName}</span>
                           <span className="text-gray-500">
                             {" "}
-                            &lt;{email.toEmail}&gt;
+                            &lt;{currentEmail.toEmail}&gt;
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Date */}
                     <div className="text-right">
                       <div className="text-sm text-gray-600">
-                        {formatDateShort(email.createdAt)}
+                        {formatDateShort(currentEmail.createdAt)}
                       </div>
-                      {email.sentAt && email.sentAt !== email.createdAt && (
+                      {currentEmail.sentAt && currentEmail.sentAt !== currentEmail.createdAt && (
                         <div className="text-xs text-green-600 mt-1">
-                          Sent: {formatDateShort(email.sentAt)}
+                          Sent: {formatDateShort(currentEmail.sentAt)}
                         </div>
                       )}
                     </div>
@@ -196,99 +188,87 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
                 </div>
               </div>
 
-              {/* Email Body */}
               <div className="overflow-y-auto max-h-[calc(95vh-240px)]">
                 <div className="p-6">
-                  {/* Main Email Content */}
                   <div className="prose prose-gray max-w-none">
                     <div className="whitespace-pre-wrap text-gray-900 leading-relaxed text-base">
-                      {email.message}
+                      {currentEmail.message}
                     </div>
                   </div>
 
-                  {/* Email Footer - Technical Details */}
                   <div className="mt-12 pt-6 border-t border-gray-200">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
-                      {/* Template */}
                       <div>
                         <div className="text-gray-500 font-medium mb-1">
                           Template
                         </div>
                         <div className="text-gray-900">
-                          {email.template === "default"
-                            ? "Default"
-                            : "Business Professional"}
+                          {getTemplateDisplayName(currentEmail.template)}
                         </div>
                       </div>
 
-                      {/* Delivery Method */}
                       <div>
                         <div className="text-gray-500 font-medium mb-1">
-                          Delivery
+                          Delivery Type
                         </div>
                         <div className="text-gray-900">
-                          {email.sendNow ? "Immediate" : "Scheduled"}
+                          {currentEmail.sendNow ? "Immediate" : "Scheduled"}
                         </div>
                       </div>
 
-                      {/* Created By */}
-                      {email.createdBy && (
+                      {currentEmail.createdBy && (
                         <div>
                           <div className="text-gray-500 font-medium mb-1">
                             Created By
                           </div>
                           <div className="text-gray-900">
-                            {email.createdBy.firstName}{" "}
-                            {email.createdBy.lastName}
+                            {currentEmail.createdBy.firstName}{" "}
+                            {currentEmail.createdBy.lastName}
                           </div>
                         </div>
                       )}
 
-                      {/* Company */}
-                      {email.companyId && (
+                      {currentEmail.companyId && (
                         <div>
                           <div className="text-gray-500 font-medium mb-1">
                             Company
                           </div>
                           <div className="text-gray-900">
-                            {email.companyId.name}
+                            {currentEmail.companyId.name}
                           </div>
                         </div>
                       )}
 
-                      {/* Scheduled For */}
-                      {email.scheduledFor && (
+                      {currentEmail.scheduledFor && (
                         <div>
                           <div className="text-gray-500 font-medium mb-1">
                             Scheduled For
                           </div>
                           <div className="text-gray-900">
-                            {formatDate(email.scheduledFor)}
+                            {formatDate(currentEmail.scheduledFor)}
                           </div>
                         </div>
                       )}
 
-                      {/* Failed At */}
-                      {email.failedAt && (
+                      {currentEmail.failedAt && (
                         <div>
                           <div className="text-red-500 font-medium mb-1">
                             Failed At
                           </div>
                           <div className="text-red-700">
-                            {formatDate(email.failedAt)}
+                            {formatDate(currentEmail.failedAt)}
                           </div>
                         </div>
                       )}
                     </div>
 
-                    {/* Error Message */}
-                    {email.errorMessage && (
+                    {currentEmail.errorMessage && (
                       <div className="mt-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-md">
                         <div className="text-red-700 font-medium mb-1">
                           Error Details
                         </div>
                         <div className="text-red-600 text-sm">
-                          {email.errorMessage}
+                          {currentEmail.errorMessage}
                         </div>
                       </div>
                     )}
@@ -296,33 +276,6 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
                 </div>
               </div>
             </>
-          ) : (
-            <div className="flex items-center justify-center py-32">
-              <div className="text-center">
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg
-                    className="w-10 h-10 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">
-                  Email not found
-                </h3>
-                <p className="text-gray-500">
-                  The email you're looking for doesn't exist or has been
-                  deleted.
-                </p>
-              </div>
-            </div>
           )}
         </div>
       </div>

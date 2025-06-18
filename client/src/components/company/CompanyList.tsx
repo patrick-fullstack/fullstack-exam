@@ -80,8 +80,9 @@ export function CompanyList({ userRole }: CompanyListProps) {
         {searchTerm && (
           <div className="mt-2 text-sm text-gray-500">
             {companies.length > 0
-              ? `Found ${pagination?.totalCompanies || 0} company${(pagination?.totalCompanies || 0) !== 1 ? "s" : ""
-              } matching "${searchTerm}"`
+              ? `Found ${pagination?.totalCompanies || 0} company${
+                  (pagination?.totalCompanies || 0) !== 1 ? "s" : ""
+                } matching "${searchTerm}"`
               : `No companies found matching "${searchTerm}"`}
           </div>
         )}
@@ -147,10 +148,11 @@ export function CompanyList({ userRole }: CompanyListProps) {
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`btn min-w-[40px] ${page === pagination.currentPage
+                      className={`btn min-w-[40px] ${
+                        page === pagination.currentPage
                           ? "btn-primary"
                           : "btn-secondary"
-                        }`}
+                      }`}
                     >
                       {page}
                     </button>

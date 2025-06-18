@@ -1,4 +1,5 @@
 import type { User } from "./user";
+import type { ImageFormats } from "./image-format";
 
 // API Error response interface
 export interface ApiErrorResponse {
@@ -30,7 +31,7 @@ export interface Company {
   id: string;
   name: string;
   email: string;
-  logo?: string;
+  logo?: ImageFormats;
   website: string;
   createdAt: string;
   updatedAt: string;
@@ -44,7 +45,7 @@ export interface CompanyEmployee {
   email: string;
   role: "manager" | "employee";
   isActive: boolean;
-  avatar?: string;
+  avatar?: ImageFormats;
   companyId?: string;
 }
 

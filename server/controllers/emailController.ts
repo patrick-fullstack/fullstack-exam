@@ -15,7 +15,7 @@ export const createScheduledEmail = asyncHandler(
     const currentUser = req.user!;
     const {
       fromName,
-      //   fromEmail,
+      fromEmail,
       toName,
       toEmail,
       subject,
@@ -28,7 +28,7 @@ export const createScheduledEmail = asyncHandler(
     // Simple validation
     if (
       !fromName ||
-      //   !fromEmail ||
+      !fromEmail ||
       !toName ||
       !toEmail ||
       !subject ||

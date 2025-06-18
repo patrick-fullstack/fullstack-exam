@@ -253,11 +253,11 @@ export const createCompany = asyncHandler(
       // Validate file before uploading
       if (!validateFileUpload(req.file, res)) return;
 
-      const logoUrl = await uploadToCloudinary(
+      const logoUrls = await uploadToCloudinary(
         req.file.buffer,
         "company-logos"
       );
-      companyData.logo = logoUrl;
+      companyData.logo = logoUrls;
     }
 
     const newCompany = await Company.create(companyData);
@@ -360,11 +360,11 @@ export const updateCompany = asyncHandler(
       // Validate file before uploading
       if (!validateFileUpload(req.file, res)) return;
 
-      const logoUrl = await uploadToCloudinary(
+      const logoUrls = await uploadToCloudinary(
         req.file.buffer,
         "company-logos"
       );
-      updateData.logo = logoUrl;
+      updateData.logo = logoUrls;
     }
 
     if (Object.keys(updateData).length === 0) {

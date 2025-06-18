@@ -1,3 +1,5 @@
+import type { ImageFormats } from "./image-format";
+
 export interface Notification {
   id: string;
   type: "user_created" | "user_updated" | "user_deleted";
@@ -8,7 +10,7 @@ export interface Notification {
     firstName: string;
     lastName: string;
     role: string;
-    avatar?: string;
+    avatar?: string | ImageFormats;
   };
   profileUrl: string;
   timestamp: string;
@@ -25,7 +27,7 @@ export interface NotificationData {
     firstName: string;
     lastName: string;
     role: string;
-    avatar?: string;
+    avatar?: string | ImageFormats;
   };
   profileUrl: string;
   timestamp: string;
