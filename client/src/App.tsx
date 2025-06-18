@@ -5,11 +5,14 @@ import {
   Navigate,
 } from "react-router-dom";
 import "./App.css";
+
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoutes";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { CompanyProvider } from "./contexts/CompanyContext";
 import { EmailProvider } from "./contexts/EmailContext";
+import { UserProvider } from "./contexts/UserContext";
+
 // Pages
 import PortalSelector from "./pages/PortalSelector";
 import AdminLogin from "./pages/admin/Login";
@@ -300,13 +303,15 @@ export default function App() {
   return (
     <Router>
       <AuthProvider>
-        <CompanyProvider>
-          <NotificationProvider>
-            <EmailProvider>
-              <AppRoutes />
-            </EmailProvider>
-          </NotificationProvider>
-        </CompanyProvider>
+        <UserProvider>
+          <CompanyProvider>
+            <NotificationProvider>
+              <EmailProvider>
+                <AppRoutes />
+              </EmailProvider>
+            </NotificationProvider>
+          </CompanyProvider>
+        </UserProvider>
       </AuthProvider>
     </Router>
   );

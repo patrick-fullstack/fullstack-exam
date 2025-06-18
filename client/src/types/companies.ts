@@ -45,7 +45,7 @@ export interface CompanyEmployee {
   email: string;
   role: "manager" | "employee";
   isActive: boolean;
-  avatar?: string;
+  avatar?: ImageFormats;
   companyId?: string;
 }
 

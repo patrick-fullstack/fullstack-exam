@@ -30,7 +30,7 @@ export default function CreateEmailPage() {
         title="Create Email"
         variant="dashboard"
         onLogout={logout}
-        userAvatar={user?.avatar?.small}
+        userAvatar={user?.avatar}
         userName={user?.firstName}
       />
 

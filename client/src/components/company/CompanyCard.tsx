@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCompany } from "../../contexts/CompanyContext";
 import type { CompanyCardProps } from "../../types/companies";
+import { CompanyLogo } from "../ui/OptimizedImage";
 
 export function CompanyCard({ company, userRole }: CompanyCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -72,19 +73,7 @@ export function CompanyCard({ company, userRole }: CompanyCardProps) {
       <div className="card hover:shadow-md transition-shadow">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-              {company.logo ? (
-                <img
-                  src={company.logo.small}
-                  alt={`${company.name} logo`}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-xl font-bold text-gray-500">
-                  {company.name.charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
+            <CompanyLogo company={company} context="card" />
 
             <div>
               <h3 className="font-semibold text-lg text-gray-900">

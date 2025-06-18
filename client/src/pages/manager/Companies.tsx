@@ -22,7 +22,7 @@ export default function ManagerCompaniesPage() {
         title="Company Directory"
         variant="dashboard"
         onLogout={logout}
-        userAvatar={user?.avatar?.small}
+        userAvatar={user?.avatar}
         userName={user?.firstName}
       />
 

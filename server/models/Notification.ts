@@ -11,7 +11,12 @@ export interface INotification extends Document {
       firstName: string;
       lastName: string;
       role: string;
-      avatar?: string;
+      avatar: {
+        original: { type: String };
+        thumbnail: { type: String };
+        small: { type: String };
+        medium: { type: String };
+      };
     };
     profileUrl: string;
   };
@@ -47,7 +52,12 @@ const NotificationSchema: Schema = new Schema(
         firstName: { type: String, required: true },
         lastName: { type: String, required: true },
         role: { type: String, required: true },
-        avatar: { type: String },
+        avatar: {
+          original: { type: String },
+          thumbnail: { type: String },
+          small: { type: String },
+          medium: { type: String },
+        },
       },
       profileUrl: { type: String, required: true },
     },

@@ -48,6 +48,8 @@ export interface UpdateProfileRequest {
   password?: string;
   avatar?: File;
   companyId?: string;
+  role?: string;
+  isActive?: boolean;
 }
 
 export interface CreateUserData {

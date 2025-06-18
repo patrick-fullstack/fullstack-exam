@@ -7,6 +7,7 @@ import type {
   CompanyDetailsProps,
   UpdateCompanyData,
 } from "../../types/companies";
+import { CompanyLogo } from "../ui/OptimizedImage";
 
 export function CompanyDetails({
   company,
@@ -108,19 +109,7 @@ export function CompanyDetails({
       <div className="card">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 md:mb-6 gap-4">
           <div className="flex items-start space-x-3 md:space-x-4">
-            <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
-              {company.logo ? (
-                <img
-                  src={company.logo.medium}
-                  alt={`${company.name} logo`}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-lg md:text-2xl font-bold text-gray-500">
-                  {company.name.charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
+            <CompanyLogo company={company} context="card" />
 
             <div className="flex-1 min-w-0">
               <h1 className="text-xl md:text-2xl font-bold text-gray-900 break-words">

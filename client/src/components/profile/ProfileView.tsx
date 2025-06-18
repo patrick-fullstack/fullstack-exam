@@ -1,22 +1,14 @@
-import React, { useState } from "react";
-import type { ProfileViewProps } from "../../types/user";
+import React from "react";
+import { AvatarImage } from "../ui/OptimizedImage";
+import { getImageUrl } from "../../utils/imageUtils";
+import { useUser } from "../../contexts/UserContext";
 
-export const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
-  const [showModal, setShowModal] = useState(false);
-
-  const formatRole = (role: string) => {
-    return role.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
-  };
-
-  const getImageUrl = (size: "medium") => {
-    if (!user.avatar) return null;
-    if (typeof user.avatar === "string") return user.avatar;
-    return user.avatar[size] || user.avatar.medium || null;
-  };
+export const ProfileView: React.FC = () => {
+  const { profileUser, isModalOpen, toggleModal, formatRole } = useUser();
+  const user = profileUser!;
 
   return (
     <div className="space-y-6">
-      {/* Profile Picture Section */}
       <div className="text-center pb-6 border-b border-gray-200">
         <h3 className="mb-4">Profile Picture</h3>
         <div className="flex justify-center">
@@ -26,33 +18,21 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
                 ? "cursor-pointer hover:ring-2 hover:ring-blue-300 transition-all duration-200"
                 : ""
             }`}
-            onClick={() => user.avatar && setShowModal(true)}
+            onClick={() => user.avatar && toggleModal()}
           >
-            {user.avatar ? (
-              <img
-                src={getImageUrl("small")}
-                alt={`${user.firstName} ${user.lastName}`}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-2xl font-bold text-gray-500">
-                {user.firstName.charAt(0)}
-                {user.lastName.charAt(0)}
-              </span>
-            )}
+            <AvatarImage user={user} context="profile" />
           </div>
         </div>
       </div>
 
-      {/* Medium Size Modal */}
-      {showModal && (
+      {isModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-          onClick={() => setShowModal(false)}
+          onClick={toggleModal}
         >
           <div className="relative">
             <button
-              onClick={() => setShowModal(false)}
+              onClick={toggleModal}
               className="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100"
             >
               <svg
@@ -70,15 +50,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
               </svg>
             </button>
             <img
-              src={getImageUrl("medium")}
+              src={getImageUrl(user.avatar, "medium") || ""}
               alt={`${user.firstName} ${user.lastName}`}
+              className="w-48 h-48 object-cover rounded-lg shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />
           </div>
         </div>
       )}
 
-      {/* Personal Information */}
       <div>
         <h3 className="mb-4">Personal Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -120,7 +100,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* Account Information */}
       <div>
         <h3 className="mb-4">Account Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -163,7 +142,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* Account Status */}
       <div>
         <h3 className="mb-4">Account Status</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

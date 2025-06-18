@@ -51,7 +51,7 @@ export default function CompanyEmployeeDetailPage() {
         title={company ? `${company.name} - Details` : "Company Details"}
         variant="dashboard"
         onLogout={logout}
-        userAvatar={user?.avatar?.small}
+        userAvatar={user?.avatar}
         userName={user?.firstName}
       />
 

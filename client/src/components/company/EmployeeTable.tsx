@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCompany } from "../../contexts/CompanyContext";
 import { useAuth } from "../../contexts/AuthContext";
 import type { EmployeeTableProps } from "../../types/companies";
+import { AvatarImage } from "../ui/OptimizedImage";
 
 export function EmployeeTable({ companyId }: EmployeeTableProps) {
   const navigate = useNavigate();
@@ -183,20 +184,7 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
                 className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
               >
                 <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                    {employee.avatar ? (
-                      <img
-                        src={employee.avatar.small}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-sm font-medium text-gray-600">
-                        {employee.firstName.charAt(0)}
-                        {employee.lastName.charAt(0)}
-                      </span>
-                    )}
-                  </div>
+                  <AvatarImage user={employee} context="card" />
                   <div className="flex-1">
                     <div className="font-medium">
                       {employee.firstName} {employee.lastName}
@@ -277,18 +265,7 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
                     <td className="py-4 px-4">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                          {employee.avatar ? (
-                            <img
-                              src={employee.avatar.small}
-                              alt=""
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-sm font-medium text-gray-600">
-                              {employee.firstName.charAt(0)}
-                              {employee.lastName.charAt(0)}
-                            </span>
-                          )}
+                          <AvatarImage user={employee} context="card" />
                         </div>
                         <div className="font-medium">
                           {employee.firstName} {employee.lastName}

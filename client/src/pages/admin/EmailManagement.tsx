@@ -43,7 +43,7 @@ export default function EmailManagementPage() {
         title="Email Management"
         variant="dashboard"
         onLogout={logout}
-        userAvatar={user?.avatar?.small}
+        userAvatar={user?.avatar}
         userName={user?.firstName}
       />
 

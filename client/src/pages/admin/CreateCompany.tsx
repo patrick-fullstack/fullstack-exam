@@ -38,7 +38,7 @@ export default function CreateCompanyPage() {
         title="Create Company"
         variant="dashboard"
         onLogout={logout}
-        userAvatar={user?.avatar?.small}
+        userAvatar={user?.avatar}
         userName={user?.firstName}
       />
 

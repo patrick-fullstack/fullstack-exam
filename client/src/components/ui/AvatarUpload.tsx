@@ -1,9 +1,12 @@
 import React, { useState, useRef } from "react";
+import { getImageUrl } from "../../utils/imageUtils";
+import type { ImageFormats } from "../../types/image-format";
 
 interface AvatarUploadProps {
-  currentAvatar?: string;
+  currentAvatar?: ImageFormats | string | null;
   onAvatarChange: (file: File | null) => void;
   disabled?: boolean;
+  context?: "profile" | "card" | "header";
 }
 
 export const AvatarUpload: React.FC<AvatarUploadProps> = ({
@@ -11,7 +14,9 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   onAvatarChange,
   disabled = false,
 }) => {
-  const [preview, setPreview] = useState<string | null>(currentAvatar || null);
+  const [preview, setPreview] = useState<string | null>(
+    getImageUrl(currentAvatar, "medium")
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {

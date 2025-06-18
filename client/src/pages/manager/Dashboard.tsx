@@ -1,6 +1,7 @@
 import { useAuth } from "../../contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { Header } from "../../components/layout/Header";
+import { AvatarImage } from "../../components/ui/OptimizedImage";
 
 export default function ManagerDashboard() {
   const { user, logout } = useAuth();
@@ -14,7 +15,7 @@ export default function ManagerDashboard() {
         title="Manager Dashboard"
         variant="dashboard"
         onLogout={logout}
-        userAvatar={user?.avatar?.small}
+        userAvatar={user?.avatar}
         userName={user?.firstName}
       />
 
@@ -57,19 +58,14 @@ export default function ManagerDashboard() {
 
               {/* Avatar Section */}
               <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-green-800 rounded-full flex items-center justify-center">
-                  {user?.avatar ? (
-                    <img
-                      src={user.avatar.medium}
-                      alt={user.firstName}
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  ) : (
-                    <span className="text-white text-xl font-bold">
-                      {user?.firstName?.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
+                <AvatarImage
+                  user={{
+                    firstName: user?.firstName || "",
+                    lastName: user?.lastName || "",
+                    avatar: user?.avatar,
+                  }}
+                  context="dashboard"
+                />
               </div>
             </div>
           </div>

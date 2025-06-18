@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { NotificationBell } from "../ui/NotificationBell";
+import { AvatarImage } from "../ui/OptimizedImage";
 import type { ImageFormats } from "../../types/image-format";
 
 interface HeaderProps {
@@ -71,28 +72,15 @@ export const Header: React.FC<HeaderProps> = ({
                 className="flex items-center space-x-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 title="Edit Profile"
               >
-                {/* Avatar */}
-                <div className="flex-shrink-0">
-                  {userAvatar ? (
-                    <img
-                      src={
-                        typeof userAvatar === "string"
-                          ? userAvatar
-                          : userAvatar.thumbnail ||
-                            userAvatar.small ||
-                            userAvatar.medium ||
-                            userAvatar.original ||
-                            ""
-                      }
-                      alt="Profile"
-                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-gray-300"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-green-600 flex items-center justify-center text-white text-xs sm:text-sm font-semibold">
-                      {userName ? userName.charAt(0).toUpperCase() : "👤"}
-                    </div>
-                  )}
-                </div>
+                <AvatarImage
+                  user={{
+                    firstName: userName || "",
+                    lastName: "",
+                    avatar: userAvatar,
+                  }}
+                  context="header"
+                  className="border-2 border-gray-300"
+                />
 
                 {/* User Name (hidden on mobile) */}
                 {userName && (
