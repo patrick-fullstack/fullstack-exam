@@ -9,7 +9,6 @@ const connectDB = async (): Promise<typeof mongoose> => {
 
   // Connect with serverless-optimized settings
   const conn = await mongoose.connect(env.MONGO_URI, {
-    bufferCommands: false,
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
@@ -19,6 +18,5 @@ const connectDB = async (): Promise<typeof mongoose> => {
 
   return conn;
 };
-
 
 export default connectDB;
