@@ -19,6 +19,11 @@ export const NotificationBell: React.FC = () => {
     }
   };
 
+  const handleViewAllClick = () => {
+    setIsOpen(false);
+    navigate("/notifications");
+  };
+
   const formatTime = (timestamp: string): string => {
     const now = new Date();
     const time = new Date(timestamp);
@@ -169,7 +174,10 @@ export const NotificationBell: React.FC = () => {
           {/* Footer */}
           {notifications.length > 10 && (
             <div className="p-3 border-t border-gray-200 text-center">
-              <button className="text-sm text-blue-600 hover:text-blue-800">
+              <button
+                onClick={handleViewAllClick}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
                 View all notifications ({notifications.length})
               </button>
             </div>

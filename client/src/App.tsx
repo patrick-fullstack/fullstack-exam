@@ -33,6 +33,7 @@ import AdminEmailManagement from "./pages/admin/EmailManagement";
 import AdminCreateEmail from "./pages/admin/CreateEmail";
 import ManagerEmailManagement from "./pages/manager/EmailManagement";
 import ManagerCreateEmail from "./pages/manager/CreateEmail";
+import NotificationPage from "./pages/Notification";
 
 function AppRoutes() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -275,6 +276,19 @@ function AppRoutes() {
             redirectTo="/"
           >
             <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* NOTIFICATION ROUTE */}
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute
+            requiredRoles={["super_admin", "manager", "employee"]}
+            redirectTo="/"
+          >
+            <NotificationPage />
           </ProtectedRoute>
         }
       />

@@ -32,7 +32,10 @@ export const ProfileView: React.FC = () => {
         >
           <div className="relative">
             <button
-              onClick={toggleModal}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleModal();
+              }}
               className="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100"
             >
               <svg
