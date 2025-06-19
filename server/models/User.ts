@@ -22,7 +22,12 @@ export interface IUser extends Document {
   firstName: string;
   lastName: string;
   phone?: string;
-  avatar?: string;
+  avatar?: {
+    original?: string;
+    thumbnail?: string;
+    small?: string;
+    medium?: string;
+  };
   role: UserRole;
   companyId?: mongoose.Types.ObjectId; // Optional for super admin
   isActive: boolean;
@@ -66,8 +71,10 @@ const userSchema = new Schema<IUser>(
       trim: true,
     },
     avatar: {
-      type: String,
-      default: null,
+      original: { type: String, default: null },
+      thumbnail: { type: String, default: null },
+      small: { type: String, default: null },
+      medium: { type: String, default: null },
     },
     role: {
       type: String,

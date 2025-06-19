@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { IScheduledEmail } from "../models/Email";
+import { format } from "path";
 
 // Email templates
 const emailTemplates = {
@@ -255,6 +256,7 @@ const emailTemplates = {
                 <div class="header-content">
                     <h1>${data.subject}</h1>
                     <div class="from-info">From ${data.fromName}</div>
+                    <div class="from-info">${data.fromEmail}</div>
                 </div>
             </div>
 
@@ -584,6 +586,7 @@ const emailTemplates = {
                 </div>
                 <h1 class="header-subject">${data.subject}</h1>
                 <div class="header-from">From: ${data.fromName}</div>
+                <div class="header-from">${data.fromEmail}</div>
             </div>
             
             <!-- Main Content -->
@@ -653,6 +656,7 @@ class EmailService {
     const htmlContent = template({
       subject: emailData.subject,
       fromName: emailData.fromName,
+      fromEmail: emailData.fromEmail,
       toName: emailData.toName,
       message: emailData.message,
     });

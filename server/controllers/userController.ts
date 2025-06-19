@@ -253,8 +253,11 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
     // Validate file before uploading
     if (!validateFileUpload(req.file, res)) return;
 
-    const avatarUrl = await uploadToCloudinary(req.file.buffer, "user-avatars");
-    updateData.avatar = avatarUrl;
+    const avatarUrls = await uploadToCloudinary(
+      req.file.buffer,
+      "user-avatars"
+    );
+    updateData.avatar = avatarUrls;
   }
 
   if (Object.keys(updateData).length === 0) {

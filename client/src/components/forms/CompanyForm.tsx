@@ -5,6 +5,7 @@ import type {
   CreateCompanyFormProps,
   EditCompanyFormProps,
 } from "../../types/companies";
+import { getImageUrl } from "../../utils/imageUtils";
 
 // Union type for props
 type CompanyFormProps = CreateCompanyFormProps | EditCompanyFormProps;
@@ -22,7 +23,7 @@ export function CompanyForm({
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(
-    company?.logo || null
+    company?.logo ? getImageUrl(company.logo, "medium") : null
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

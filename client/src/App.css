@@ -16,9 +16,9 @@
 
 /* Color Palette - Our theme colors */
 :root {
-  --primary-green: #065f46; /* Dark green */
-  --primary-green-hover: #047857; /* Slightly lighter green */
-  --primary-green-light: #d1fae5; /* Very light green */
+  --primary-green: #065f46;
+  --primary-green-hover: #047857;
+  --primary-green-light: #d1fae5;
   --background-white: #ffffff;
   --background-gray: #f9fafb;
   --text-dark: #1a1a1a;

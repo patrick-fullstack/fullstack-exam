@@ -1,33 +1,75 @@
 import cloudinary from "../config/cloudinary";
 
+export interface ImageFormats {
+  original: string;
+  thumbnail: string;
+  small: string;
+  medium: string;
+}
+
 export const uploadToCloudinary = async (
   buffer: Buffer,
   folder: string = "mini-crm",
   options: any = {}
-): Promise<string> => {
+): Promise<ImageFormats> => {
   return new Promise((resolve, reject) => {
     // Simple size mapping - company logos minimum 100x100
     const sizes = {
-      "user-avatars": { width: 300, height: 300 },
-      "company-logos": { width: 100, height: 100 },
+      "user-avatars": {
+        thumbnail: { width: 50, height: 50, crop: "fill" },
+        small: { width: 100, height: 100, crop: "fill" },
+        medium: { width: 200, height: 200, crop: "fill" },
+      },
+      "company-logos": {
+        thumbnail: { width: 100, height: 100, crop: "fill" },
+        small: { width: 200, height: 200, crop: "fill" },
+        medium: { width: 300, height: 300, crop: "fill" },
+      },
     };
 
     // Get size or use default
     const size = sizes[folder as keyof typeof sizes] || {
-      width: 300,
-      height: 300,
+      thumbnail: { width: 100, height: 100, crop: "fill" },
+      small: { width: 200, height: 200, crop: "fill" },
+      medium: { width: 300, height: 300, crop: "fill" },
     };
 
     cloudinary.uploader
       .upload_stream(
         {
           folder,
-          transformation: [{ ...size, crop: "fill" }, { quality: "auto" }],
           ...options,
         },
         (error, result) => {
           if (error) reject(error);
-          else resolve(result?.secure_url || "");
+          else if (!result) {
+            reject(new Error("Failed to upload image"));
+          } else {
+            const publicId = result.public_id;
+
+            const urls: ImageFormats = {
+              original: result.secure_url,
+              thumbnail: cloudinary.url(publicId, {
+                transformation: [
+                  { ...size.thumbnail, crop: "fill" },
+                  { quality: "auto" },
+                ],
+              }),
+              small: cloudinary.url(publicId, {
+                transformation: [
+                  { ...size.small, crop: "fill" },
+                  { quality: "auto" },
+                ],
+              }),
+              medium: cloudinary.url(publicId, {
+                transformation: [
+                  { ...size.medium, crop: "fill" },
+                  { quality: "auto" },
+                ],
+              }),
+            };
+            resolve(urls);
+          }
         }
       )
       .end(buffer);

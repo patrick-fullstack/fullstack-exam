@@ -2,16 +2,21 @@ import React, { useState, useEffect } from "react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { AvatarUpload } from "../ui/AvatarUpload";
-import { companyService } from "../../services/companies";
-import type { CreateUserData, CreateUserFormProps } from "../../types/user";
-import type { Company } from "../../types/companies";
+import { useUser } from "../../contexts/UserContext";
+import type { CreateUserData } from "../../types/user";
+import { CompanyLogo } from "../ui/OptimizedImage";
 
-export const CreateUserForm: React.FC<CreateUserFormProps> = ({
-  onSubmit,
-  loading = false,
-  error,
-  resetForm = false,
-}) => {
+export const CreateUserForm: React.FC = () => {
+  const {
+    createUser,
+    createUserLoading: loading,
+    createUserError: error,
+    resetCreateForm,
+    companies,
+    companiesLoading,
+    companiesError,
+  } = useUser();
+
   const initialFormState: CreateUserData = {
     email: "",
     password: "",
@@ -25,76 +30,55 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
 
   const [formData, setFormData] = useState<CreateUserData>(initialFormState);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Partial<CreateUserData>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [avatarKey, setAvatarKey] = useState(0);
 
-  // Company dropdown state
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [companiesLoading, setCompaniesLoading] = useState(false);
-  const [companiesError, setCompaniesError] = useState("");
-
-  // Fetch companies on component mount
+  // Reset form when resetCreateForm is true
   useEffect(() => {
-    const fetchCompanies = async () => {
-      setCompaniesLoading(true);
-      setCompaniesError("");
-
-      const response = await companyService.getCompanies({
-        page: 1,
-        limit: 100, // Get all companies
-      });
-
-      if (response.success) {
-        setCompanies(response.data.companies || []);
-      } else {
-        setCompaniesError("Failed to load companies");
-      }
-
-      setCompaniesLoading(false);
-    };
-
-    fetchCompanies();
-  }, []);
-
-  useEffect(() => {
-    if (resetForm) {
-      // Reset all form data to initial state
+    if (resetCreateForm) {
       setFormData(initialFormState);
       setAvatarFile(null);
-      setFieldErrors({}); // Clear all field errors
+      setFieldErrors({});
       setAvatarKey((prev) => prev + 1);
     }
-  }, [resetForm]);
+  }, [resetCreateForm]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     // Clear field error when user starts typing
     if (fieldErrors[name as keyof CreateUserData]) {
-      setFieldErrors((prev) => ({
-        ...prev,
-        [name]: undefined,
-      }));
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
   const validateForm = (): boolean => {
-    const errors: Partial<CreateUserData> = {};
+    const errors: Record<string, string> = {};
+    const requiredFields: (keyof CreateUserData)[] = [
+      "email",
+      "password",
+      "confirmPassword",
+      "firstName",
+      "lastName",
+      "phone",
+    ];
 
     // Required field validation
-    if (!formData.email) errors.email = "Email is required";
-    if (!formData.password) errors.password = "Password is required";
-    if (!formData.confirmPassword)
-      errors.confirmPassword = "Confirm password is required";
-    if (!formData.firstName) errors.firstName = "First name is required";
-    if (!formData.lastName) errors.lastName = "Last name is required";
-    if (!formData.phone) errors.phone = "Phone is required";
+    requiredFields.forEach((field) => {
+      if (!formData[field]) {
+        errors[field] = `${
+          field.charAt(0).toUpperCase() +
+          field.slice(1).replace(/([A-Z])/g, " $1")
+        } is required`;
+      }
+    });
 
     // Email validation
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
@@ -111,8 +95,8 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
       errors.confirmPassword = "Passwords do not match";
     }
 
-    // Company ID validation for non-super admin roles
-    if (formData.role !== "super_admin" && !formData.companyId) {
+    // Company ID validation
+    if (!formData.companyId) {
       errors.companyId = "Please select a company";
     }
 
@@ -122,30 +106,16 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
 
-    if (!validateForm()) {
-      return;
-    }
-
-    const submitData = {
+    await createUser({
       ...formData,
       avatar: avatarFile || undefined,
-    };
-
-    await onSubmit(submitData);
+    });
   };
 
   const handleReset = () => {
-    setFormData({
-      email: "",
-      password: "",
-      confirmPassword: "",
-      firstName: "",
-      lastName: "",
-      phone: "",
-      role: "employee",
-      companyId: "",
-    });
+    setFormData(initialFormState);
     setAvatarFile(null);
     setFieldErrors({});
     setAvatarKey((prev) => prev + 1);
@@ -153,11 +123,10 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Alert Messages */}
-      {error && <div className="alert alert-error">{error}</div>}
-      {companiesError && <div className="alert alert-error">{companiesError}</div>}
+      {(error || companiesError) && (
+        <div className="alert alert-error">{error || companiesError}</div>
+      )}
 
-      {/* Avatar Upload */}
       <div className="text-center">
         <h3 className="mb-4">Profile Picture (Optional)</h3>
         <AvatarUpload
@@ -165,10 +134,10 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
           onAvatarChange={setAvatarFile}
           disabled={loading}
           currentAvatar={undefined}
+          context="profile"
         />
       </div>
 
-      {/* Personal Information */}
       <div>
         <h3 className="mb-4">Personal Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -217,11 +186,9 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
         </div>
       </div>
 
-      {/* Account Information */}
       <div>
         <h3 className="mb-4">Account Information</h3>
 
-        {/* Role Selection */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Role *
@@ -238,39 +205,62 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
           </select>
         </div>
 
-        {/* Company Selection */}
-        {formData.role !== "super_admin" && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Company *
-            </label>
-            <select
-              name="companyId"
-              value={formData.companyId}
-              onChange={handleInputChange}
-              disabled={loading || companiesLoading}
-              className={`input-field ${fieldErrors.companyId ? "border-red-500" : ""}`}
-            >
-              <option value="">
-                {companiesLoading ? "Loading companies..." : "Select a company"}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Company *
+          </label>
+          <select
+            name="companyId"
+            value={formData.companyId}
+            onChange={handleInputChange}
+            disabled={loading || companiesLoading}
+            className={`input-field ${
+              fieldErrors.companyId ? "border-red-500" : ""
+            }`}
+          >
+            <option value="">
+              {companiesLoading ? "Loading companies..." : "Select a company"}
+            </option>
+            {companies.map((company) => (
+              <option key={company.id} value={company.id}>
+                {company.name}
               </option>
-              {companies.map((company) => (
-                <option key={company.id} value={company.id}>
-                  {company.name} - {company.email}
-                </option>
-              ))}
-            </select>
-            {fieldErrors.companyId && (
-              <p className="text-sm text-red-600 mt-1">{fieldErrors.companyId}</p>
-            )}
-            {companies.length === 0 && !companiesLoading && !companiesError && (
-              <p className="text-sm text-gray-500 mt-1">No companies available</p>
-            )}
-          </div>
-        )}
+            ))}
+          </select>
+
+          {formData.companyId && (
+            <div className="mt-2 p-2 bg-gray-50 rounded border">
+              {(() => {
+                const selectedCompany = companies.find(
+                  (c) => c.id === formData.companyId
+                );
+                return (
+                  selectedCompany && (
+                    <div className="flex items-center space-x-2">
+                      <CompanyLogo company={selectedCompany} context="card" />
+                      <div>
+                        <p className="text-sm font-medium">
+                          {selectedCompany.name}
+                        </p>
+                        {selectedCompany.website && (
+                          <p className="text-xs text-gray-500">
+                            {selectedCompany.website}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                );
+              })()}
+            </div>
+          )}
+
+          {fieldErrors.companyId && (
+            <p className="text-sm text-red-600 mt-1">{fieldErrors.companyId}</p>
+          )}
+        </div>
       </div>
 
-      {/* Password Section */}
       <div>
         <h3 className="mb-4">Security</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -298,7 +288,6 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
         <button
           type="button"

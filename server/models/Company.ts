@@ -5,7 +5,12 @@ export interface ICompany extends Document {
   _id: mongoose.Types.ObjectId; // unique identifier
   name: string;
   email: string;
-  logo?: string;
+  logo?: {
+    original?: string;
+    thumbnail?: string;
+    small?: string;
+    medium?: string;
+  };
   website: string;
   createdAt: Date;
   updatedAt: Date;
@@ -33,8 +38,10 @@ const companySchema = new Schema<ICompany>(
       },
     },
     logo: {
-      type: String,
-      default: null,
+      original: { type: String, default: null },
+      thumbnail: { type: String, default: null },
+      small: { type: String, default: null },
+      medium: { type: String, default: null },
     },
     website: {
       type: String,
