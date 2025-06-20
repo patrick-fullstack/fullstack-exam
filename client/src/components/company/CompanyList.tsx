@@ -1,18 +1,19 @@
 import { useEffect } from "react";
 import { CompanyCard } from "./CompanyCard";
-import { useCompany } from "../../contexts/CompanyContext";
+import { useCompanyList } from "../../hooks/company/useCompanyList";
 import type { CompanyListProps } from "../../types/companies";
 
 export function CompanyList({ userRole }: CompanyListProps) {
+  // Use custom hook instead of context
   const {
     companies,
-    companiesLoading: loading,
-    companiesPagination: pagination,
-    companiesSearchTerm: searchTerm,
+    loading,
+    pagination,
+    searchTerm,
     fetchCompanies,
     searchCompanies,
-    clearCompaniesSearch,
-  } = useCompany();
+    clearSearch,
+  } = useCompanyList();
 
   useEffect(() => {
     fetchCompanies();
@@ -25,7 +26,6 @@ export function CompanyList({ userRole }: CompanyListProps) {
   const handlePageChange = (page: number) => {
     fetchCompanies(page, searchTerm);
   };
-
   return (
     <div className="px-2 sm:px-4">
       <div className="mb-6">
@@ -55,7 +55,7 @@ export function CompanyList({ userRole }: CompanyListProps) {
           {searchTerm && (
             <div className="absolute inset-y-0 right-0 flex items-center">
               <button
-                onClick={clearCompaniesSearch}
+                onClick={clearSearch}
                 className="mr-3 p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors"
                 title="Clear search"
               >

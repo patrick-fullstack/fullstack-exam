@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { EmployeeTable } from "./EmployeeTable";
 import { CompanyForm } from "../forms/CompanyForm";
-import { useCompany } from "../../contexts/CompanyContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { useCompanyUpdate } from "../../hooks/company/useCompanyUpdate";
+import { useCompanyExport } from "../../hooks/company/useCompanyExport";
 import type {
   CompanyDetailsProps,
   UpdateCompanyData,
@@ -12,23 +13,34 @@ import { CompanyLogo } from "../ui/OptimizedImage";
 export function CompanyDetails({
   company,
   companyId,
-  loading,
+  loading: initialLoading,
   onUpdate,
 }: CompanyDetailsProps) {
   const [copied, setCopied] = useState(false);
   const { user } = useAuth();
+
+  // Use custom hooks instead of context
   const {
     isEditing,
     updating,
-    isExporting,
-    error,
-    success,
-    currentCompany,
-    setIsEditing,
+    error: updateError,
+    success: updateSuccess,
     updateCompany,
+    setIsEditing,
+    clearMessages: clearUpdateMessages,
+  } = useCompanyUpdate();
+
+  const {
+    isExporting,
+    error: exportError,
+    success: exportSuccess,
     exportCompanyCSV,
-    clearMessages,
-  } = useCompany();
+    clearMessages: clearExportMessages,
+  } = useCompanyExport();
+
+  // Combine errors and success messages
+  const error = updateError || exportError;
+  const success = updateSuccess || exportSuccess;
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(companyId);
@@ -47,25 +59,37 @@ export function CompanyDetails({
 
   const handleEditClick = () => {
     setIsEditing(true);
-    clearMessages();
+    clearUpdateMessages();
+    clearExportMessages();
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    clearMessages();
+    clearUpdateMessages();
+    clearExportMessages();
   };
 
   const handleUpdateCompany = async (updateData: UpdateCompanyData) => {
-    const result = await updateCompany(companyId, updateData);
-    if (result && onUpdate && currentCompany) {
-      onUpdate(currentCompany);
+    const success = await updateCompany(companyId, updateData);
+    if (success && onUpdate) {
+      onUpdate(company);
     }
   };
 
-  if (loading) {
+  if (initialLoading) {
+    return <div className="loading">Loading...</div>;
+  }
+
+  if (isEditing && canEdit) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="loading loading-spinner loading-lg"></div>
+      <div className="edit-form">
+        {/* Edit form */}
+        <CompanyForm
+          company={company}
+          mode="edit"
+          onSubmit={handleUpdateCompany}
+          loading={updating}
+        />
       </div>
     );
   }

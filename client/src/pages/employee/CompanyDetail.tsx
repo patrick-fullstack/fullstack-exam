@@ -1,13 +1,14 @@
 import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCompany } from "../../contexts/CompanyContext";
+import { useCompanyDetails } from "../../hooks/company/useCompanyDetails";
 import { Header } from "../../components/layout/Header";
 import { CompanyDetails } from "../../components/company/CompanyDetails";
 
 export default function CompanyEmployeeDetailPage() {
   const { user, logout } = useAuth();
   const { companyId } = useParams<{ companyId: string }>();
+
   const {
     currentCompany: company,
     currentCompanyLoading: loading,
@@ -15,32 +16,17 @@ export default function CompanyEmployeeDetailPage() {
     fetchCompany,
     clearCurrentCompany,
     clearMessages,
-    setError,
-  } = useCompany();
+  } = useCompanyDetails();
 
-  // Fetch company with access control
   useEffect(() => {
     if (!companyId || !user) return;
 
-    // Check if employee is accessing their own company
-    if (user.role === "employee" && user.companyId !== companyId) {
-      setError("Access denied. You can only view your own company.");
-      return;
-    }
-
     clearMessages();
-    fetchCompany(companyId);
+    // Pass the user object to fetchCompany for access control
+    fetchCompany(companyId, user);
 
-    // Cleanup on unmount
     return () => clearCurrentCompany();
-  }, [
-    companyId,
-    user,
-    fetchCompany,
-    clearCurrentCompany,
-    clearMessages,
-    setError,
-  ]);
+  }, [companyId, user, fetchCompany, clearCurrentCompany, clearMessages]);
 
   return (
     <div

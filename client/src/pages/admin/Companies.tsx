@@ -1,15 +1,16 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCompany } from "../../contexts/CompanyContext";
+import { useCompanyList } from "../../hooks/company/useCompanyList";
 import { Header } from "../../components/layout/Header";
 import { CompanyList } from "../../components/company/CompanyList";
 
 export default function CompaniesPage() {
   const { user, logout } = useAuth();
-  const { clearMessages } = useCompany();
 
-  // Clear messages on mount
+  // Use custom hook instead of context
+  const { clearMessages } = useCompanyList();
+
   useEffect(() => {
     clearMessages();
   }, [clearMessages]);

@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useCompany } from "../../contexts/CompanyContext";
+import { useCompanyDelete } from "../../hooks/company/useCompanyDelete";
 import type { CompanyCardProps } from "../../types/companies";
 import { CompanyLogo } from "../ui/OptimizedImage";
 
 export function CompanyCard({ company, userRole }: CompanyCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const { deleteCompany, deletingCompanyId } = useCompany();
 
-  const isDeleting = deletingCompanyId === company.id;
+  const { deleteCompany, isDeleting } = useCompanyDelete();
 
   const handleDeleteClick = () => {
     setShowDeleteConfirm(true);

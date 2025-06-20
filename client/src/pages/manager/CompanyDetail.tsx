@@ -1,13 +1,14 @@
 import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCompany } from "../../contexts/CompanyContext";
+import { useCompanyDetails } from "../../hooks/company/useCompanyDetails";
 import { Header } from "../../components/layout/Header";
 import { CompanyDetails } from "../../components/company/CompanyDetails";
 
-export default function ManagerCompanyDetailPage() {
+export default function CompanyEmployeeDetailPage() {
   const { user, logout } = useAuth();
   const { companyId } = useParams<{ companyId: string }>();
+
   const {
     currentCompany: company,
     currentCompanyLoading: loading,
@@ -15,16 +16,15 @@ export default function ManagerCompanyDetailPage() {
     fetchCompany,
     clearCurrentCompany,
     clearMessages,
-  } = useCompany();
+  } = useCompanyDetails();
 
-  // Fetch company when companyId changes
   useEffect(() => {
-    if (companyId && user) {
-      clearMessages();
-      fetchCompany(companyId);
-    }
+    if (!companyId || !user) return;
 
-    // Cleanup on unmount
+    clearMessages();
+    // Pass the user object to fetchCompany for access control
+    fetchCompany(companyId, user);
+
     return () => clearCurrentCompany();
   }, [companyId, user, fetchCompany, clearCurrentCompany, clearMessages]);
 

@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCompany } from "../../contexts/CompanyContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { useEmployeeList } from "../../hooks/company/useEmployeeList";
 import type { EmployeeTableProps } from "../../types/companies";
 import { AvatarImage } from "../ui/OptimizedImage";
 
 export function EmployeeTable({ companyId }: EmployeeTableProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Use custom hook instead of context
   const {
     employees,
     employeesLoading: loading,
@@ -18,51 +20,58 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
     searchEmployees,
     clearEmployeesSearch,
     deleteEmployee,
-  } = useCompany();
+  } = useEmployeeList();
 
   const [roleFilter, setRoleFilter] = useState<string>("");
 
   useEffect(() => {
-    if (companyId) fetchEmployees(companyId, 1, searchTerm);
+    if (companyId) fetchEmployees(companyId, 1, searchTerm, roleFilter);
   }, [companyId, fetchEmployees, searchTerm, roleFilter]);
 
-  const handleSearch = (value: string) => searchEmployees(value);
-  const handleRoleChange = (role: string) => setRoleFilter(role);
+  const handleSearch = (value: string) => {
+    searchEmployees(companyId, value, roleFilter);
+  };
+
+  const handleRoleChange = (role: string) => {
+    setRoleFilter(role);
+    searchEmployees(companyId, searchTerm, role);
+  };
+
   const handleClearFilters = () => {
     setRoleFilter("");
-    clearEmployeesSearch();
+    clearEmployeesSearch(companyId);
   };
-  const handlePageChange = (page: number) =>
-    fetchEmployees(companyId, page, searchTerm);
-  const handleRowClick = (userId: string) => navigate(`/profile/${userId}`);
+
+  const handlePageChange = (page: number) => {
+    fetchEmployees(companyId, page, searchTerm, roleFilter);
+  };
+
+  const handleRowClick = (userId: string) => {
+    navigate(`/profile/${userId}`);
+  };
+
   const handleEditClick = (e: React.MouseEvent, userId: string) => {
     e.stopPropagation();
     navigate(`/profile/${userId}?edit=true`);
   };
+
   const handleDeleteUser = async (e: React.MouseEvent, userId: string) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this user?"))
+    if (window.confirm("Are you sure you want to delete this user?")) {
       await deleteEmployee(userId);
+    }
   };
 
   const canEdit = () =>
-    user && (user.role === "super_admin" || user.role === "manager");
+    user?.role === "super_admin" || user?.role === "manager";
+
   const canDelete = (employeeId: string) =>
-    user && user.role === "super_admin" && employeeId !== user.id;
+    user?.role === "super_admin" && employeeId !== user.id;
 
   // Filter employees based on role
   const filteredEmployees = roleFilter
     ? employees.filter((emp) => emp.role === roleFilter)
     : employees;
-
-  if (!companyId)
-    return (
-      <div className="card">
-        <div className="text-center py-8 text-gray-500">
-          No company selected
-        </div>
-      </div>
-    );
 
   return (
     <div className="card">

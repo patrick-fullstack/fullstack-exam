@@ -1,26 +1,22 @@
 import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCompany } from "../../contexts/CompanyContext";
+import { useCompanyCreate } from "../../hooks/company/useCompanyCreate";
 import { Header } from "../../components/layout/Header";
 import { CompanyForm } from "../../components/forms/CompanyForm";
 
 export default function CreateCompanyPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const {
-    createCompany,
-    companiesLoading: creating,
-    success,
-    clearMessages,
-  } = useCompany();
 
-  // Clear messages on mount
+  // Use custom hook instead of context
+  const { createCompany, isCreating, success, error, clearMessages } =
+    useCompanyCreate();
+
   useEffect(() => {
     clearMessages();
   }, [clearMessages]);
 
-  // Auto-navigate on success
   useEffect(() => {
     if (success && success.includes("created successfully")) {
       const timer = setTimeout(() => {
@@ -60,7 +56,6 @@ export default function CreateCompanyPage() {
             <p className="text-gray-600">Add a new company to the system</p>
           </div>
 
-          {/* Context provides success messages */}
           {success && (
             <div className="alert alert-success mb-6">
               {success}
@@ -70,10 +65,11 @@ export default function CreateCompanyPage() {
             </div>
           )}
 
-          {/* Use context method directly */}
+          {error && <div className="alert alert-error mb-6">{error}</div>}
+
           <CompanyForm
             onSubmit={createCompany}
-            loading={creating}
+            loading={isCreating}
             mode="create"
           />
         </div>
