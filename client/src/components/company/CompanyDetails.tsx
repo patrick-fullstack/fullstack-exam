@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EmployeeTable } from "./EmployeeTable";
 import { CompanyForm } from "../forms/CompanyForm";
-import { useCompany } from "../../contexts/CompanyContext";
+import { useCompany } from "../../hooks/company/queries/useCompany";
+import { useUpdate } from "../../hooks/company/mutations/useUpdate";
+import { useExport } from "../../hooks/company/mutations/useExport";
 import { useAuth } from "../../contexts/AuthContext";
 import type {
   CompanyDetailsProps,
@@ -16,19 +18,27 @@ export function CompanyDetails({
   onUpdate,
 }: CompanyDetailsProps) {
   const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const { user } = useAuth();
+
+  const { company: updatedCompany, setCompany } = useCompany();
   const {
-    isEditing,
-    updating,
-    isExporting,
-    error,
-    success,
-    currentCompany,
-    setIsEditing,
     updateCompany,
+    loading: updating,
+    error: updateError,
+    success: updateSuccess,
+    clearMessages: clearUpdateMessages,
+  } = useUpdate();
+  const {
     exportCompanyCSV,
-    clearMessages,
-  } = useCompany();
+    loading: isExporting,
+    error: exportError,
+    success: exportSuccess,
+    clearMessages: clearExportMessages,
+  } = useExport();
+
+  const error = updateError || exportError;
+  const success = updateSuccess || exportSuccess;
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(companyId);
@@ -47,20 +57,44 @@ export function CompanyDetails({
 
   const handleEditClick = () => {
     setIsEditing(true);
-    clearMessages();
+    clearUpdateMessages();
+    clearExportMessages();
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    clearMessages();
+    clearUpdateMessages();
+    clearExportMessages();
   };
 
   const handleUpdateCompany = async (updateData: UpdateCompanyData) => {
     const result = await updateCompany(companyId, updateData);
-    if (result && onUpdate && currentCompany) {
-      onUpdate(currentCompany);
+    if (result) {
+      setCompany(result);
+      if (onUpdate) {
+        onUpdate(result);
+      }
+      setIsEditing(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      clearUpdateMessages();
+      clearExportMessages();
+    };
+  }, [clearUpdateMessages, clearExportMessages]);
+
+  useEffect(() => {
+    if (updateSuccess) {
+      const timer = setTimeout(() => {
+        clearUpdateMessages();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [updateSuccess, clearUpdateMessages]);
+
+  const displayCompany = updatedCompany || company;
 
   if (loading) {
     return (
@@ -73,7 +107,6 @@ export function CompanyDetails({
   if (isEditing && canEdit) {
     return (
       <div className="space-y-4 md:space-y-6">
-        {success && <div className="alert alert-success">{success}</div>}
         {error && <div className="alert alert-error">{error}</div>}
 
         <div className="card">
@@ -91,7 +124,7 @@ export function CompanyDetails({
           </div>
 
           <CompanyForm
-            company={company}
+            company={displayCompany}
             mode="edit"
             onSubmit={handleUpdateCompany}
             loading={updating}
@@ -109,14 +142,14 @@ export function CompanyDetails({
       <div className="card">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 md:mb-6 gap-4">
           <div className="flex items-start space-x-3 md:space-x-4">
-            <CompanyLogo company={company} context="card" />
+            <CompanyLogo company={displayCompany} context="card" />
 
             <div className="flex-1 min-w-0">
               <h1 className="text-xl md:text-2xl font-bold text-gray-900 break-words">
-                {company.name}
+                {displayCompany.name}
               </h1>
               <p className="text-sm md:text-base text-gray-600 break-all">
-                {company.email}
+                {displayCompany.email}
               </p>
               <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
                 <span className="hidden sm:inline">ID:</span>
@@ -220,15 +253,15 @@ export function CompanyDetails({
             </label>
             <a
               href={
-                company.website.startsWith("http")
-                  ? company.website
-                  : `https://${company.website}`
+                displayCompany.website.startsWith("http")
+                  ? displayCompany.website
+                  : `https://${displayCompany.website}`
               }
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:text-blue-800 break-all text-sm md:text-base"
             >
-              {company.website}
+              {displayCompany.website}
             </a>
           </div>
 
@@ -237,7 +270,7 @@ export function CompanyDetails({
               Created Date
             </label>
             <div className="text-gray-900 text-sm md:text-base">
-              {new Date(company.createdAt).toLocaleDateString()}
+              {new Date(displayCompany.createdAt).toLocaleDateString()}
             </div>
           </div>
 
@@ -246,7 +279,7 @@ export function CompanyDetails({
               Last Updated
             </label>
             <div className="text-gray-900 text-sm md:text-base">
-              {new Date(company.updatedAt).toLocaleDateString()}
+              {new Date(displayCompany.updatedAt).toLocaleDateString()}
             </div>
           </div>
         </div>

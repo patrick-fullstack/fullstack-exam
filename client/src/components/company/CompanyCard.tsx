@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useCompany } from "../../contexts/CompanyContext";
+import { useDelete } from "../../hooks/company/mutations/useDelete";
 import type { CompanyCardProps } from "../../types/companies";
 import { CompanyLogo } from "../ui/OptimizedImage";
 
-export function CompanyCard({ company, userRole }: CompanyCardProps) {
+export function CompanyCard({
+  company,
+  userRole,
+  onDeleteSuccess,
+}: CompanyCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const { deleteCompany, deletingCompanyId } = useCompany();
+  const { deleteCompany, deletingId } = useDelete();
 
-  const isDeleting = deletingCompanyId === company.id;
+  const isDeleting = deletingId === company.id;
 
   const handleDeleteClick = () => {
     setShowDeleteConfirm(true);
@@ -16,7 +20,12 @@ export function CompanyCard({ company, userRole }: CompanyCardProps) {
 
   const confirmDelete = async () => {
     setShowDeleteConfirm(false);
-    await deleteCompany(company.id);
+    const success = await deleteCompany(company.id);
+
+    // If deletion was successful and callback provided, call it
+    if (success && onDeleteSuccess) {
+      onDeleteSuccess();
+    }
   };
 
   const cancelDelete = () => {
@@ -62,8 +71,9 @@ export function CompanyCard({ company, userRole }: CompanyCardProps) {
               <button
                 onClick={confirmDelete}
                 className="btn bg-red-600 hover:bg-red-700 text-white"
+                disabled={isDeleting}
               >
-                Delete
+                {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

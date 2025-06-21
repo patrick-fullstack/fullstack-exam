@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { useEmail } from "../../contexts/EmailContext";
+import React, { useEffect, useCallback } from "react";
+import { useEmail } from "../../hooks/email/queries/useEmail";
 
 interface EmailViewerProps {
   emailId: string | null;
@@ -14,7 +14,14 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
   onClose,
   onError,
 }) => {
-  const { currentEmail, getEmailById, setCurrentEmail, error, clearError } = useEmail();
+  // Only use the single email query hook
+  const { currentEmail, getEmailById, setCurrentEmail, error, loading } =
+    useEmail();
+
+  const loadEmail = useCallback(async () => {
+    if (!emailId) return;
+    await getEmailById(emailId);
+  }, [emailId, getEmailById]);
 
   useEffect(() => {
     if (emailId && isOpen) {
@@ -26,20 +33,14 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
         setCurrentEmail(null);
       }
     };
-  }, [emailId, isOpen, getEmailById, setCurrentEmail]);
+  }, [emailId, isOpen, loadEmail, setCurrentEmail]);
 
   useEffect(() => {
     if (error && onError) {
       onError(error);
-      clearError();
       onClose();
     }
-  }, [error, onError, clearError, onClose]);
-
-  const loadEmail = async () => {
-    if (!emailId) return;
-    await getEmailById(emailId);
-  };
+  }, [error, onError, onClose]);
 
   const getStatusColor = (status: string) => {
     const colors = {
@@ -90,7 +91,7 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
 
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden">
-          {!currentEmail ? (
+          {!currentEmail || loading ? (
             <div className="flex items-center justify-center py-32">
               <div className="flex flex-col items-center space-y-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -128,7 +129,9 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
 
                   <div className="flex items-center space-x-3">
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(currentEmail.status)} bg-opacity-10`}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                        currentEmail.status
+                      )} bg-opacity-10`}
                     >
                       {currentEmail.status.charAt(0).toUpperCase() +
                         currentEmail.status.slice(1)}
@@ -165,7 +168,9 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
                           <span>to </span>
-                          <span className="font-medium">{currentEmail.toName}</span>
+                          <span className="font-medium">
+                            {currentEmail.toName}
+                          </span>
                           <span className="text-gray-500">
                             {" "}
                             &lt;{currentEmail.toEmail}&gt;
@@ -178,11 +183,12 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
                       <div className="text-sm text-gray-600">
                         {formatDateShort(currentEmail.createdAt)}
                       </div>
-                      {currentEmail.sentAt && currentEmail.sentAt !== currentEmail.createdAt && (
-                        <div className="text-xs text-green-600 mt-1">
-                          Sent: {formatDateShort(currentEmail.sentAt)}
-                        </div>
-                      )}
+                      {currentEmail.sentAt &&
+                        currentEmail.sentAt !== currentEmail.createdAt && (
+                          <div className="text-xs text-green-600 mt-1">
+                            Sent: {formatDateShort(currentEmail.sentAt)}
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div>

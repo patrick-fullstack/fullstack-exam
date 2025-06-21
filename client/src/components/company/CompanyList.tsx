@@ -1,18 +1,18 @@
 import { useEffect } from "react";
 import { CompanyCard } from "./CompanyCard";
-import { useCompany } from "../../contexts/CompanyContext";
+import { useCompanies } from "../../hooks/company/queries/useCompany";
 import type { CompanyListProps } from "../../types/companies";
 
 export function CompanyList({ userRole }: CompanyListProps) {
   const {
     companies,
-    companiesLoading: loading,
-    companiesPagination: pagination,
-    companiesSearchTerm: searchTerm,
+    loading,
+    pagination,
+    searchTerm,
     fetchCompanies,
     searchCompanies,
-    clearCompaniesSearch,
-  } = useCompany();
+    clearSearch,
+  } = useCompanies();
 
   useEffect(() => {
     fetchCompanies();
@@ -24,6 +24,12 @@ export function CompanyList({ userRole }: CompanyListProps) {
 
   const handlePageChange = (page: number) => {
     fetchCompanies(page, searchTerm);
+  };
+
+  // Remove the unused parameter
+  const handleDeleteSuccess = () => {
+    // Refresh the companies list to reflect the deletion
+    fetchCompanies(pagination?.currentPage || 1, searchTerm);
   };
 
   return (
@@ -55,7 +61,7 @@ export function CompanyList({ userRole }: CompanyListProps) {
           {searchTerm && (
             <div className="absolute inset-y-0 right-0 flex items-center">
               <button
-                onClick={clearCompaniesSearch}
+                onClick={clearSearch}
                 className="mr-3 p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors"
                 title="Clear search"
               >
@@ -116,6 +122,7 @@ export function CompanyList({ userRole }: CompanyListProps) {
                 key={company.id}
                 company={company}
                 userRole={userRole}
+                onDeleteSuccess={handleDeleteSuccess}
               />
             ))}
           </div>

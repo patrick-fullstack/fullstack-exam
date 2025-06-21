@@ -327,7 +327,7 @@ export const updateCompany = asyncHandler(
       // check if new email conflicts with existing company
       const existingCompany = await Company.findOne({
         email: { $regex: new RegExp(`^${email}$`, "i") },
-        _id: { $new: companyId }, // Exclude current company
+        _id: { $ne: companyId }, // Exclude current company
       });
 
       if (existingCompany) {
@@ -343,7 +343,7 @@ export const updateCompany = asyncHandler(
       // check if new email conflicts with existing company
       const existingCompany = await Company.findOne({
         website: { $regex: new RegExp(`^${website}$`, "i") },
-        _id: { $new: companyId }, // Exclude current company
+        _id: { $ne: companyId }, // Exclude current company
       });
 
       if (existingCompany) {

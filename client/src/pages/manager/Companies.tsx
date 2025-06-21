@@ -1,18 +1,10 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCompany } from "../../contexts/CompanyContext";
 import { Header } from "../../components/layout/Header";
 import { CompanyList } from "../../components/company/CompanyList";
 
 export default function ManagerCompaniesPage() {
   const { user, logout } = useAuth();
-  const { error, success, clearMessages } = useCompany();
-
-  // Clear messages on mount
-  useEffect(() => {
-    clearMessages();
-  }, [clearMessages]);
 
   return (
     <div
@@ -44,18 +36,6 @@ export default function ManagerCompaniesPage() {
               </Link>
             </div>
           </div>
-
-          {success && (
-            <div className="alert alert-success flex justify-between items-center">
-              <span>{success}</span>
-            </div>
-          )}
-
-          {error && (
-            <div className="alert alert-error flex justify-between items-center">
-              <span>{error}</span>
-            </div>
-          )}
 
           <CompanyList
             userRole={user?.role as "super_admin" | "manager" | "employee"}

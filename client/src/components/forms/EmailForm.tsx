@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Input } from "../ui/Input";
 import { Button } from "../ui/Button";
 import { emailService } from "../../services/email";
-import { useEmail } from "../../contexts/EmailContext";
+import { useCreateEmail } from "../../hooks/email/mutations/useCreate";
 import type { CreateEmailData } from "../../types/emails";
 
 interface EmailTemplate {
@@ -19,19 +19,23 @@ export const EmailForm: React.FC<EmailFormProps> = ({
   onSuccess,
   resetForm = false,
 }) => {
-  const { createEmail, loading, error, clearError } = useEmail();
+  const { createEmail, loading, error, clearMessages } = useCreateEmail();
 
-  const initialFormState: CreateEmailData = {
-    fromName: "",
-    fromEmail: "",
-    toName: "",
-    toEmail: "",
-    subject: "",
-    message: "",
-    template: "default",
-    sendNow: true,
-    scheduledFor: "",
-  };
+  // Memoize the initial form state to prevent unnecessary re-renders
+  const initialFormState: CreateEmailData = useMemo(
+    () => ({
+      fromName: "",
+      fromEmail: "",
+      toName: "",
+      toEmail: "",
+      subject: "",
+      message: "",
+      template: "default",
+      sendNow: true,
+      scheduledFor: "",
+    }),
+    []
+  );
 
   const [formData, setFormData] = useState<CreateEmailData>(initialFormState);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -48,6 +52,12 @@ export const EmailForm: React.FC<EmailFormProps> = ({
     const localDate = new Date(dateTimeLocal);
     return localDate.toISOString();
   };
+
+  const handleReset = useCallback(() => {
+    setFormData(initialFormState);
+    setValidationErrors({});
+    clearMessages();
+  }, [initialFormState, clearMessages]);
 
   useEffect(() => {
     const loadTemplates = async () => {
@@ -66,7 +76,7 @@ export const EmailForm: React.FC<EmailFormProps> = ({
     if (resetForm) {
       handleReset();
     }
-  }, [resetForm]);
+  }, [resetForm, handleReset]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -87,7 +97,7 @@ export const EmailForm: React.FC<EmailFormProps> = ({
     }
 
     if (error) {
-      clearError();
+      clearMessages();
     }
   };
 
@@ -148,12 +158,6 @@ export const EmailForm: React.FC<EmailFormProps> = ({
     }
 
     setIsSubmitting(false);
-  };
-
-  const handleReset = () => {
-    setFormData(initialFormState);
-    setValidationErrors({});
-    clearError();
   };
 
   const getMinDateTime = () => {
