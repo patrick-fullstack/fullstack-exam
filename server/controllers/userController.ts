@@ -251,7 +251,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
   // Handle avatar upload
   if (req.file) {
     // Validate file before uploading
-    if (!validateFileUpload(req.file, res)) return;
+    if (!validateFileUpload(req.file, res, "user-avatars")) return;
 
     const avatarUrls = await uploadToCloudinary(
       req.file.buffer,

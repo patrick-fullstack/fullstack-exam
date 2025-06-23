@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEmployees } from "../../hooks/company/queries/useEmployee";
-import { useDeleteEmployee } from "../../hooks/company/mutations/useDelete";
+import { useDeleteEmployee } from "../../hooks/users/mutations/useDelete";
 import { useAuth } from "../../contexts/AuthContext";
 import type { EmployeeTableProps } from "../../types/companies";
 import { AvatarImage } from "../ui/OptimizedImage";

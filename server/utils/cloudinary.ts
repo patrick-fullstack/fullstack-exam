@@ -13,7 +13,6 @@ export const uploadToCloudinary = async (
   options: any = {}
 ): Promise<ImageFormats> => {
   return new Promise((resolve, reject) => {
-    // Simple size mapping - company logos minimum 100x100
     const sizes = {
       "user-avatars": {
         thumbnail: { width: 50, height: 50, crop: "fill" },
@@ -27,7 +26,6 @@ export const uploadToCloudinary = async (
       },
     };
 
-    // Get size or use default
     const size = sizes[folder as keyof typeof sizes] || {
       thumbnail: { width: 100, height: 100, crop: "fill" },
       small: { width: 200, height: 200, crop: "fill" },

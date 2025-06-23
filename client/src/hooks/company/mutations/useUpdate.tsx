@@ -19,6 +19,10 @@ export function useUpdate() {
         return result.data.company;
       } catch (err) {
         console.error("Error updating company:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to update company"
+        );
+
         return null;
       } finally {
         setLoading(false);

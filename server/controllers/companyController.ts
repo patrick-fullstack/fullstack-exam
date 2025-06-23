@@ -251,7 +251,7 @@ export const createCompany = asyncHandler(
     //Handle logo upload if file is provided
     if (req.file) {
       // Validate file before uploading
-      if (!validateFileUpload(req.file, res)) return;
+      if (!validateFileUpload(req.file, res, "company-logos")) return;
 
       const logoUrls = await uploadToCloudinary(
         req.file.buffer,
@@ -358,7 +358,7 @@ export const updateCompany = asyncHandler(
     // Handle logo upload
     if (req.file) {
       // Validate file before uploading
-      if (!validateFileUpload(req.file, res)) return;
+      if (!validateFileUpload(req.file, res, "company-logos")) return;
 
       const logoUrls = await uploadToCloudinary(
         req.file.buffer,
