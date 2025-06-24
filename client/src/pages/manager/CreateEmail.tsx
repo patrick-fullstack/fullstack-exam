@@ -116,7 +116,6 @@ export default function CreateEmailPage() {
             </div>
           )}
 
-          {/* Email Form */}
           <div className="bg-white shadow rounded-lg p-6">
             <EmailForm onSuccess={handleSuccess} resetForm={resetForm} />
           </div>

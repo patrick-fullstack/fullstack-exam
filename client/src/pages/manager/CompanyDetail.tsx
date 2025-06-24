@@ -1,38 +1,26 @@
 import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCompany } from "../../contexts/CompanyContext";
+import { useCompany } from "../../hooks/company/queries/useCompany";
 import { Header } from "../../components/layout/Header";
 import { CompanyDetails } from "../../components/company/CompanyDetails";
 
 export default function ManagerCompanyDetailPage() {
   const { user, logout } = useAuth();
   const { companyId } = useParams<{ companyId: string }>();
-  const {
-    currentCompany: company,
-    currentCompanyLoading: loading,
-    error,
-    fetchCompany,
-    clearCurrentCompany,
-    clearMessages,
-  } = useCompany();
+  const { company, loading, error, fetchCompany, clearCompany } = useCompany();
 
-  // Fetch company when companyId changes
   useEffect(() => {
     if (companyId && user) {
-      clearMessages();
       fetchCompany(companyId);
     }
-
-    // Cleanup on unmount
-    return () => clearCurrentCompany();
-  }, [companyId, user, fetchCompany, clearCurrentCompany, clearMessages]);
+    return () => clearCompany();
+  }, [companyId, user, fetchCompany, clearCompany]);
 
   return (
     <div
       style={{ minHeight: "100vh", backgroundColor: "var(--background-gray)" }}
     >
-      {/* Header */}
       <Header
         title={company ? `${company.name} - Details` : "Company Details"}
         variant="dashboard"
@@ -41,9 +29,7 @@ export default function ManagerCompanyDetailPage() {
         userName={user?.firstName}
       />
 
-      {/* Content */}
       <main className="container" style={{ paddingTop: "2rem" }}>
-        {/* Back Button */}
         <div className="mb-4">
           <Link to="/manager/companies" className="btn btn-secondary">
             ← Back to Companies

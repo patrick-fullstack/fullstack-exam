@@ -197,7 +197,7 @@ export default function EmailManagementPage() {
             </div>
           )}
 
-          {/* Email List */}
+          {/* Email List - Using the updated EmailList component */}
           <div className="bg-white shadow rounded-lg">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-medium text-gray-900">

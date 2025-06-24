@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { pusher } from "../services/pusherService";
 import Notification from "../models/Notification";
+import { asyncHandler } from "../middlewares/errorHandler";
 
 // Authenticates users for Pusher private channel subscriptions
 export const authenticatePusher = (req: Request, res: Response) => {
@@ -68,3 +69,20 @@ export const markAllNotificationsAsRead = async (
 
   res.json({ success: true });
 };
+
+// Delete
+export const deleteNotification = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await Notification.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user!._id,
+    });
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Notification not found" });
+    }
+    res.json({ success: true });
+  }
+);

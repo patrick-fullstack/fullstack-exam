@@ -42,7 +42,7 @@ export const getContextualSize = (
 ): ImageFormat => {
   const sizeMap: Record<string, ImageFormat> = {
     header: "thumbnail", // 50x50 - small header avatars
-    dashboard: "small", // 100x100 - dashboard display
+    dashboard: "thumbnail", // 50x50 - dashboard display
     profile: "medium", // 200x200 - profile pages
     card: "small", // 100x100 - user/company cards
     detail: "medium", // 200x200 - detailed views

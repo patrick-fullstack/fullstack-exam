@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCompany } from "../../contexts/CompanyContext";
+import { useEmployees } from "../../hooks/company/queries/useEmployee";
+import { useDeleteEmployee } from "../../hooks/users/mutations/useDelete";
 import { useAuth } from "../../contexts/AuthContext";
 import type { EmployeeTableProps } from "../../types/companies";
 import { AvatarImage } from "../ui/OptimizedImage";
@@ -8,41 +9,73 @@ import { AvatarImage } from "../ui/OptimizedImage";
 export function EmployeeTable({ companyId }: EmployeeTableProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [roleFilter, setRoleFilter] = useState<string>("");
+
   const {
     employees,
-    employeesLoading: loading,
-    employeesPagination: pagination,
-    employeesSearchTerm: searchTerm,
-    deletingEmployeeId: deletingId,
+    loading,
+    pagination,
+    searchTerm,
     fetchEmployees,
     searchEmployees,
     clearEmployeesSearch,
-    deleteEmployee,
-  } = useCompany();
+  } = useEmployees();
 
-  const [roleFilter, setRoleFilter] = useState<string>("");
+  const { deleteEmployee, deletingId } = useDeleteEmployee();
 
   useEffect(() => {
-    if (companyId) fetchEmployees(companyId, 1, searchTerm);
+    if (companyId) {
+      fetchEmployees(companyId, 1, searchTerm, roleFilter);
+    }
   }, [companyId, fetchEmployees, searchTerm, roleFilter]);
 
-  const handleSearch = (value: string) => searchEmployees(value);
-  const handleRoleChange = (role: string) => setRoleFilter(role);
+  const handleSearch = (value: string) => {
+    if (companyId) {
+      searchEmployees(value, companyId, roleFilter);
+    }
+  };
+
+  const handleRoleChange = (role: string) => {
+    setRoleFilter(role);
+    if (companyId) {
+      fetchEmployees(companyId, 1, searchTerm, role);
+    }
+  };
+
   const handleClearFilters = () => {
     setRoleFilter("");
-    clearEmployeesSearch();
+    if (companyId) {
+      clearEmployeesSearch(companyId);
+    }
   };
-  const handlePageChange = (page: number) =>
-    fetchEmployees(companyId, page, searchTerm);
+
+  const handlePageChange = (page: number) => {
+    if (companyId) {
+      fetchEmployees(companyId, page, searchTerm, roleFilter);
+    }
+  };
+
   const handleRowClick = (userId: string) => navigate(`/profile/${userId}`);
+
   const handleEditClick = (e: React.MouseEvent, userId: string) => {
     e.stopPropagation();
     navigate(`/profile/${userId}?edit=true`);
   };
+
   const handleDeleteUser = async (e: React.MouseEvent, userId: string) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this user?"))
-      await deleteEmployee(userId);
+    if (window.confirm("Are you sure you want to delete this user?")) {
+      const success = await deleteEmployee(userId);
+      if (success && companyId) {
+        // Refresh the employee list
+        fetchEmployees(
+          companyId,
+          pagination?.currentPage || 1,
+          searchTerm,
+          roleFilter
+        );
+      }
+    }
   };
 
   const canEdit = () =>
@@ -55,7 +88,7 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
     ? employees.filter((emp) => emp.role === roleFilter)
     : employees;
 
-  if (!companyId)
+  if (!companyId) {
     return (
       <div className="card">
         <div className="text-center py-8 text-gray-500">
@@ -63,6 +96,7 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
         </div>
       </div>
     );
+  }
 
   return (
     <div className="card">
@@ -101,7 +135,7 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
           />
           {searchTerm && (
             <button
-              onClick={clearEmployeesSearch}
+              onClick={handleClearFilters}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <svg
