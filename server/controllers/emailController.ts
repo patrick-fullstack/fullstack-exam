@@ -186,12 +186,8 @@ export const getEmailById = asyncHandler(
     // Check permissions
     if (
       currentUser.role !== UserRole.SUPER_ADMIN &&
-      !(
-        email.createdBy.toString() === currentUser._id.toString() ||
-        (currentUser.role === UserRole.MANAGER &&
-          email.companyId &&
-          email.companyId.toString() === currentUser.companyId?.toString())
-      )
+      currentUser.role !== UserRole.MANAGER &&
+      email.createdBy.toString() !== currentUser._id.toString()
     ) {
       return res.status(403).json({
         success: false,
@@ -224,6 +220,7 @@ export const cancelScheduledEmail = asyncHandler(
     // Check permissions
     if (
       currentUser.role !== UserRole.SUPER_ADMIN &&
+      currentUser.role !== UserRole.MANAGER &&
       email.createdBy.toString() !== currentUser._id.toString()
     ) {
       return res.status(403).json({
@@ -267,6 +264,7 @@ export const retryEmail = asyncHandler(async (req: Request, res: Response) => {
   // Check permissions
   if (
     currentUser.role !== UserRole.SUPER_ADMIN &&
+    currentUser.role !== UserRole.MANAGER &&
     email.createdBy.toString() !== currentUser._id.toString()
   ) {
     return res.status(403).json({
