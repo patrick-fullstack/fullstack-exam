@@ -186,7 +186,12 @@ export const getEmailById = asyncHandler(
     // Check permissions
     if (
       currentUser.role !== UserRole.SUPER_ADMIN &&
-      email.createdBy.toString() !== currentUser._id.toString()
+      !(
+        email.createdBy.toString() === currentUser._id.toString() ||
+        (currentUser.role === UserRole.MANAGER &&
+          email.companyId &&
+          email.companyId.toString() === currentUser.companyId?.toString())
+      )
     ) {
       return res.status(403).json({
         success: false,
