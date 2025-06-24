@@ -186,18 +186,12 @@ export const getEmailById = asyncHandler(
     // Check permissions
     if (
       currentUser.role !== UserRole.SUPER_ADMIN &&
-      email.createdBy.toString() !== currentUser._id.toString() &&
-      !(
-        // Only the emails of the manager can be accessed by the manager
-        (
-          currentUser.role === UserRole.MANAGER &&
-          email.companyId &&
-          currentUser.companyId &&
-          email.companyId.toString() === currentUser.companyId.toString()
-        )
-      )
+      email.createdBy.toString() !== currentUser._id.toString()
     ) {
-      return res.status(403).json({ success: false, message: "Access denied" });
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
     }
 
     res.status(200).json({
