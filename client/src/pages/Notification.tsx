@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useNotifications } from "../contexts/NotificationContext";
@@ -8,9 +9,16 @@ import type { Notification } from "../types/notification";
 
 export default function NotificationPage() {
   const { user, logout } = useAuth();
-  const { notifications, unreadCount, markAsRead, markAllAsRead } =
-    useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications();
   const { getDashboardRoute } = useUser();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.isRead) {
@@ -18,7 +26,25 @@ export default function NotificationPage() {
     }
   };
 
+  const handleDeleteClick = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeletingId(id);
+    setMenuOpenId(null);
+
+    try {
+      await deleteNotification(id);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const toggleMenu = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMenuOpenId((prevId) => (prevId === id ? null : id));
+  };
+
   const formatTime = (timestamp: string): string => {
+    // Existing formatTime function unchanged
     const now = new Date();
     const time = new Date(timestamp);
     const diffInMinutes = Math.floor(
@@ -80,6 +106,7 @@ export default function NotificationPage() {
           <div className="card">
             {notifications.length === 0 ? (
               <div className="text-center py-12">
+                {/* Empty state */}
                 <svg
                   className="w-16 h-16 mx-auto mb-4 text-gray-300"
                   fill="none"
@@ -107,11 +134,11 @@ export default function NotificationPage() {
                   <div
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
-                    className={`p-6 hover:bg-gray-50 transition-colors cursor-pointer ${
+                    className={`p-6 hover:bg-gray-50 transition-colors cursor-pointer relative ${
                       !notification.isRead
                         ? "bg-blue-50 border-l-4 border-blue-500"
                         : ""
-                    }`}
+                    } ${deletingId === notification.id ? "opacity-50" : ""}`}
                   >
                     <div className="flex items-start space-x-4">
                       {/* Avatar */}
@@ -182,15 +209,66 @@ export default function NotificationPage() {
                             </p>
                           </div>
 
-                          {/* Unread indicator */}
-                          {!notification.isRead && (
-                            <div className="flex items-center space-x-2">
-                              <div className="w-3 h-3 bg-blue-600 rounded-full" />
-                              <span className="text-xs font-medium text-blue-600">
-                                NEW
-                              </span>
+                          {/* Three-dot Menu and Unread Indicator */}
+                          <div className="flex items-center space-x-2">
+                            {/* Unread indicator */}
+                            {!notification.isRead && (
+                              <div className="flex items-center space-x-2">
+                                <div className="w-3 h-3 bg-blue-600 rounded-full" />
+                                <span className="text-xs font-medium text-blue-600">
+                                  NEW
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Three dots menu button */}
+                            <div className="relative">
+                              <button
+                                onClick={(e) => toggleMenu(notification.id, e)}
+                                className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                                disabled={deletingId === notification.id}
+                              >
+                                <svg
+                                  className="w-5 h-5 text-gray-500"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                </svg>
+                              </button>
+
+                              {/* Dropdown menu */}
+                              {menuOpenId === notification.id && (
+                                <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                                  <div className="py-1">
+                                    {!notification.isRead && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          markAsRead(notification.id);
+                                          setMenuOpenId(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                      >
+                                        Mark as read
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={(e) =>
+                                        handleDeleteClick(notification.id, e)
+                                      }
+                                      disabled={deletingId === notification.id}
+                                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                                    >
+                                      {deletingId === notification.id
+                                        ? "Deleting..."
+                                        : "Delete"}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -201,6 +279,14 @@ export default function NotificationPage() {
           </div>
         </div>
       </main>
+
+      {/* Click outside handler to close menus */}
+      {menuOpenId && (
+        <div
+          className="fixed inset-0 z-5"
+          onClick={() => setMenuOpenId(null)}
+        />
+      )}
     </div>
   );
 }

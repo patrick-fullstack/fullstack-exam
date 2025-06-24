@@ -6,6 +6,7 @@ import {
   getNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
+  deleteNotification,
 } from "../controllers/notificationController";
 const router = Router();
 
@@ -30,6 +31,11 @@ router.patch(
   "/mark-all-read",
   authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE),
   markAllNotificationsAsRead
+);
+router.delete(
+  "/:id",
+  authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE),
+  deleteNotification
 );
 
 export default router;

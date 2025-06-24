@@ -40,4 +40,5 @@ export interface NotificationContextType {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearNotifications: () => void;
+  deleteNotification: (id: string) => Promise<boolean>;
 }

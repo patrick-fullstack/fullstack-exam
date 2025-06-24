@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { EmailViewer } from "./EmailView";
-import { useEmail } from "../../contexts/EmailContext";
+import { useEmails } from "../../hooks/email/queries/useEmail";
+import { useCancelEmail } from "../../hooks/email/mutations/useCancel";
+import { useRetryEmail } from "../../hooks/email/mutations/useRetry";
 
 interface EmailListProps {
   onError?: (error: string) => void;
@@ -11,32 +13,49 @@ export const EmailList: React.FC<EmailListProps> = ({
   onError,
   refreshTrigger,
 }) => {
+  // Use individual hooks - only what we need
+  const { emails, loading, error, pagination, loadEmails, clearError } =
+    useEmails();
+
   const {
-    emails,
-    loading,
-    error,
-    pagination,
-    loadEmails,
     cancelEmail,
+    cancelingId,
+    error: cancelError,
+    clearMessages: clearCancelMessages,
+  } = useCancelEmail();
+
+  const {
     retryEmail,
-    clearError
-  } = useEmail();
+    retryingId,
+    error: retryError,
+    clearMessages: clearRetryMessages,
+  } = useRetryEmail();
 
   const [statusFilter, setStatusFilter] = useState("");
   const [viewingEmailId, setViewingEmailId] = useState<string | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     loadEmails(1, statusFilter);
   }, [statusFilter, refreshTrigger, loadEmails]);
 
   useEffect(() => {
-    if (error && onError) {
-      onError(error);
+    const combinedError = error || cancelError || retryError;
+    if (combinedError && onError) {
+      onError(combinedError);
       clearError();
+      clearCancelMessages();
+      clearRetryMessages();
     }
-  }, [error, onError, clearError]);
+  }, [
+    error,
+    cancelError,
+    retryError,
+    onError,
+    clearError,
+    clearCancelMessages,
+    clearRetryMessages,
+  ]);
 
   const handleViewEmail = (emailId: string) => {
     setViewingEmailId(emailId);
@@ -58,21 +77,17 @@ export const EmailList: React.FC<EmailListProps> = ({
   };
 
   const handleCancel = async (emailId: string) => {
-    setActionLoading(emailId);
     const success = await cancelEmail(emailId);
-    if (!success && error && onError) {
-      onError(error);
+    if (success) {
+      loadEmails(pagination.currentPage, statusFilter);
     }
-    setActionLoading(null);
   };
 
   const handleRetry = async (emailId: string) => {
-    setActionLoading(emailId);
     const success = await retryEmail(emailId);
-    if (!success && error && onError) {
-      onError(error);
+    if (success) {
+      loadEmails(pagination.currentPage, statusFilter);
     }
-    setActionLoading(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -85,8 +100,9 @@ export const EmailList: React.FC<EmailListProps> = ({
 
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800"
-          }`}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800"
+        }`}
       >
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
@@ -216,20 +232,22 @@ export const EmailList: React.FC<EmailListProps> = ({
                       {email.status === "pending" && (
                         <button
                           onClick={() => handleCancel(email._id)}
-                          disabled={actionLoading === email._id}
+                          disabled={cancelingId === email._id}
                           className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                         >
-                          {actionLoading === email._id ? "Cancelling..." : "Cancel"}
+                          {cancelingId === email._id
+                            ? "Cancelling..."
+                            : "Cancel"}
                         </button>
                       )}
 
                       {email.status === "failed" && (
                         <button
                           onClick={() => handleRetry(email._id)}
-                          disabled={actionLoading === email._id}
+                          disabled={retryingId === email._id}
                           className="px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                         >
-                          {actionLoading === email._id ? "Retrying..." : "Retry"}
+                          {retryingId === email._id ? "Retrying..." : "Retry"}
                         </button>
                       )}
                     </div>
@@ -244,8 +262,8 @@ export const EmailList: React.FC<EmailListProps> = ({
             <div className="flex items-center justify-between border-t pt-6">
               <div className="text-sm text-gray-700">
                 Showing {(pagination.currentPage - 1) * 10 + 1} to{" "}
-                {Math.min(pagination.currentPage * 10, pagination.totalEmails)} of{" "}
-                {pagination.totalEmails} emails
+                {Math.min(pagination.currentPage * 10, pagination.totalEmails)}{" "}
+                of {pagination.totalEmails} emails
               </div>
 
               <div className="flex space-x-2">
@@ -263,10 +281,11 @@ export const EmailList: React.FC<EmailListProps> = ({
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
-                      className={`px-3 py-2 border rounded-md text-sm font-medium ${page === pagination.currentPage
+                      className={`px-3 py-2 border rounded-md text-sm font-medium ${
+                        page === pagination.currentPage
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                        }`}
+                      }`}
                     >
                       {page}
                     </button>

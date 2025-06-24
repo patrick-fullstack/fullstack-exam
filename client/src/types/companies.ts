@@ -168,6 +168,7 @@ export interface EditCompanyFormProps {
 export interface CompanyCardProps {
   company: Company;
   userRole: "super_admin" | "manager" | "employee";
+  onDeleteSuccess?: () => void;
 }
 
 export interface EmployeeTableProps {

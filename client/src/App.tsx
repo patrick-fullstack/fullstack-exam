@@ -9,8 +9,6 @@ import "./App.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoutes";
 import { NotificationProvider } from "./contexts/NotificationContext";
-import { CompanyProvider } from "./contexts/CompanyContext";
-import { EmailProvider } from "./contexts/EmailContext";
 import { UserProvider } from "./contexts/UserContext";
 
 // Pages
@@ -318,13 +316,9 @@ export default function App() {
     <Router>
       <AuthProvider>
         <UserProvider>
-          <CompanyProvider>
-            <NotificationProvider>
-              <EmailProvider>
-                <AppRoutes />
-              </EmailProvider>
-            </NotificationProvider>
-          </CompanyProvider>
+          <NotificationProvider>
+            <AppRoutes />
+          </NotificationProvider>
         </UserProvider>
       </AuthProvider>
     </Router>

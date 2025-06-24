@@ -1,18 +1,10 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCompany } from "../../contexts/CompanyContext";
 import { Header } from "../../components/layout/Header";
 import { CompanyList } from "../../components/company/CompanyList";
 
 export default function CompaniesPage() {
   const { user, logout } = useAuth();
-  const { clearMessages } = useCompany();
-
-  // Clear messages on mount
-  useEffect(() => {
-    clearMessages();
-  }, [clearMessages]);
 
   return (
     <div
@@ -50,7 +42,6 @@ export default function CompaniesPage() {
             </div>
           </div>
 
-          {/* Remove onError - context handles it */}
           <CompanyList
             userRole={user?.role as "super_admin" | "manager" | "employee"}
           />
