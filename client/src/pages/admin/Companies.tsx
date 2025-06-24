@@ -16,6 +16,7 @@ export default function CompaniesPage() {
         onLogout={logout}
         userAvatar={user?.avatar}
         userName={user?.firstName}
+        userRole={user?.role}
       />
 
       <main className="container" style={{ paddingTop: "2rem" }}>

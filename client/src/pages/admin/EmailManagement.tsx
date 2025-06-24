@@ -45,6 +45,7 @@ export default function EmailManagementPage() {
         onLogout={logout}
         userAvatar={user?.avatar}
         userName={user?.firstName}
+        userRole={user?.role}
       />
 
       {/* Content */}

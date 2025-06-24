@@ -33,6 +33,7 @@ export default function CreateCompanyPage() {
         onLogout={logout}
         userAvatar={user?.avatar}
         userName={user?.firstName}
+        userRole={user?.role}
       />
 
       <main

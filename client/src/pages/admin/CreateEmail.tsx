@@ -31,6 +31,7 @@ export default function CreateEmailPage() {
         onLogout={logout}
         userAvatar={user?.avatar}
         userName={user?.firstName}
+        userRole={user?.role}
       />
 
       {/* Content */}

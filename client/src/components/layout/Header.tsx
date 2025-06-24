@@ -11,6 +11,7 @@ interface HeaderProps {
   onLogout?: () => void;
   userAvatar?: ImageFormats | string;
   userName?: string;
+  userRole?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,6 +21,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   userAvatar,
   userName,
+  userRole,
 }) => {
   // Login header (with logo)
   if (variant === "login") {
@@ -61,7 +63,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center space-x-2 sm:space-x-4 ml-4">
             {/* Notifications */}
             <div className="hidden sm:block">
-              <NotificationBell />
+              {userRole !== "super_admin" && <NotificationBell />}
             </div>
 
             {/* Profile Section */}
@@ -97,7 +99,7 @@ export const Header: React.FC<HeaderProps> = ({
 
               {/* Mobile Notifications */}
               <div className="sm:hidden">
-                <NotificationBell />
+                {userRole !== "super_admin" && <NotificationBell />}
               </div>
 
               {/* Logout Button */}
