@@ -72,11 +72,17 @@ export const createScheduledEmail = asyncHandler(
     if (sendNow) {
       // Send immediately in background
       setImmediate(async () => {
-        const result = await emailService.sendEmail(scheduledEmail).catch(() => ({ success: false }));
-        
-        const updateData = result.success 
+        const result = await emailService
+          .sendEmail(scheduledEmail)
+          .catch(() => ({ success: false }));
+
+        const updateData = result.success
           ? { status: "sent", sentAt: new Date() }
-          : { status: "failed", failedAt: new Date(), errorMessage: "Failed to send email" };
+          : {
+              status: "failed",
+              failedAt: new Date(),
+              errorMessage: "Failed to send email",
+            };
 
         await ScheduledEmail.findByIdAndUpdate(scheduledEmail._id, updateData);
       });
@@ -89,7 +95,7 @@ export const createScheduledEmail = asyncHandler(
       // For scheduled emails
     } else {
       const jobId = await scheduleEmailJob(scheduledEmail);
-      
+
       res.status(201).json({
         success: true,
         message: "Email scheduled successfully",
@@ -180,12 +186,14 @@ export const getEmailById = asyncHandler(
     // Check permissions
     if (
       currentUser.role !== UserRole.SUPER_ADMIN &&
-      email.createdBy.toString() !== currentUser._id.toString()
+      email.createdBy.toString() !== currentUser._id.toString() &&
+      !(
+        currentUser.role === UserRole.MANAGER &&
+        email.companyId &&
+        email.companyId.toString() === currentUser.companyId.toString()
+      )
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied",
-      });
+      return res.status(403).json({ success: false, message: "Access denied" });
     }
 
     res.status(200).json({
