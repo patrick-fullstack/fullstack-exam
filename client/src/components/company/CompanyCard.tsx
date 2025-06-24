@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useDelete } from "../../hooks/company/mutations/useDelete";
+import { useDeleteCompany } from "../../hooks/company/mutations/useDelete";
 import type { CompanyCardProps } from "../../types/companies";
 import { CompanyLogo } from "../ui/OptimizedImage";
 
@@ -10,7 +10,7 @@ export function CompanyCard({
   onDeleteSuccess,
 }: CompanyCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const { deleteCompany, deletingId } = useDelete();
+  const { deleteCompany, deletingId } = useDeleteCompany();
 
   const isDeleting = deletingId === company.id;
 

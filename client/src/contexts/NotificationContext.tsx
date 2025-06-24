@@ -132,6 +132,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const clearNotifications = () => setNotifications([]);
 
+  const deleteNotification = async (id: string) => {
+    const success = await notificationService.deleteNotification(id);
+    if (success) {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }
+    return success;
+  };
+
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const contextValue: NotificationContextType = {
@@ -141,6 +149,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     markAsRead,
     markAllAsRead,
     clearNotifications,
+    deleteNotification,
   };
 
   return (
