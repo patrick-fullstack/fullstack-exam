@@ -152,10 +152,6 @@ export function CompanyDetails({
                 {displayCompany.email}
               </p>
               <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
-                <span className="hidden sm:inline">ID:</span>
-                <span className="font-mono text-xs truncate max-w-[120px] sm:max-w-none">
-                  {companyId}
-                </span>
                 <button
                   onClick={copyToClipboard}
                   className={`p-0.5 rounded transition-colors flex-shrink-0 ${
