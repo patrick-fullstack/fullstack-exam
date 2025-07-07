@@ -135,12 +135,13 @@ export const getCompanyById = asyncHandler(
       }
     } else if (currentUser.role === UserRole.EMPLOYEE) {
       // Employee can only view their own company
-      if (currentUser.companyId?.toString() !== companyId) {
+      const userCompanyId = currentUser.companyId?._id?.toString() || currentUser.companyId?.toString();
+      if (userCompanyId !== companyId) {
         return res.status(403).json({
           success: false,
           message: "You can only view your own company",
         });
-      }
+    }
       // Employees see all colleagues (including managers)
     }
 

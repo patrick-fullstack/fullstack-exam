@@ -1,5 +1,4 @@
 import axios, { AxiosError } from "axios";
-import Cookies from "js-cookie";
 import type {
   User,
   LoginRequest,
@@ -8,7 +7,7 @@ import type {
 } from "../types/user";
 
 const API_URL = import.meta.env.VITE_API_URL;
-// Event emitter for auth events
+
 class AuthEventEmitter {
   private listeners: (() => void)[] = [];
 
@@ -31,38 +30,27 @@ export const authEvents = new AuthEventEmitter();
 const api = axios.create({
   baseURL: API_URL,
   timeout: 30000,
+  withCredentials: true,
 });
 
-// Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response interceptor
+// Completely remove the interceptor that was causing loops
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      Cookies.remove("token");
-      authEvents.emit(); // Emit logout event
-    }
+    // No automatic auth event emissions - this was causing the loops
     return Promise.reject(error);
   }
 );
+
+// Session cache to reduce server calls
+let sessionCache: { isAuthenticated: boolean; timestamp: number } | null = null;
+const SESSION_CACHE_DURATION = 10000; // 10 seconds
 
 export const auth = {
   async login(email: string, password: string, requiredRole?: string) {
     try {
       const requestBody: LoginRequest = { email, password };
 
-      // Include required role in request so server can validate before issuing token
       if (requiredRole) {
         requestBody.requiredRole = requiredRole;
       }
@@ -70,21 +58,20 @@ export const auth = {
       const response = await api.post("/auth/login", requestBody);
 
       if (response.data.success) {
-        Cookies.set("token", response.data.data.token, { expires: 1 });
+        // Clear session cache on login
+        sessionCache = null;
+        // Only emit on successful login
         authEvents.emit();
         return { success: true, user: response.data.data.user };
       }
 
       return { success: false, error: response.data.message };
     } catch (error) {
-      console.error("Login error:", error);
-
       if (error instanceof AxiosError && error.response?.data) {
         const apiError = error.response.data as ApiErrorResponse;
         return {
           success: false,
           error: apiError.message || "Login failed",
-          // Include actual user role if it's a role mismatch
           actualRole: apiError.actualRole,
         };
       }
@@ -96,14 +83,13 @@ export const auth = {
   async getCurrentUser(): Promise<User | null> {
     try {
       const response = await api.get("/auth/me");
-
-      if (response.data.success && response.data.data.user) {
+      
+      if (response.data.success) {
         return response.data.data.user;
       }
-
+      
       return null;
-    } catch (error) {
-      console.error("Get current user error:", error);
+    } catch {
       return null;
     }
   },
@@ -112,14 +98,12 @@ export const auth = {
     try {
       const formData = new FormData();
 
-      // Add text fields
       if (data.firstName) formData.append("firstName", data.firstName);
       if (data.lastName) formData.append("lastName", data.lastName);
       if (data.phone) formData.append("phone", data.phone);
       if (data.email) formData.append("email", data.email);
       if (data.password) formData.append("password", data.password);
 
-      // Add avatar file
       if (data.avatar) {
         formData.append("avatar", data.avatar);
       }
@@ -131,15 +115,15 @@ export const auth = {
       });
 
       if (response.data.success) {
-        // Emit event to refresh user data
+        // Clear session cache on profile update
+        sessionCache = null;
+        // Only emit on successful update
         authEvents.emit();
         return { success: true, user: response.data.data.user };
       }
 
       return { success: false, error: response.data.message };
     } catch (error) {
-      console.error("Update profile error:", error);
-
       if (error instanceof AxiosError && error.response?.data) {
         const apiError = error.response.data as ApiErrorResponse;
         return {
@@ -155,21 +139,48 @@ export const auth = {
     }
   },
 
-  isLoggedIn(): boolean {
-    return !!Cookies.get("token");
+  async checkSession(): Promise<boolean> {
+    const now = Date.now();
+    
+    // Return cached result if recent - this prevents excessive API calls
+    if (sessionCache && (now - sessionCache.timestamp) < SESSION_CACHE_DURATION) {
+      return sessionCache.isAuthenticated;
+    }
+
+    try {
+      const response = await api.get("/auth/session");
+      const isAuthenticated = response.data.success && response.data.data.isAuthenticated;
+      
+      // Cache the result
+      sessionCache = {
+        isAuthenticated,
+        timestamp: now
+      };
+      
+      return isAuthenticated;
+    } catch {
+      // Cache negative result to prevent repeated failed calls
+      sessionCache = {
+        isAuthenticated: false,
+        timestamp: now
+      };
+      return false;
+    }
   },
 
-  getToken(): string | undefined {
-    return Cookies.get("token");
+  async isLoggedIn(): Promise<boolean> {
+    return await this.checkSession();
   },
 
   async logout() {
     try {
       await api.post("/auth/logout");
-    } catch (error) {
-      console.error("Logout error:", error);
+    } catch {
+      // Logout errors are not critical
     } finally {
-      Cookies.remove("token");
+      // Clear session cache on logout
+      sessionCache = null;
+      // Only emit on logout
       authEvents.emit();
     }
   },

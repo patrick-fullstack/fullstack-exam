@@ -1,24 +1,16 @@
 import axios from "axios";
-import { auth } from "./auth";
 import type { Notification } from "../types/notification";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// Create axios instance with default config
+// Create axios instance with session support
 const api = axios.create({
   baseURL: `${API_URL}/notifications`,
+  timeout: 10000,
+  withCredentials: true, // Essential for session cookies
   headers: {
     "Content-Type": "application/json",
   },
-});
-
-// Request interceptor to add auth token
-api.interceptors.request.use((config) => {
-  const token = auth.getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
 });
 
 // Response interceptor for error handling
@@ -26,6 +18,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error("Notification API error:", error);
+    
+    // Handle session expiration
+    if (error.response?.status === 401) {
+      window.location.href = '/login';
+    }
+    
     throw error;
   }
 );

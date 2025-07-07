@@ -3,40 +3,38 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useRef,
+  useCallback,
   type ReactNode,
 } from "react";
 import { auth, authEvents } from "../services/auth";
 import type { User, LoginResult } from "../types/user";
 
 interface AuthContextType {
-  // State
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-
-  // Actions
-  login: (
-    email: string,
-    password: string,
-    allowedRole?: string
-  ) => Promise<LoginResult>;
+  login: (email: string, password: string, allowedRole?: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-// Props for the provider
+
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-// The main Auth Provider component
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [initialCheckComplete, setInitialCheckComplete] = useState(false);
+  
+  const refreshingRef = useRef(false);
+  const lastRefreshTime = useRef(0);
+  const authEventTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // LOGIN FUNCTION - Called from login pages
   const login = async (
     email: string,
     password: string,
@@ -57,37 +55,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // LOGOUT FUNCTION - Called from any component
   const logout = async (): Promise<void> => {
     await auth.logout();
     setUser(null);
     setIsAuthenticated(false);
   };
 
-  // REFRESH USER - Called when user data might have changed
-  const refreshUser = async (): Promise<void> => {
-    if (auth.isLoggedIn()) {
-      const userData = await auth.getCurrentUser();
-      if (userData) {
-        setUser(userData);
-        setIsAuthenticated(true);
-      } else {
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-    } else {
-      setUser(null);
-      setIsAuthenticated(false);
+  const refreshUser = useCallback(async (): Promise<void> => {
+    const now = Date.now();
+    
+    // Prevent multiple refresh calls within 5 seconds
+    if (refreshingRef.current || !initialCheckComplete || (now - lastRefreshTime.current) < 5000) {
+      return;
     }
-  };
-
-  // CHECK AUTH STATUS ON APP START
-  useEffect(() => {
-    const checkInitialAuth = async () => {
-      setLoading(true);
-
-      const isLoggedIn = auth.isLoggedIn();
-
+    
+    lastRefreshTime.current = now;
+    refreshingRef.current = true;
+    
+    try {
+      const isLoggedIn = await auth.checkSession();
       if (isLoggedIn) {
         const userData = await auth.getCurrentUser();
         if (userData) {
@@ -96,29 +82,92 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           setUser(null);
           setIsAuthenticated(false);
-          await auth.logout(); // Clear invalid token
         }
       } else {
         setUser(null);
         setIsAuthenticated(false);
       }
+    } catch {
+      setUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      refreshingRef.current = false;
+    }
+  }, [initialCheckComplete]);
 
-      setLoading(false);
+  // Initial authentication check - only once on mount
+  useEffect(() => {
+    let isMounted = true;
+    
+    const checkInitialAuth = async () => {
+      setLoading(true);
+
+      try {
+        const isLoggedIn = await auth.checkSession();
+
+        if (!isMounted) return;
+
+        if (isLoggedIn) {
+          const userData = await auth.getCurrentUser();
+          if (isMounted && userData) {
+            setUser(userData);
+            setIsAuthenticated(true);
+          } else if (isMounted) {
+            setUser(null);
+            setIsAuthenticated(false);
+          }
+        } else if (isMounted) {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } catch {
+        if (isMounted) {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+          setInitialCheckComplete(true);
+        }
+      }
     };
 
     checkInitialAuth();
-  }, []);
 
-  // LISTEN TO AUTH EVENTS (login, logout, token expiration)
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - only run once on mount
+
+  // Setup auth event listener - ONLY after initial check AND only if authenticated
   useEffect(() => {
-    const unsubscribe = authEvents.subscribe(() => {
-      refreshUser();
-    });
+    if (!initialCheckComplete) return;
 
-    return unsubscribe;
-  }, []);
+    // Only subscribe to auth events if user is authenticated
+    // This prevents unnecessary event handling when no user is logged in
+    if (isAuthenticated) {
+      const debouncedRefresh = () => {
+        if (authEventTimeoutRef.current) {
+          clearTimeout(authEventTimeoutRef.current);
+        }
+        
+        authEventTimeoutRef.current = setTimeout(() => {
+          refreshUser();
+        }, 2000); // 2 second debounce
+      };
 
-  // PROVIDE CONTEXT VALUE
+      const unsubscribe = authEvents.subscribe(debouncedRefresh);
+
+      return () => {
+        unsubscribe();
+        if (authEventTimeoutRef.current) {
+          clearTimeout(authEventTimeoutRef.current);
+        }
+      };
+    }
+  }, [refreshUser, initialCheckComplete, isAuthenticated]); // Include isAuthenticated in deps
+
   const contextValue: AuthContextType = {
     user,
     isAuthenticated,
@@ -129,17 +178,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>
+      {children}
+    </AuthContext.Provider>
   );
 };
 
-// CUSTOM HOOK - This is what components will use
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
-
   return context;
 };

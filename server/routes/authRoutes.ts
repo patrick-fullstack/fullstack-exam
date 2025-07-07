@@ -4,7 +4,7 @@ import {
   register,
   getCurrentUser,
   logout,
-  refreshToken,
+  checkSession,
 } from "../controllers/authController";
 import { authenticate, authorize } from "../middlewares/auth";
 import { authLimiter } from "../middlewares/security";
@@ -13,19 +13,16 @@ import { upload } from "../middlewares/upload";
 
 const router = express.Router();
 
-// Public routes (no authentication required)
 router.post("/login", authLimiter, login);
-
-// Protected routes (authentication required)
+router.get("/session", checkSession);
 router.post(
   "/register",
   authenticate,
-  authorize(UserRole.SUPER_ADMIN), // Only super admin can register new users
+  authorize(UserRole.SUPER_ADMIN),
   upload.single("avatar"),
   register
 );
 router.get("/me", authenticate, getCurrentUser);
-router.post("/refresh-token", authenticate, refreshToken);
 router.post("/logout", authenticate, logout);
 
 export default router;

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CompanyCard } from "./CompanyCard";
 import { useCompanies } from "../../hooks/company/queries/useCompany";
 import type { CompanyListProps } from "../../types/companies";
@@ -14,22 +14,29 @@ export function CompanyList({ userRole }: CompanyListProps) {
     clearSearch,
   } = useCompanies();
 
+  const [searchInput, setSearchInput] = useState(searchTerm);
+
   useEffect(() => {
     fetchCompanies();
   }, [fetchCompanies]);
 
-  const handleSearch = (value: string) => {
-    searchCompanies(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      searchCompanies(searchInput);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchInput, searchCompanies]);
+
+  const handleSearchInput = (value: string) => {
+    setSearchInput(value);
   };
 
   const handlePageChange = (page: number) => {
-    fetchCompanies(page, searchTerm);
+    fetchCompanies(page, searchInput);
   };
 
-  // Remove the unused parameter
   const handleDeleteSuccess = () => {
-    // Refresh the companies list to reflect the deletion
-    fetchCompanies(pagination?.currentPage || 1, searchTerm);
+    fetchCompanies(pagination?.currentPage || 1, searchInput);
   };
 
   return (
@@ -53,15 +60,18 @@ export function CompanyList({ userRole }: CompanyListProps) {
           </div>
           <input
             type="text"
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => handleSearchInput(e.target.value)}
             placeholder="Search companies..."
             className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 transition-colors text-sm sm:text-base"
           />
-          {searchTerm && (
+          {searchInput && (
             <div className="absolute inset-y-0 right-0 flex items-center">
               <button
-                onClick={clearSearch}
+                onClick={() => {
+                  setSearchInput("");
+                  clearSearch();
+                }}
                 className="mr-3 p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors"
                 title="Clear search"
               >
@@ -83,13 +93,13 @@ export function CompanyList({ userRole }: CompanyListProps) {
           )}
         </div>
 
-        {searchTerm && (
+        {searchInput && (
           <div className="mt-2 text-sm text-gray-500">
             {companies.length > 0
               ? `Found ${pagination?.totalCompanies || 0} company${
                   (pagination?.totalCompanies || 0) !== 1 ? "s" : ""
-                } matching "${searchTerm}"`
-              : `No companies found matching "${searchTerm}"`}
+                } matching "${searchInput}"`
+              : `No companies found matching "${searchInput}"`}
           </div>
         )}
       </div>
@@ -104,10 +114,10 @@ export function CompanyList({ userRole }: CompanyListProps) {
       {!loading && companies.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg mb-4">
-            {searchTerm ? "No companies found" : "No companies available"}
+            {searchInput ? "No companies found" : "No companies available"}
           </div>
           <p className="text-gray-400">
-            {searchTerm
+            {searchInput
               ? "Try adjusting your search criteria"
               : "There are no companies in the system yet"}
           </p>

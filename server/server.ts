@@ -9,6 +9,9 @@ import { configureCors } from "./config/cors";
 import { configureSecurity } from "./middlewares/security";
 import { configureErrorHandlers } from "./middlewares/errorHandler";
 import connectDB from "./config/database";
+import { MongoSessionStore } from "./utils/session";
+import session from "express-session";
+import passport from "./config/passport";
 
 const app = express();
 
@@ -32,6 +35,28 @@ app.use(async (req, res, next) => {
   next();
 });
 
+// Session configuration
+app.use(
+  session({
+    name: "sessionId",
+    secret: env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: new MongoSessionStore(),
+    rolling: true,
+    cookie: {
+      secure: env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24,
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+    }
+  })
+);
+
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.get("/", (req: Request, res: Response) => {
   res.json({
     success: true,
@@ -40,7 +65,6 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // ROUTES
-// Authentication routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/company", companyRoutes);

@@ -3,18 +3,20 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { AvatarUpload } from "../ui/AvatarUpload";
 import { useUser } from "../../contexts/UserContext";
+import { companyService } from "../../services/companies";
 import type { CreateUserData } from "../../types/user";
+import type { Company } from "../../types/companies";
 import { CompanyLogo } from "../ui/OptimizedImage";
+import { useAuth } from "../../contexts/AuthContext";
 
 export const CreateUserForm: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const {
     createUser,
-    createUserLoading: loading,
-    createUserError: error,
-    resetCreateForm,
-    companies,
-    companiesLoading,
-    companiesError,
+    loading: userLoading,
+    error: userError,
+    success: userSuccess,
+    clearMessages,
   } = useUser();
 
   const initialFormState: CreateUserData = {
@@ -33,15 +35,47 @@ export const CreateUserForm: React.FC = () => {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [avatarKey, setAvatarKey] = useState(0);
 
-  // Reset form when resetCreateForm is true
+  // Company state - fetch locally instead of from context
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companiesLoading, setCompaniesLoading] = useState(false);
+  const [companiesError, setCompaniesError] = useState("");
+
+  // Fetch companies when component mounts
   useEffect(() => {
-    if (resetCreateForm) {
+    if (isAuthenticated) {
+      setCompaniesLoading(true);
+      companyService
+        .getCompanies({ page: 1, limit: 100 })
+        .then((response) => {
+          if (response.success) {
+            setCompanies(response.data.companies || []);
+          } else {
+            setCompaniesError("Failed to load companies");
+          }
+        })
+        .catch(() => {
+          setCompaniesError("Failed to load companies");
+        })
+        .finally(() => {
+          setCompaniesLoading(false);
+        });
+    }
+  }, [isAuthenticated]);
+
+  // Reset form when user creation is successful
+  useEffect(() => {
+    if (userSuccess) {
       setFormData(initialFormState);
       setAvatarFile(null);
       setFieldErrors({});
       setAvatarKey((prev) => prev + 1);
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        clearMessages();
+      }, 5000);
     }
-  }, [resetCreateForm]);
+  }, [userSuccess, clearMessages]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -119,12 +153,20 @@ export const CreateUserForm: React.FC = () => {
     setAvatarFile(null);
     setFieldErrors({});
     setAvatarKey((prev) => prev + 1);
+    clearMessages();
   };
+
+  const error = userError || companiesError;
+  const loading = userLoading || companiesLoading;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {(error || companiesError) && (
-        <div className="alert alert-error">{error || companiesError}</div>
+      {error && (
+        <div className="alert alert-error">{error}</div>
+      )}
+
+      {userSuccess && (
+        <div className="alert alert-success">{userSuccess}</div>
       )}
 
       <div className="text-center">

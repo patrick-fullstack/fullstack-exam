@@ -12,9 +12,7 @@ import { upload } from "../middlewares/upload";
 import { UserRole } from "../models/User";
 
 const router = express.Router();
-// All routes require authentication
 router.use(authenticate);
-
 router.get(
   "/",
   authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER),

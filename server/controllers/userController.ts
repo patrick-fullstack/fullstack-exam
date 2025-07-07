@@ -210,10 +210,13 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
         updateData.password = await bcrypt.hash(password, 12);
       }
     } else {
-      // Manager updating an employee
+      // Manager updating an employee - fix the comparison here
+      const targetUserCompanyId = targetUser.companyId?._id?.toString() || targetUser.companyId?.toString();
+      const currentUserCompanyId = currentUser.companyId?._id?.toString() || currentUser.companyId?.toString();
+      
       if (
         targetUser.role !== UserRole.EMPLOYEE ||
-        targetUser.companyId?.toString() !== currentUser.companyId?.toString()
+        targetUserCompanyId !== currentUserCompanyId
       ) {
         return res.status(403).json({
           success: false,

@@ -1,6 +1,6 @@
-import { Request, Response } from "express";
-import { User, UserRole } from "../models/User";
-import { generateUserToken } from "../utils/jwt";
+import { Request, Response, NextFunction } from "express";
+import passport from "passport";
+import { User, UserRole, IUser } from "../models/User";
 import { asyncHandler } from "../middlewares/errorHandler";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import { validateFileUpload } from "../middlewares/upload";
@@ -12,6 +12,11 @@ interface LoginRequest {
   email: string;
   password: string;
   requiredRole?: UserRole;
+}
+
+// Extend Request interface to include typed body
+interface AuthenticatedRequest extends Request {
+  body: LoginRequest;
 }
 
 // Login response interface
@@ -42,28 +47,14 @@ interface LoginResponse {
         logo?: string;
       };
     };
-    token: string;
-    expiresIn: string;
   };
 }
 
-// Register request interface
-interface RegisterRequest {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  role: UserRole;
-  companyId?: string;
-}
-
-// Format populated company data
+// Format company data utility
 function formatCompanyData(companyId: any) {
   if (!companyId || typeof companyId !== "object") {
     return undefined;
   }
-
   return {
     id: companyId._id.toString(),
     name: companyId.name,
@@ -73,98 +64,84 @@ function formatCompanyData(companyId: any) {
   };
 }
 
+// Helper function to get user ID safely
+function getUserId(user: any): string | undefined {
+  if (!user) return undefined;
+  if (user.id) return user.id.toString();
+  if (user._id) return user._id.toString();
+  if (typeof user === "string") return user;
+
+  return undefined;
+}
+
 // Login controller
-export const login = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password, requiredRole }: LoginRequest = req.body;
+export const login = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    // Validate request body
+    const { email, password, requiredRole } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
+    }
 
-  // Validate input
-  if (!email || !password) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Email and password are required" });
+    passport.authenticate("local", (err: any, user: any, info: any) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: "Authentication error",
+        });
+      }
+
+      if (!user) {
+        const statusCode = info?.actualRole ? 403 : 401;
+        return res.status(statusCode).json({
+          success: false,
+          message: info?.message || "Authentication failed",
+          actualRole: info?.actualRole,
+        });
+      }
+
+      req.logIn(user, (err) => {
+        if (err) {
+          return res.status(500).json({
+            success: false,
+            message: "Session creation failed",
+          });
+        }
+
+        const response: LoginResponse = {
+          success: true,
+          message: "Login successful",
+          data: {
+            user: {
+              id: user._id.toString(),
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              phone: user.phone,
+              avatar: user.avatar,
+              role: user.role,
+              companyId: user.companyId?._id?.toString(),
+              isActive: user.isActive,
+              company: formatCompanyData(user.companyId),
+            },
+          },
+        };
+
+        res.status(200).json(response);
+      });
+    })(req, res, next);
   }
-
-  // Find and validate user
-  const user = await User.findOne({ email })
-    .select("+password")
-    .populate("companyId", "name email website logo");
-  if (!user) {
-    return res
-      .status(401)
-      .json({ success: false, message: "Invalid email or password" });
-  }
-  if (!user.isActive) {
-    return res.status(401).json({
-      success: false,
-      message: "Account is deactivated. Please contact administrator.",
-    });
-  }
-
-  // Verify password
-  if (!(await user.comparePassword(password))) {
-    return res
-      .status(401)
-      .json({ success: false, message: "Invalid email or password" });
-  }
-
-  // Check role before issueing token - NEW FEATURE FOR ROLE-BASED LOGIN IN FRONTEND
-  if (requiredRole && user.role !== requiredRole) {
-    return res.status(403).json({
-      success: false,
-      message: `Access denied. This portal is for ${requiredRole.replace(
-        "_",
-        " "
-      )}s only. You are a ${user.role.replace("_", " ")}.`,
-      actualRole: user.role,
-    });
-  }
-
-  // Generate token and respond
-  const tokenData = generateUserToken({
-    _id: user._id.toString(),
-    email: user.email,
-    role: user.role,
-    companyId: user.companyId?._id?.toString(),
-  });
-
-  // Prepare response data - using LoginResponse interface
-  const response: LoginResponse = {
-    success: true,
-    message: "Login successful",
-    data: {
-      user: {
-        id: user._id.toString(),
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone,
-        avatar: user.avatar,
-        role: user.role,
-        companyId: user.companyId?._id?.toString(),
-        isActive: user.isActive,
-        company: formatCompanyData(user.companyId),
-      },
-      token: tokenData.token,
-      expiresIn: tokenData.expiresIn,
-    },
-  };
-
-  res.status(200).json(response);
-});
+);
 
 // Register controller
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const {
-    email,
-    password,
-    firstName,
-    lastName,
-    phone,
-    role,
-    companyId,
-  }: RegisterRequest = req.body;
+  const { email, password, firstName, lastName, phone, role, companyId } =
+    req.body;
 
-  // Validate required fields
   if (!email || !password || !firstName || !lastName || !role) {
     return res.status(400).json({
       success: false,
@@ -172,7 +149,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Validate role
   if (!Object.values(UserRole).includes(role)) {
     return res.status(400).json({
       success: false,
@@ -180,7 +156,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Validate companyId for non-super admin roles
   if (role !== UserRole.SUPER_ADMIN && !companyId) {
     return res.status(400).json({
       success: false,
@@ -188,7 +163,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Check if company exists (for manager and employee roles)
   if (companyId) {
     const company = await Company.findById(companyId);
     if (!company) {
@@ -198,7 +172,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
       });
     }
 
-    // Check if company already has a manager when registering a manager
     if (role === UserRole.MANAGER) {
       const existingManager = await User.findOne({
         companyId: companyId,
@@ -215,7 +188,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     }
   }
 
-  // Check if user already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     return res.status(409).json({
@@ -224,7 +196,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Create new user
   const userData: any = {
     email,
     password,
@@ -234,16 +205,12 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     role,
   };
 
-  // Add companyId if provided (for managers and employees)
   if (companyId) {
     userData.companyId = companyId;
   }
 
-  // Handle avatar upload if file is provided
   if (req.file) {
-    // Validate file before uploading
     if (!validateFileUpload(req.file, res, "user-avatars")) return;
-
     const avatarUrls = await uploadToCloudinary(
       req.file.buffer,
       "user-avatars"
@@ -253,12 +220,10 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
   const newUser = await User.create(userData);
 
-  // SEnd notifications to managers and employees
   setImmediate(async () => {
     await notifyUsersOfNewUser(newUser);
   });
 
-  // Return user data (excluding password)
   res.status(201).json({
     success: true,
     message: "User registered successfully",
@@ -280,57 +245,27 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-// Refresj token controller
-export const refreshToken = asyncHandler(
-  async (req: Request, res: Response) => {
-    // User is available from authenticate middleware
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: "User not authenticated",
-      });
-    }
-
-    // Check if user is still active
-    if (!req.user.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: "Account is deactivated. Please contact administrator.",
-      });
-    }
-
-    // Generate new token with same payload structure as login
-    const tokenData = generateUserToken({
-      _id: req.user._id.toString(),
-      email: req.user.email,
-      role: req.user.role,
-      companyId: req.user.companyId?.toString(),
-    });
-
-    // Return new token (same format as login response)
-    res.status(200).json({
-      success: true,
-      message: "Token refreshed successfully",
-      data: {
-        token: tokenData.token,
-        expiresIn: tokenData.expiresIn,
-      },
-    });
-  }
-);
-
-// Get current user profile (protected route)
+// Get current user profile
 export const getCurrentUser = asyncHandler(
   async (req: Request, res: Response) => {
-    // User is available from authenticate middleware
     if (!req.user) {
       return res.status(401).json({
         success: false,
         message: "User not authenticated",
       });
     }
-    // Fetch user with populated company details
-    const userWithCompany = await User.findById(req.user._id)
+
+    const user = req.user as IUser;
+    const userId = getUserId(user);
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User ID not found in session",
+      });
+    }
+
+    const userWithCompany = await User.findById(userId)
       .populate("companyId", "name email website logo")
       .select("-password");
 
@@ -341,7 +276,6 @@ export const getCurrentUser = asyncHandler(
       });
     }
 
-    // Prepare user data
     const userData = {
       id: userWithCompany._id.toString(),
       email: userWithCompany.email,
@@ -360,17 +294,62 @@ export const getCurrentUser = asyncHandler(
     res.status(200).json({
       success: true,
       message: "User profile retrieved successfully",
-      data: {
-        user: userData,
-      },
+      data: { user: userData },
     });
   }
 );
 
-// Logout controller (optional - for token blacklisting in future)
+// Logout controller
 export const logout = asyncHandler(async (req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
-    message: "Logout successful",
+  req.logout((err) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: "Logout failed",
+      });
+    }
+
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: "Session cleanup failed",
+        });
+      }
+
+      res.clearCookie("sessionId");
+      res.status(200).json({
+        success: true,
+        message: "Logout successful",
+      });
+    });
   });
 });
+
+// Session status check
+export const checkSession = asyncHandler(
+  async (req: Request, res: Response) => {
+    // Check if user is authenticated without requiring authentication
+    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+      const user = req.user as IUser;
+      const userId = getUserId(user);
+
+      res.status(200).json({
+        success: true,
+        message: "Session is active",
+        data: {
+          isAuthenticated: true,
+          userId: userId,
+        },
+      });
+    } else {
+      res.status(200).json({
+        success: false,
+        message: "No active session",
+        data: {
+          isAuthenticated: false,
+        },
+      });
+    }
+  }
+);

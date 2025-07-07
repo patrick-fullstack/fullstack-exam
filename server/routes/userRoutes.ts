@@ -12,7 +12,6 @@ import { upload } from "../middlewares/upload";
 
 const router = express.Router();
 
-// All routes require authentication
 router.use(authenticate);
 
 router.get("/", authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER), getAllUsers);

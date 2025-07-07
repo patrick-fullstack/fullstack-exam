@@ -7,48 +7,45 @@ import React, {
 } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useUser as useUserQuery } from "../hooks/users/queries/useUser";
-import { useCompanies } from "../hooks/users/queries/useCompanies";
 import { useUpdateProfile } from "../hooks/users/mutations/useUpdate";
 import { useCreateUser } from "../hooks/users/mutations/useCreate";
 import { useUserPermissions } from "../hooks/users/utils/useUserPermission";
 import { useUserUtils } from "../hooks/users/utils/useUserUtils";
 import type { User, UpdateProfileRequest, CreateUserData } from "../types/user";
-import type { Company } from "../types/companies";
 
 interface UserContextType {
-  // Profile states & functions
+  // User state
   profileUser: User | null;
   loading: boolean;
-  updating: boolean;
   error: string;
   success: string;
   isEditing: boolean;
   isModalOpen: boolean;
-  isOwnProfile: boolean;
+  updating: boolean;
+
+  // Actions
   fetchProfileUser: (userId?: string) => Promise<void>;
-  handleEditClick: () => void;
+  updateProfile: (data: UpdateProfileRequest) => Promise<void>;
+  createUser: (userData: CreateUserData) => Promise<void>;
   handleCancelEdit: () => void;
-  updateProfile: (updateData: UpdateProfileRequest) => Promise<void>;
-  setError: (error: string) => void;
-  clearMessages: () => void;
+  handleEditClick: () => void; // Add this
+  
+  // UI state
+  setIsEditing: (editing: boolean) => void;
   toggleModal: () => void;
+  clearMessages: () => void;
+  setError: (error: string) => void;
+
+  // Permissions
+  isOwnProfile: boolean;
   canEditProfile: () => boolean;
   canEditEmail: () => boolean;
   canEditCompany: () => boolean;
-  getPageTitle: () => string;
-  getDashboardRoute: () => string;
-  formatRole: (role: string) => string;
 
-  // User Creation states & functions
-  createUserLoading: boolean;
-  createUserError: string;
-  createUserSuccess: string;
-  resetCreateForm: boolean;
-  companies: Company[];
-  companiesLoading: boolean;
-  companiesError: string;
-  createUser: (userData: CreateUserData) => Promise<void>;
-  clearCreateUserMessages: () => void;
+  // Utils
+  getDashboardRoute: () => string;
+  getPageTitle: () => string;
+  formatRole: (role: string) => string;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -56,25 +53,19 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Custom hooks
   const {
     profileUser,
-    loading,
+    loading: userLoading,
     error: userError,
     fetchProfileUser,
     clearError,
     setProfileUser,
   } = useUserQuery();
-
-  const {
-    companies,
-    loading: companiesLoading,
-    error: companiesError,
-  } = useCompanies();
 
   const { isOwnProfile, canEditProfile, canEditEmail, canEditCompany } =
     useUserPermissions({ profileUser });
@@ -103,39 +94,51 @@ export const UserProvider: React.FC<React.PropsWithChildren> = ({
 
   const {
     createUser: createUserMutation,
-    loading: createUserLoading,
-    error: createUserError,
-    success: createUserSuccess,
-    resetForm: resetCreateForm,
-    clearMessages: clearCreateUserMessages,
+    loading: creatingUser,
+    error: createError,
+    success: createSuccess,
+    clearMessages: clearCreateMessages,
   } = useCreateUser();
 
-  // Combined error and success states
-  const error = userError || updateError;
-  const success = updateSuccess;
+  // Combine all errors and success messages
+  const error = userError || updateError || createError;
+  const success = updateSuccess || createSuccess;
+  const combinedLoading = userLoading || updating || creatingUser;
 
-  // Event handlers
-  const handleEditClick = useCallback(() => {
-    if (!canEditProfile()) {
-      clearError();
-      clearUpdateMessages();
-      return;
-    }
-    setIsEditing(true);
-    clearError();
-    clearUpdateMessages();
-  }, [canEditProfile, clearError, clearUpdateMessages]);
-
-  const handleCancelEdit = useCallback(() => {
-    setIsEditing(false);
-    clearError();
-    clearUpdateMessages();
-  }, [clearError, clearUpdateMessages]);
-
+  // Define clearMessages FIRST before other callbacks that use it
   const clearMessages = useCallback(() => {
     clearError();
     clearUpdateMessages();
-  }, [clearError, clearUpdateMessages]);
+    clearCreateMessages();
+  }, [clearError, clearUpdateMessages, clearCreateMessages]);
+
+  // Actions - now clearMessages is available
+  const updateProfile = useCallback(
+    async (data: UpdateProfileRequest) => {
+      await updateProfileMutation(data);
+    },
+    [updateProfileMutation]
+  );
+
+  const handleEditClick = useCallback(() => {
+    setIsEditing(true);
+    clearMessages();
+    
+    // Add edit parameter to URL
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set("edit", "true");
+    setSearchParams(newSearchParams);
+  }, [setIsEditing, clearMessages, searchParams, setSearchParams]);
+
+  const handleCancelEdit = useCallback(() => {
+    setIsEditing(false);
+    clearMessages();
+    
+    // Remove edit parameter from URL
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete("edit");
+    setSearchParams(newSearchParams);
+  }, [setIsEditing, clearMessages, searchParams, setSearchParams]);
 
   const toggleModal = useCallback(() => setIsModalOpen((prev) => !prev), []);
 
@@ -169,39 +172,38 @@ export const UserProvider: React.FC<React.PropsWithChildren> = ({
   return (
     <UserContext.Provider
       value={{
-        // Profile properties
+        // User state
         profileUser,
-        loading,
-        updating,
+        loading: combinedLoading,
         error,
         success,
         isEditing,
         isModalOpen,
-        isOwnProfile,
+        updating,
+
+        // Actions
         fetchProfileUser,
-        handleEditClick,
+        updateProfile,
+        createUser,
         handleCancelEdit,
-        updateProfile: updateProfileMutation,
-        setError,
-        clearMessages,
+        handleEditClick, // Add this
+        
+        // UI state
+        setIsEditing,
         toggleModal,
+        clearMessages,
+        setError,
+
+        // Permissions
+        isOwnProfile,
         canEditProfile,
         canEditEmail,
         canEditCompany,
-        getPageTitle,
-        getDashboardRoute,
-        formatRole,
 
-        // User creation properties
-        createUserLoading,
-        createUserError,
-        createUserSuccess,
-        resetCreateForm,
-        companies,
-        companiesLoading,
-        companiesError,
-        createUser,
-        clearCreateUserMessages,
+        // Utils
+        getDashboardRoute,
+        getPageTitle,
+        formatRole,
       }}
     >
       {children}
@@ -209,8 +211,10 @@ export const UserProvider: React.FC<React.PropsWithChildren> = ({
   );
 };
 
-export const useUser = () => {
+export const useUser = (): UserContextType => {
   const context = useContext(UserContext);
-  if (!context) throw new Error("useUser must be used within a UserProvider");
+  if (context === undefined) {
+    throw new Error("useUser must be used within a UserProvider");
+  }
   return context;
 };

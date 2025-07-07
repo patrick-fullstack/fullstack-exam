@@ -111,17 +111,13 @@ export const getScheduledEmails = asyncHandler(
     const currentUser = req.user!;
     const { page = 1, limit = 10, status } = req.query;
 
-    // Build filter based on user role
     let filter: any = {};
 
     if (currentUser.role === UserRole.SUPER_ADMIN) {
       // Super admin sees all emails
     } else if (currentUser.role === UserRole.MANAGER) {
-      // Manager sees emails from their company
-      filter.$or = [
-        { createdBy: currentUser._id },
-        { companyId: currentUser.companyId },
-      ];
+      // Manager sees only emails from their company or created by them
+      filter.companyId = currentUser.companyId;
     } else {
       return res.status(403).json({
         success: false,
@@ -129,17 +125,14 @@ export const getScheduledEmails = asyncHandler(
       });
     }
 
-    // Add status filter if provided
     if (status) {
       filter.status = status;
     }
 
-    // Pagination setup
     const pageNumber = Math.max(1, parseInt(page as string));
     const limitNumber = Math.max(1, parseInt(limit as string));
     const skip = (pageNumber - 1) * limitNumber;
 
-    // Get emails and count
     const [totalEmails, emails] = await Promise.all([
       ScheduledEmail.countDocuments(filter),
       ScheduledEmail.find(filter)

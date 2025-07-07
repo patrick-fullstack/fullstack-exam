@@ -1,65 +1,38 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyToken, extractTokenFromHeader, JWTPayload } from "../utils/jwt";
-import { User, UserRole, IUser } from "../models/User";
-import { asyncHandler } from "./errorHandler";
+import { UserRole, IUser } from "../models/User";
 
-// Extend Express Request interface to include user
-declare global {
-  namespace Express {
-    interface Request {
-      user?: IUser;
-      tokenPayload?: JWTPayload;
-    }
+declare module "express-session" {
+  interface SessionData {
+    passport?: {
+      user?: string;
+    };
   }
 }
 
-// Authentication middleware - verifies if user is logged in
-export const authenticate = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // 1. Extract token from Authorization header
-      const token = extractTokenFromHeader(req.headers.authorization);
-
-      // 2. Verify the token and get payload
-      const payload = verifyToken(token);
-
-      // 3. Find user in database to ensure they still exist and are active
-      const user = await User.findById(payload.userId).select("-password"); // Exclude password
-
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: "User no longer exists",
-        });
-      }
-
-      if (!user.isActive) {
-        return res.status(401).json({
-          success: false,
-          message: "User account is deactivated",
-        });
-      }
-
-      // 4. Attach user and token payload to request object
-      req.user = user;
-      req.tokenPayload = payload;
-
-      // 5. Continue to next middleware/route handler
-      next();
-    } catch (error: any) {
-      return res.status(401).json({
-        success: false,
-        message: error.message || "Authentication failed",
-      });
-    }
+declare global {
+  namespace Express {
+    interface User extends IUser {}
   }
-);
+}
 
-// Role-based authorization middleware
+export const authenticate = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+
+  res.status(401).json({
+    success: false,
+    message: "Authentication required",
+  });
+};
+
 export const authorize = (...allowedRoles: UserRole[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    // Check if user is authenticated first
-    if (!req.user) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.isAuthenticated()) {
       res.status(401).json({
         success: false,
         message: "Authentication required",
@@ -67,8 +40,17 @@ export const authorize = (...allowedRoles: UserRole[]) => {
       return;
     }
 
-    // Check if user's role is in allowed roles
-    if (!allowedRoles.includes(req.user.role)) {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: "User not found in session",
+      });
+      return;
+    }
+
+    const user = req.user as IUser;
+
+    if (!user.role || !allowedRoles.includes(user.role)) {
       res.status(403).json({
         success: false,
         message: "Insufficient permissions",
@@ -76,46 +58,53 @@ export const authorize = (...allowedRoles: UserRole[]) => {
       return;
     }
 
-    // User has required role, continue - proceed to next middleware/route handler
     next();
   };
 };
 
-// Company-based authorization middleware (for managers and employees)
 export const authorizeCompany = (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
-  // Check if user is authenticated
-  if (!req.user) {
-    return res.status(401).json({
+): void => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({
       success: false,
       message: "Authentication required",
     });
+    return;
   }
 
-  // Super admin can access all companies
-  if (req.user.role === UserRole.SUPER_ADMIN) {
+  if (!req.user) {
+    res.status(401).json({
+      success: false,
+      message: "User not found in session",
+    });
+    return;
+  }
+
+  const user = req.user as IUser;
+
+  if (user.role === UserRole.SUPER_ADMIN) {
     return next();
   }
 
-  // Get company ID from request parameters
   const requestedCompanyId = req.params.companyId;
 
   if (!requestedCompanyId) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       message: "Company ID is required",
     });
+    return;
   }
 
-  // Check if user belongs to the requested company
-  if (req.user.companyId?.toString() !== requestedCompanyId) {
-    return res.status(403).json({
+  if (user.companyId?.toString() !== requestedCompanyId) {
+    res.status(403).json({
       success: false,
       message: "Access denied. You can only access your own company data",
     });
+    return;
   }
 
   next();
