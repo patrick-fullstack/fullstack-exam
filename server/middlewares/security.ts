@@ -29,15 +29,7 @@ export const authLimiter = rateLimit({
 
 // Apply security middleware
 export const configureSecurity = (app: any) => {
-  // Helmet middleware for basic security headers
   app.use(helmet());
-
-  // Apply global rate limiter
   app.use(globalLimiter);
 
-  //   // Sanitize data against NoSQL injection
-  //   app.use(mongoSanitize());
-
-  //   // Force HTTPS in production
-  //   app.use(forceHttps);
 };

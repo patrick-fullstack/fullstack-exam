@@ -17,6 +17,7 @@ interface Environment {
   SUPER_PASSWORD: string;
   SUPER_FIRSTNAME: string;
   SUPER_LASTNAME: string;
+  SUPER_AVATAR: string;
 }
 
 // Validate and parse environment variables
@@ -31,6 +32,7 @@ const createEnv = (): Environment => {
     "SUPER_PASSWORD",
     "SUPER_FIRSTNAME",
     "SUPER_LASTNAME",
+    "SUPER_AVATAR",
   ];
 
   // Validate all required variables exist
@@ -52,6 +54,7 @@ const createEnv = (): Environment => {
   const SUPER_PASSWORD = process.env.SUPER_PASSWORD!;
   const SUPER_FIRSTNAME = process.env.SUPER_FIRSTNAME!;
   const SUPER_LASTNAME = process.env.SUPER_LASTNAME!;
+  const SUPER_AVATAR = process.env.SUPER_AVATAR!;
 
   return {
     NODE_ENV,
@@ -63,6 +66,7 @@ const createEnv = (): Environment => {
     SUPER_PASSWORD,
     SUPER_FIRSTNAME,
     SUPER_LASTNAME,
+    SUPER_AVATAR,
     isDevelopment: () => NODE_ENV === "development",
     isProduction: () => NODE_ENV === "production",
     isTest: () => NODE_ENV === "test",

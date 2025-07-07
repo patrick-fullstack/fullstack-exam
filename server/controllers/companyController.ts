@@ -141,8 +141,7 @@ export const getCompanyById = asyncHandler(
           success: false,
           message: "You can only view your own company",
         });
-    }
-      // Employees see all colleagues (including managers)
+      }
     }
 
     // Search filter
@@ -220,10 +219,22 @@ export const createCompany = asyncHandler(
     const { name, email, website } = req.body;
 
     // Validate required fiels
-    if (!name || !email || !website) {
+    if (!name) {
       return res.status(400).json({
-        success: false,
-        message: "Company name, email, and website are required",
+      success: false,
+      message: "Company name is required",
+      });
+    }
+    if (!email) {
+      return res.status(400).json({
+      success: false,
+      message: "Company email is required",
+      });
+    }
+    if (!website) {
+      return res.status(400).json({
+      success: false,
+      message: "Company website is required",
       });
     }
 
@@ -358,7 +369,6 @@ export const updateCompany = asyncHandler(
 
     // Handle logo upload
     if (req.file) {
-      // Validate file before uploading
       if (!validateFileUpload(req.file, res, "company-logos")) return;
 
       const logoUrls = await uploadToCloudinary(

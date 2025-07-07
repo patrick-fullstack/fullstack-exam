@@ -10,7 +10,6 @@ export default function AdminDashboard() {
     <div
       style={{ minHeight: "100vh", backgroundColor: "var(--background-gray)" }}
     >
-      {/* Header */}
       <Header
         title="Admin Dashboard"
         variant="dashboard"
@@ -20,11 +19,8 @@ export default function AdminDashboard() {
         userRole={user?.role}
       />
 
-      {/* Content */}
       <main className="container" style={{ paddingTop: "2rem" }}>
-        {/* Welcome Section */}
         <div className="space-y-6 mb-7">
-          {/* Hero Card */}
           <div className="card">
             <div className="flex items-start justify-between">
               <div>
@@ -35,7 +31,6 @@ export default function AdminDashboard() {
                   Super Administrator Dashboard
                 </p>
 
-                {/* User Info Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <div className="text-sm font-medium text-gray-500 mb-1">
@@ -58,7 +53,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Avatar Section */}
               <div className="flex-shrink-0">
                 <AvatarImage
                   user={{
@@ -72,13 +66,11 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Quick Actions */}
           <div className="card">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">
               Quick Actions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Create User */}
               <Link
                 to="/admin/create-user"
                 className="group block p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all duration-200"
@@ -113,7 +105,6 @@ export default function AdminDashboard() {
                 </div>
               </Link>
 
-              {/* Manage Companies */}
               <Link
                 to="/admin/companies"
                 className="group block p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-green-300 hover:shadow-md transition-all duration-200"
@@ -148,7 +139,6 @@ export default function AdminDashboard() {
                 </div>
               </Link>
 
-              {/* Create Company */}
               <Link
                 to="/admin/companies/create"
                 className="group block p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-purple-300 hover:shadow-md transition-all duration-200"
@@ -183,7 +173,6 @@ export default function AdminDashboard() {
                 </div>
               </Link>
 
-              {/* Email Management */}
               <Link
                 to="/admin/emails"
                 className="group block p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md transition-all duration-200"
@@ -218,7 +207,6 @@ export default function AdminDashboard() {
                 </div>
               </Link>
 
-              {/* Create Email */}
               <Link
                 to="/admin/emails/create"
                 className="group block p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-orange-300 hover:shadow-md transition-all duration-200"

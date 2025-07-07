@@ -71,7 +71,6 @@ export default function NotificationPage() {
 
       <main className="container" style={{ paddingTop: "2rem" }}>
         <div className="space-y-6 mb-7">
-          {/* Header Section */}
           <div className="card">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
@@ -102,11 +101,9 @@ export default function NotificationPage() {
             </div>
           </div>
 
-          {/* Notifications List */}
           <div className="card">
             {notifications.length === 0 ? (
               <div className="text-center py-12">
-                {/* Empty state */}
                 <svg
                   className="w-16 h-16 mx-auto mb-4 text-gray-300"
                   fill="none"
@@ -141,7 +138,6 @@ export default function NotificationPage() {
                     } ${deletingId === notification.id ? "opacity-50" : ""}`}
                   >
                     <div className="flex items-start space-x-4">
-                      {/* Avatar */}
                       <div className="flex-shrink-0">
                         {notification.newUser ? (
                           <Link
@@ -176,7 +172,6 @@ export default function NotificationPage() {
                         )}
                       </div>
 
-                      {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -209,9 +204,7 @@ export default function NotificationPage() {
                             </p>
                           </div>
 
-                          {/* Three-dot Menu and Unread Indicator */}
                           <div className="flex items-center space-x-2">
-                            {/* Unread indicator */}
                             {!notification.isRead && (
                               <div className="flex items-center space-x-2">
                                 <div className="w-3 h-3 bg-blue-600 rounded-full" />
@@ -221,7 +214,6 @@ export default function NotificationPage() {
                               </div>
                             )}
 
-                            {/* Three dots menu button */}
                             <div className="relative">
                               <button
                                 onClick={(e) => toggleMenu(notification.id, e)}
@@ -237,7 +229,6 @@ export default function NotificationPage() {
                                 </svg>
                               </button>
 
-                              {/* Dropdown menu */}
                               {menuOpenId === notification.id && (
                                 <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
                                   <div className="py-1">

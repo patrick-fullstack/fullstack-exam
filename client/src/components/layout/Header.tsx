@@ -27,19 +27,16 @@ export const Header: React.FC<HeaderProps> = ({
   if (variant === "login") {
     return (
       <div className="text-center mb-6 sm:mb-8 px-4">
-        {/* Logo */}
         <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-green-600 rounded-xl mx-auto mb-4 sm:mb-6 flex items-center justify-center">
           <span className="text-white text-lg sm:text-2xl md:text-3xl font-bold">
             C
           </span>
         </div>
 
-        {/* Title */}
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
           {title}
         </h1>
 
-        {/* Subtitle */}
         {subtitle && (
           <p className="text-sm sm:text-base text-gray-600 px-4">{subtitle}</p>
         )}
@@ -52,23 +49,18 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
-          {/* Left side - Title */}
           <div className="flex-1 min-w-0">
             <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 truncate">
               {title}
             </h1>
           </div>
 
-          {/* Right side - Profile and Actions */}
           <div className="flex items-center space-x-2 sm:space-x-4 ml-4">
-            {/* Notifications */}
             <div className="hidden sm:block">
               {userRole !== "super_admin" && <NotificationBell />}
             </div>
 
-            {/* Profile Section */}
             <div className="flex items-center space-x-2 sm:space-x-3">
-              {/* Profile Link */}
               <Link
                 to="/profile"
                 className="flex items-center space-x-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
@@ -84,25 +76,21 @@ export const Header: React.FC<HeaderProps> = ({
                   className="border-2 border-gray-300"
                 />
 
-                {/* User Name (hidden on mobile) */}
                 {userName && (
                   <span className="hidden md:block text-sm font-medium text-gray-700 max-w-32 truncate">
                     {userName}
                   </span>
                 )}
 
-                {/* Profile Text (hidden on smaller screens) */}
                 <span className="hidden lg:block text-sm text-gray-500">
                   Profile
                 </span>
               </Link>
 
-              {/* Mobile Notifications */}
               <div className="sm:hidden">
                 {userRole !== "super_admin" && <NotificationBell />}
               </div>
 
-              {/* Logout Button */}
               {onLogout && (
                 <button
                   onClick={onLogout}
@@ -125,7 +113,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
 
-              {/* Mobile Menu Button (for logout) */}
               {onLogout && (
                 <div className="sm:hidden">
                   <button

@@ -11,12 +11,12 @@ class EmailScheduler {
   // Start the scheduler - this runs every minute to check for emails to send
   start() {
     if (this.isInitialized) {
-      return; // Already started, prevent duplicate initialization
+      return;
     }
     // Cron pattern: * * * * * means "every minute"
     cron.schedule("* * * * *", async () => {
       if (this.isProcessing) {
-        return; // Skip if already processing to avoid overlaps
+        return;
       }
 
       // Connect to database before processing
@@ -41,7 +41,7 @@ class EmailScheduler {
 
   // Process emails that are ready to be sent
   private async processEmails() {
-    // Find emails that should be sent now
+    // find emails that should be sent now
     const emailsToSend = await ScheduledEmail.find({
       status: "pending",
       $or: [
@@ -53,7 +53,7 @@ class EmailScheduler {
     .lean();
 
     if (emailsToSend.length === 0) {
-      return; // Nothing to do
+      return;
     }
 
     const BATCH_SIZE = 5;
@@ -76,13 +76,13 @@ class EmailScheduler {
   }
 }
 
-// Create and export scheduler instance
+// create and export scheduler instance
 export const emailScheduler = new EmailScheduler();
 
 emailScheduler.start();
 
 export const scheduleEmailJob = async (email: any): Promise<string> => {
-  // With this approach, we just log - the cron job will pick it up
+  // with this approach, we just log - the cron job will pick it up
   return email._id.toString();
 };
 
@@ -100,7 +100,7 @@ export const retryEmailJob = async (emailId: string): Promise<string> => {
   const email = await ScheduledEmail.findById(emailId);
   if (email?.status === "failed") {
     email.status = "pending";
-    email.sendNow = true; // Retry immediately
+    email.sendNow = true;
     email.errorMessage = undefined;
     await email.save();
   }

@@ -22,7 +22,7 @@ passport.use(
 
         if (!user) {
           return done(null, false, {
-            message: "Invalid email or password",
+            message: "Invalid email",
           } as CustomVerifyOptions);
         }
 
@@ -32,10 +32,17 @@ passport.use(
           } as CustomVerifyOptions);
         }
 
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          return done(null, false, {
+            message: "Invalid email format",
+          } as CustomVerifyOptions);
+        }
+
         const isPasswordValid = await user.comparePassword(password);
         if (!isPasswordValid) {
           return done(null, false, {
-            message: "Invalid email or password",
+            message: "Invalid password",
           } as CustomVerifyOptions);
         }
 

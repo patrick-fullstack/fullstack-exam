@@ -35,7 +35,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const data = await notificationService.fetchNotifications();
         setNotifications(data);
       } catch {
-        // Error is handled silently
+        console.error("Failed to fetch notifications");
       }
     }
   };
@@ -59,7 +59,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Fix: Use inline authorizer function without type annotations
     const pusherInstance = new Pusher(import.meta.env.VITE_PUSHER_KEY, {
       cluster: import.meta.env.VITE_PUSHER_CLUSTER,
       authorizer: function(channel) {
@@ -147,7 +146,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
     } catch {
-      // Error is handled silently
+      console.error("Failed to mark notification as read");
     }
   };
 
@@ -157,7 +156,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       await notificationService.markAllAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     } catch {
-      // Error is handled silently
+      console.error("Failed to mark all notifications as read");
     }
   };
 

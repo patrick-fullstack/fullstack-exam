@@ -26,17 +26,40 @@ export const createScheduledEmail = asyncHandler(
     } = req.body;
 
     // Simple validation
-    if (
-      !fromName ||
-      !fromEmail ||
-      !toName ||
-      !toEmail ||
-      !subject ||
-      !message
-    ) {
+    if (!fromName) {
       return res.status(400).json({
-        success: false,
-        message: "All email fields are required",
+      success: false,
+      message: "From name is required",
+      });
+    }
+    if (!fromEmail) {
+      return res.status(400).json({
+      success: false,
+      message: "From email is required",
+      });
+    }
+    if (!toName) {
+      return res.status(400).json({
+      success: false,
+      message: "To name is required",
+      });
+    }
+    if (!toEmail) {
+      return res.status(400).json({
+      success: false,
+      message: "To email is required",
+      });
+    }
+    if (!subject) {
+      return res.status(400).json({
+      success: false,
+      message: "Subject is required",
+      });
+    }
+    if (!message) {
+      return res.status(400).json({
+      success: false,
+      message: "Message is required",
       });
     }
 

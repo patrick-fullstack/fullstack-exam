@@ -76,13 +76,11 @@ export function CompanyForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Company Logo */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Company Logo
         </label>
 
-        {/* Logo Preview */}
         {logoPreview && (
           <div className="mb-4">
             <img
@@ -108,7 +106,6 @@ export function CompanyForm({
         <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 2MB</p>
       </div>
 
-      {/* Company Name */}
       <div>
         <label
           htmlFor="name"
@@ -128,7 +125,6 @@ export function CompanyForm({
         />
       </div>
 
-      {/* Email */}
       <div>
         <label
           htmlFor="email"
@@ -148,7 +144,6 @@ export function CompanyForm({
         />
       </div>
 
-      {/* Website */}
       <div>
         <label
           htmlFor="website"
@@ -168,7 +163,6 @@ export function CompanyForm({
         />
       </div>
 
-      {/* Submit Button */}
       <button
         type="submit"
         disabled={loading}

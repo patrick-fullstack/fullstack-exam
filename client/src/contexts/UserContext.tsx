@@ -28,7 +28,7 @@ interface UserContextType {
   updateProfile: (data: UpdateProfileRequest) => Promise<void>;
   createUser: (userData: CreateUserData) => Promise<void>;
   handleCancelEdit: () => void;
-  handleEditClick: () => void; // Add this
+  handleEditClick: () => void;
   
   // UI state
   setIsEditing: (editing: boolean) => void;
@@ -186,7 +186,7 @@ export const UserProvider: React.FC<React.PropsWithChildren> = ({
         updateProfile,
         createUser,
         handleCancelEdit,
-        handleEditClick, // Add this
+        handleEditClick,
         
         // UI state
         setIsEditing,

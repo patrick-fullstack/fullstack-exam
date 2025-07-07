@@ -117,7 +117,6 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
 
   return (
     <>
-      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && userToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -164,7 +163,6 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
       )}
 
       <div className="card">
-        {/* Error Messages */}
         {error && (
           <div className="alert alert-error mb-4">
             {error}
@@ -183,7 +181,6 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
           </div>
         )}
 
-        {/* Header */}
         <div className="mb-6">
           <h3 className="text-xl font-semibold">
             Company Employees ({pagination?.totalUsers || displayedEmployees.length})
@@ -193,7 +190,6 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
           </p>
         </div>
 
-        {/* Search and Filters */}
         <div className="mb-6 space-y-3">
           <div className="relative">
             <svg
@@ -269,7 +265,6 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
           )}
         </div>
 
-        {/* Loading State */}
         {loading && (
           <div className="text-center py-8">
             <div className="loading loading-spinner loading-lg"></div>
@@ -277,7 +272,6 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
           </div>
         )}
 
-        {/* Empty State */}
         {!loading && displayedEmployees.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-500 text-lg mb-4">No employees found</div>
@@ -289,7 +283,6 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
           </div>
         )}
 
-        {/* Employee List */}
         {!loading && displayedEmployees.length > 0 && (
           <>
             {/* Mobile View */}
@@ -416,7 +409,6 @@ export function EmployeeTable({ companyId }: EmployeeTableProps) {
               </table>
             </div>
 
-            {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 pt-6">
                 <div className="text-sm text-gray-700">

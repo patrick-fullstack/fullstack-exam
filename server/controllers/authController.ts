@@ -80,10 +80,16 @@ export const login = asyncHandler(
     // Validate request body
     const { email, password, requiredRole } = req.body;
     
-    if (!email || !password) {
+    if (!email) {
       return res.status(400).json({
-        success: false,
-        message: "Email and password are required",
+      success: false,
+      message: "Email is required",
+      });
+    }
+    if (!password) {
+      return res.status(400).json({
+      success: false,
+      message: "Password is required",
       });
     }
 
@@ -142,10 +148,34 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, firstName, lastName, phone, role, companyId } =
     req.body;
 
-  if (!email || !password || !firstName || !lastName || !role) {
+  if (!email) {
     return res.status(400).json({
       success: false,
-      message: "Email, password, firstName, lastName, and role are required",
+      message: "Email is required",
+    });
+  }
+  if (!password) {
+    return res.status(400).json({
+      success: false,
+      message: "Password is required",
+    });
+  }
+  if (!firstName) {
+    return res.status(400).json({
+      success: false,
+      message: "First name is required",
+    });
+  }
+  if (!lastName) {
+    return res.status(400).json({
+      success: false,
+      message: "Last name is required",
+    });
+  }
+  if (!role) {
+    return res.status(400).json({
+      success: false,
+      message: "Role is required",
     });
   }
 

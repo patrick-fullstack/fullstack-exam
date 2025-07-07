@@ -28,9 +28,6 @@ api.interceptors.response.use(
 );
 
 export const companyService = {
-  /**
-   * Get all companies with pagination and search
-   */
   async getCompanies(params?: {
     page?: number;
     limit?: number;
@@ -55,9 +52,6 @@ export const companyService = {
     }
   },
 
-  /**
-   * Get company by ID with employees
-   */
   async getCompanyById(
     companyId: string,
     params?: {
@@ -84,9 +78,6 @@ export const companyService = {
     return response.data;
   },
 
-  /**
-   * Create new company (Super Admin only)
-   */
   async createCompany(
     companyData: CreateCompanyData
   ): Promise<CompanyResponse> {
@@ -116,9 +107,6 @@ export const companyService = {
     }
   },
 
-  /**
-   * Update company
-   */
   async updateCompany(
     companyId: string,
     companyData: UpdateCompanyData
@@ -155,9 +143,6 @@ export const companyService = {
     }
   },
 
-  /**
-   * Delete company (Super Admin only)
-   */
   async deleteCompany(
     companyId: string
   ): Promise<{ success: boolean; message: string }> {
@@ -174,9 +159,6 @@ export const companyService = {
     }
   },
 
-  /**
-   * Export company data to CSV
-   */
   async exportCompanyToCSV(companyId: string): Promise<void> {
     const { data, headers } = await api.get(`/company/export/${companyId}`, {
       responseType: "blob",

@@ -138,7 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => {
       isMounted = false;
     };
-  }, []); // Empty dependency array - only run once on mount
+  }, []);
 
   // Setup auth event listener - ONLY after initial check AND only if authenticated
   useEffect(() => {
@@ -166,7 +166,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       };
     }
-  }, [refreshUser, initialCheckComplete, isAuthenticated]); // Include isAuthenticated in deps
+  }, [refreshUser, initialCheckComplete, isAuthenticated]);
 
   const contextValue: AuthContextType = {
     user,

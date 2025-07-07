@@ -62,7 +62,6 @@ export const CreateUserForm: React.FC = () => {
     }
   }, [isAuthenticated]);
 
-  // Reset form when user creation is successful
   useEffect(() => {
     if (userSuccess) {
       setFormData(initialFormState);
@@ -70,7 +69,6 @@ export const CreateUserForm: React.FC = () => {
       setFieldErrors({});
       setAvatarKey((prev) => prev + 1);
       
-      // Clear success message after 5 seconds
       setTimeout(() => {
         clearMessages();
       }, 5000);

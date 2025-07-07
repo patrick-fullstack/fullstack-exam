@@ -44,12 +44,10 @@ export default function CompanyEmployeeDetailPage() {
           </Link>
         </div>
 
-        {/* Loading State */}
         {loading && (
           <div className="text-center py-8">Loading company details...</div>
         )}
 
-        {/* Error State */}
         {displayError && !loading && (
           <div className="card text-center py-12">
             <div className="text-red-500 text-lg mb-4">
@@ -64,7 +62,6 @@ export default function CompanyEmployeeDetailPage() {
           </div>
         )}
 
-        {/* Company Not Found */}
         {!company && !loading && !displayError && (
           <div className="card text-center py-12">
             <div className="text-gray-500 text-lg mb-4">Company not found</div>
@@ -74,7 +71,6 @@ export default function CompanyEmployeeDetailPage() {
           </div>
         )}
 
-        {/* Success State */}
         {company && !loading && !displayError && (
           <CompanyDetails
             company={company}

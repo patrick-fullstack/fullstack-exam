@@ -22,7 +22,7 @@ export const notifyUsersOfNewUser = async (newUser: any) => {
 
   console.log(`Processing notifications for ${recipients.length} users`);
 
-  // Prepare notification data template
+  // prepare notification data template
   const notificationTemplate = {
     type: "user_created" as const,
     title: "New User Created",
@@ -40,7 +40,7 @@ export const notifyUsersOfNewUser = async (newUser: any) => {
     isRead: false,
   };
 
-  // Create all notifications in one batch operation
+  // create all notifications in one batch operation
   const notificationsToCreate = recipients.map((recipient) => ({
     userId: recipient._id,
     ...notificationTemplate,
@@ -62,7 +62,7 @@ export const notifyUsersOfNewUser = async (newUser: any) => {
     `Created ${createdNotifications.length} notifications in database`
   );
 
-  // Send Pusher notifications in batches
+  // send pusher notifications in batches
   const BATCH_SIZE = 50;
   let pusherSuccessCount = 0;
 

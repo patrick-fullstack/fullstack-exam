@@ -33,18 +33,16 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Completely remove the interceptor that was causing loops
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    // No automatic auth event emissions - this was causing the loops
     return Promise.reject(error);
   }
 );
 
 // Session cache to reduce server calls
 let sessionCache: { isAuthenticated: boolean; timestamp: number } | null = null;
-const SESSION_CACHE_DURATION = 10000; // 10 seconds
+const SESSION_CACHE_DURATION = 10000;
 
 export const auth = {
   async login(email: string, password: string, requiredRole?: string) {

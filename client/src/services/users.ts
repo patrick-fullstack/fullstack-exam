@@ -22,9 +22,6 @@ api.interceptors.response.use(
 );
 
 export const userService = {
-  /**
-   * Create a new user (Super Admin only)
-   */
   async createUser(userData: CreateUserData) {
     try {
       const formData = new FormData();
@@ -83,9 +80,6 @@ export const userService = {
     }
   },
 
-  /**
-   * Get user by ID
-   */
   async getUserById(userId: string) {
     try {
       const response = await api.get(`/users/${userId}`);
@@ -119,9 +113,6 @@ export const userService = {
     }
   },
 
-  /**
-   * Get all users with filtering and pagination
-   */
   async getUsers(params?: {
     page?: number;
     limit?: number;
@@ -171,9 +162,6 @@ export const userService = {
     }
   },
 
-  /**
-   * Update user
-   */
   async updateUser(
     userId: string,
     userData: {
@@ -237,9 +225,6 @@ export const userService = {
     }
   },
 
-  /**
-   * Delete user
-   */
   async deleteUser(userId: string) {
     try {
       const response = await api.delete(`/users/${userId}`);

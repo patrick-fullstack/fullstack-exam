@@ -22,6 +22,7 @@ const seedAdmin = async () => {
       firstName: env.SUPER_FIRSTNAME,
       lastName: env.SUPER_LASTNAME,
       role: UserRole.SUPER_ADMIN,
+      avatar: env.SUPER_AVATAR,
       isActive: true,
     });
 
