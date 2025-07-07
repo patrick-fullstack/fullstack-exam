@@ -19,41 +19,6 @@ const NotificationContext = createContext<NotificationContextType | undefined>(
   undefined
 );
 
-interface AuthorizerChannel {
-  name: string;
-}
-
-interface AuthCallback {
-  (error: Error | null, data?: unknown): void;
-}
-
-const customAuthorizer = (channel: AuthorizerChannel) => {
-  return {
-    authorize: (socketId: string, callback: AuthCallback) => {
-      fetch(`${import.meta.env.VITE_API_URL}/notifications/pusher/auth`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        credentials: 'include',
-        body: `socket_id=${encodeURIComponent(socketId)}&channel_name=${encodeURIComponent(channel.name)}`
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        callback(null, data);
-      })
-      .catch(error => {
-        callback(error, null);
-      });
-    }
-  };
-};
-
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -61,7 +26,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
 
   const shouldReceiveNotifications = (userRole: string) => {
-    return ['super_admin', 'manager', 'employee'].includes(userRole);
+    return ['manager', 'employee'].includes(userRole);
   };
 
   const fetchNotifications = async () => {
@@ -94,33 +59,42 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Fix: Use inline authorizer function without type annotations
     const pusherInstance = new Pusher(import.meta.env.VITE_PUSHER_KEY, {
       cluster: import.meta.env.VITE_PUSHER_CLUSTER,
-      authorizer: customAuthorizer
+      authorizer: function(channel) {
+        return {
+          authorize: function(socketId, callback) {
+            fetch(`${import.meta.env.VITE_API_URL}/notifications/pusher/auth`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              credentials: 'include',
+              body: `socket_id=${encodeURIComponent(socketId)}&channel_name=${encodeURIComponent(channel.name)}`
+            })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+              }
+              return response.json();
+            })
+            .then(data => callback(null, data))
+            .catch(error => callback(error instanceof Error ? error : new Error('Authentication failed'), null));
+          }
+        };
+      }
     });
 
-    pusherInstance.connection.bind("connected", () => {
-      setIsConnected(true);
-    });
-    
-    pusherInstance.connection.bind("disconnected", () => {
-      setIsConnected(false);
-    });
-    
-    pusherInstance.connection.bind("error", () => {
-      setIsConnected(false);
-    });
+    pusherInstance.connection.bind("connected", () => setIsConnected(true));
+    pusherInstance.connection.bind("disconnected", () => setIsConnected(false));
+    pusherInstance.connection.bind("error", () => setIsConnected(false));
 
     const channelName = `private-user-${user.id}`;
     const channel = pusherInstance.subscribe(channelName);
 
-    channel.bind("pusher:subscription_succeeded", () => {
-      setIsConnected(true);
-    });
-    
-    channel.bind("pusher:subscription_error", () => {
-      setIsConnected(false);
-    });
+    channel.bind("pusher:subscription_succeeded", () => setIsConnected(true));
+    channel.bind("pusher:subscription_error", () => setIsConnected(false));
 
     channel.bind("new-user-notification", (data: NotificationData) => {
       const notification: Notification = {
@@ -141,12 +115,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           ? getImageUrl(data.newUser.avatar, "thumbnail") || "/vite.svg"
           : "/vite.svg";
 
-        const browserNotification = new Notification(data.title, {
+        new Notification(data.title, {
           body: data.message,
           icon: avatarUrl,
         });
-
-        setTimeout(() => browserNotification.close(), 5000);
       }
     });
 

@@ -6,7 +6,7 @@ import { CreateUserForm } from "../../components/forms/CreateUserForm";
 
 export default function CreateUserPage() {
   const { user, logout } = useAuth();
-  const { createUserSuccess: success } = useUser();
+  const { success } = useUser();
   const navigate = useNavigate();
 
   return (
