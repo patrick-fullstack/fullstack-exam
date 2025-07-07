@@ -38,7 +38,6 @@ export default function EmailManagementPage() {
     <div
       style={{ minHeight: "100vh", backgroundColor: "var(--background-gray)" }}
     >
-      {/* Header */}
       <Header
         title="Email Management"
         variant="dashboard"
@@ -48,10 +47,8 @@ export default function EmailManagementPage() {
         userRole={user?.role}
       />
 
-      {/* Content */}
       <main className="container" style={{ paddingTop: "2rem" }}>
         <div className="space-y-6 mb-7">
-          {/* Page Header */}
           <div className="bg-white shadow rounded-lg p-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex items-center space-x-3">
@@ -80,7 +77,6 @@ export default function EmailManagementPage() {
                 </div>
               </div>
 
-              {/* Role Badge */}
               <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
                 {user?.role === "super_admin" ? "Super Admin" : "Manager"}{" "}
                 Dashboard
@@ -88,7 +84,6 @@ export default function EmailManagementPage() {
             </div>
           </div>
 
-          {/* Actions Bar */}
           <div className="bg-white shadow rounded-lg p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex flex-wrap items-center gap-3">
@@ -156,7 +151,6 @@ export default function EmailManagementPage() {
             </div>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-md p-4">
               <div className="flex justify-between items-start">
@@ -198,7 +192,6 @@ export default function EmailManagementPage() {
             </div>
           )}
 
-          {/* Email List - Using the updated EmailList component */}
           <div className="bg-white shadow rounded-lg">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-medium text-gray-900">

@@ -34,13 +34,11 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
 
-  // Methods
   // method to compare password - for login
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
 // User schema
-// This  defines the structure of the User document in MongoDB
 const userSchema = new Schema<IUser>(
   {
     email: {
@@ -95,7 +93,7 @@ const userSchema = new Schema<IUser>(
     },
   },
   {
-    timestamps: true, // Automatically adds createdAt and updatedAt
+    timestamps: true,
   }
 );
 

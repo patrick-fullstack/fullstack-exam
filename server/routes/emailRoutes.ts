@@ -12,9 +12,7 @@ import { UserRole } from "../models/User";
 
 const router = express.Router();
 
-// All routes need authentication
 router.use(authenticate);
-
 router.post(
   "/",
   authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER),
@@ -45,6 +43,5 @@ router.put(
   authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER),
   retryEmail
 );
-
 
 export default router;

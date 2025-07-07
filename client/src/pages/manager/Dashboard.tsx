@@ -10,7 +10,6 @@ export default function ManagerDashboard() {
     <div
       style={{ minHeight: "100vh", backgroundColor: "var(--background-gray)" }}
     >
-      {/* Header */}
       <Header
         title="Manager Dashboard"
         variant="dashboard"
@@ -19,10 +18,8 @@ export default function ManagerDashboard() {
         userName={user?.firstName}
       />
 
-      {/* Content */}
       <main className="container" style={{ paddingTop: "2rem" }}>
         <div className="space-y-6 mb-7">
-          {/* Hero Card */}
           <div className="card">
             <div className="flex items-start justify-between">
               <div>
@@ -33,7 +30,6 @@ export default function ManagerDashboard() {
                   Company Manager Dashboard
                 </p>
 
-                {/* User Info Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <div className="text-sm font-medium text-gray-500 mb-1">
@@ -56,7 +52,6 @@ export default function ManagerDashboard() {
                 </div>
               </div>
 
-              {/* Avatar Section */}
               <div className="flex-shrink-0">
                 <AvatarImage
                   user={{
@@ -70,13 +65,11 @@ export default function ManagerDashboard() {
             </div>
           </div>
 
-          {/* Quick Actions - Simple */}
           <div className="card">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">
               Quick Actions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Manage My Company */}
               {user?.companyId && (
                 <Link
                   to={`/manager/company/${user.companyId}`}
@@ -113,7 +106,6 @@ export default function ManagerDashboard() {
                 </Link>
               )}
 
-              {/* Browse All Companies */}
               <Link
                 to="/manager/companies"
                 className="group block p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all duration-200"
@@ -147,7 +139,6 @@ export default function ManagerDashboard() {
                   </div>
                 </div>
               </Link>
-              {/* Email Management */}
               <Link
                 to="/manager/emails"
                 className="group block p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all duration-200"
@@ -182,7 +173,6 @@ export default function ManagerDashboard() {
                 </div>
               </Link>
 
-              {/* Send Email */}
               <Link
                 to="/manager/emails/create"
                 className="group block p-6 bg-white border-2 border-gray-200 rounded-xl hover:border-purple-300 hover:shadow-md transition-all duration-200"

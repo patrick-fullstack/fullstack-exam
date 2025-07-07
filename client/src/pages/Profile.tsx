@@ -7,7 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useUser } from "../contexts/UserContext";
 
 export default function ProfilePage() {
-  const { user: currentUser, logout } = useAuth();
+  const { user, user: currentUser, logout } = useAuth();
   const {
     profileUser,
     loading,
@@ -67,6 +67,7 @@ export default function ProfilePage() {
         onLogout={logout}
         userAvatar={currentUser?.avatar}
         userName={currentUser?.firstName}
+        userRole={user?.role}
       />
 
       <main

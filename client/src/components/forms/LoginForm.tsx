@@ -36,10 +36,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* General Error Message */}
       {error && <div className="alert alert-error">{error}</div>}
 
-      {/* Email Input */}
       <Input
         label="Email Address"
         type="email"
@@ -50,7 +48,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         error={fieldErrors.email}
       />
 
-      {/* Password Input */}
       <Input
         label="Password"
         type="password"
@@ -61,7 +58,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         error={fieldErrors.password}
       />
 
-      {/* Submit Button */}
       <Button
         type="submit"
         loading={loading}

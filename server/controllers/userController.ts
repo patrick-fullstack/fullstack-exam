@@ -210,10 +210,13 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
         updateData.password = await bcrypt.hash(password, 12);
       }
     } else {
-      // Manager updating an employee
+      // Manager updating an employee - fix the comparison here
+      const targetUserCompanyId = targetUser.companyId?._id?.toString() || targetUser.companyId?.toString();
+      const currentUserCompanyId = currentUser.companyId?._id?.toString() || currentUser.companyId?.toString();
+      
       if (
         targetUser.role !== UserRole.EMPLOYEE ||
-        targetUser.companyId?.toString() !== currentUser.companyId?.toString()
+        targetUserCompanyId !== currentUserCompanyId
       ) {
         return res.status(403).json({
           success: false,
@@ -311,50 +314,3 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-// Get user statistics (Super Admin only) - for total users etc
-export const getUserStats = asyncHandler(
-  async (req: Request, res: Response) => {
-    const stats = await User.aggregate([
-      {
-        $group: {
-          _id: "$role",
-          count: { $sum: 1 },
-          active: {
-            $sum: {
-              $cond: ["$isActive", 1, 0],
-            },
-          },
-          inactive: {
-            $sum: {
-              $cond: ["$isActive", 0, 1],
-            },
-          },
-        },
-      },
-      // {
-      //   $project: {
-      //     role: "$_id",
-      //     count: 1,
-      //     active: 1,
-      //     inactive: 1,
-      //     _id: 0,
-      //   },
-      // },
-    ]);
-
-    const totalUsers = await User.countDocuments();
-    const activeUsers = await User.countDocuments({ isActive: true });
-    const inactiveUsers = await User.countDocuments({ isActive: false });
-
-    res.status(200).json({
-      success: true,
-      message: "User statistics retrieved successfully",
-      data: {
-        totalUsers,
-        activeUsers,
-        inactiveUsers,
-        roleBreakdown: stats,
-      },
-    });
-  }
-);

@@ -26,7 +26,6 @@ export default function EmailManagementPage() {
     <div
       style={{ minHeight: "100vh", backgroundColor: "var(--background-gray)" }}
     >
-      {/* Header */}
       <Header
         title="Email Management"
         variant="dashboard"
@@ -35,10 +34,8 @@ export default function EmailManagementPage() {
         userName={user?.firstName}
       />
 
-      {/* Content */}
       <main className="container" style={{ paddingTop: "2rem" }}>
         <div className="space-y-6 mb-7">
-          {/* Page Header */}
           <div className="bg-white shadow rounded-lg p-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex items-center space-x-3">
@@ -73,7 +70,6 @@ export default function EmailManagementPage() {
             </div>
           </div>
 
-          {/* Actions Bar */}
           <div className="bg-white shadow rounded-lg p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex flex-wrap items-center gap-3">
@@ -141,7 +137,6 @@ export default function EmailManagementPage() {
             </div>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-md p-4">
               <div className="flex justify-between items-start">

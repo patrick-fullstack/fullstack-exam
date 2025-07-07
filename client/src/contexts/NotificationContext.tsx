@@ -7,7 +7,6 @@ import {
 } from "react";
 import Pusher from "pusher-js";
 import { useAuth } from "./AuthContext";
-import { auth } from "../services/auth";
 import { notificationService } from "../services/notification";
 import type {
   Notification,
@@ -26,13 +25,23 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [pusher, setPusher] = useState<Pusher | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  const shouldReceiveNotifications = (userRole: string) => {
+    return ['manager', 'employee'].includes(userRole);
+  };
+
   const fetchNotifications = async () => {
-    const data = await notificationService.fetchNotifications();
-    setNotifications(data);
+    if (user && shouldReceiveNotifications(user.role)) {
+      try {
+        const data = await notificationService.fetchNotifications();
+        setNotifications(data);
+      } catch {
+        console.error("Failed to fetch notifications");
+      }
+    }
   };
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user && shouldReceiveNotifications(user.role)) {
       fetchNotifications();
     } else {
       setNotifications([]);
@@ -40,27 +49,40 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, user]);
 
   useEffect(() => {
-    if (!isAuthenticated || !user) {
-      if (pusher) {
-        pusher.disconnect();
-        setPusher(null);
-      }
-      setIsConnected(false);
-      return;
+    if (pusher) {
+      pusher.disconnect();
+      setPusher(null);
     }
+    setIsConnected(false);
 
-    const token = auth.getToken();
-    if (!token) {
-      setIsConnected(false);
+    if (!isAuthenticated || !user || !shouldReceiveNotifications(user.role)) {
       return;
     }
 
     const pusherInstance = new Pusher(import.meta.env.VITE_PUSHER_KEY, {
       cluster: import.meta.env.VITE_PUSHER_CLUSTER,
-      authEndpoint: `${import.meta.env.VITE_API_URL}/notifications/pusher/auth`,
-      auth: {
-        headers: { Authorization: `Bearer ${token}` },
-      },
+      authorizer: function(channel) {
+        return {
+          authorize: function(socketId, callback) {
+            fetch(`${import.meta.env.VITE_API_URL}/notifications/pusher/auth`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              credentials: 'include',
+              body: `socket_id=${encodeURIComponent(socketId)}&channel_name=${encodeURIComponent(channel.name)}`
+            })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+              }
+              return response.json();
+            })
+            .then(data => callback(null, data))
+            .catch(error => callback(error instanceof Error ? error : new Error('Authentication failed'), null));
+          }
+        };
+      }
     });
 
     pusherInstance.connection.bind("connected", () => setIsConnected(true));
@@ -92,12 +114,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           ? getImageUrl(data.newUser.avatar, "thumbnail") || "/vite.svg"
           : "/vite.svg";
 
-        const browserNotification = new Notification(data.title, {
+        new Notification(data.title, {
           body: data.message,
           icon: avatarUrl,
         });
-
-        setTimeout(() => browserNotification.close(), 5000);
       }
     });
 
@@ -113,31 +133,46 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, user]);
 
   useEffect(() => {
-    if (isAuthenticated && Notification.permission === "default") {
+    if (isAuthenticated && user && shouldReceiveNotifications(user.role) && Notification.permission === "default") {
       Notification.requestPermission();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   const markAsRead = async (id: string) => {
-    await notificationService.markAsRead(id);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+    if (!user || !shouldReceiveNotifications(user.role)) return;
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+    } catch {
+      console.error("Failed to mark notification as read");
+    }
   };
 
   const markAllAsRead = async () => {
-    await notificationService.markAllAsRead();
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    if (!user || !shouldReceiveNotifications(user.role)) return;
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch {
+      console.error("Failed to mark all notifications as read");
+    }
   };
 
   const clearNotifications = () => setNotifications([]);
 
   const deleteNotification = async (id: string) => {
-    const success = await notificationService.deleteNotification(id);
-    if (success) {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    if (!user || !shouldReceiveNotifications(user.role)) return false;
+    try {
+      const success = await notificationService.deleteNotification(id);
+      if (success) {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      }
+      return success;
+    } catch {
+      return false;
     }
-    return success;
   };
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;

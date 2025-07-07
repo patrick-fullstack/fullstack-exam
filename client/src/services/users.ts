@@ -1,5 +1,4 @@
 import axios, { AxiosError } from "axios";
-import Cookies from "js-cookie";
 import type { User, ApiErrorResponse } from "../types/user";
 import type { CreateUserData } from "../types/user";
 
@@ -7,24 +6,22 @@ const API_URL = import.meta.env.VITE_API_URL;
 const api = axios.create({
   baseURL: API_URL,
   timeout: 30000,
+  withCredentials: true, // Essential for session cookies
 });
 
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<ApiErrorResponse>) => {
+    // Handle session expiration
+    if (error.response?.status === 401) {
+      window.location.href = '/login';
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
+    return Promise.reject(error);
+  }
 );
 
 export const userService = {
-  /**
-   * Create a new user (Super Admin only)
-   */
   async createUser(userData: CreateUserData) {
     try {
       const formData = new FormData();
@@ -83,9 +80,6 @@ export const userService = {
     }
   },
 
-  /**
-   * Get user by ID
-   */
   async getUserById(userId: string) {
     try {
       const response = await api.get(`/users/${userId}`);
@@ -119,9 +113,6 @@ export const userService = {
     }
   },
 
-  /**
-   * Get all users with filtering and pagination
-   */
   async getUsers(params?: {
     page?: number;
     limit?: number;
@@ -171,9 +162,6 @@ export const userService = {
     }
   },
 
-  /**
-   * Update user
-   */
   async updateUser(
     userId: string,
     userData: {
@@ -237,9 +225,6 @@ export const userService = {
     }
   },
 
-  /**
-   * Delete user
-   */
   async deleteUser(userId: string) {
     try {
       const response = await api.delete(`/users/${userId}`);

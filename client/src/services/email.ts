@@ -1,5 +1,4 @@
 import axios, { AxiosError } from "axios";
-import Cookies from "js-cookie";
 import type {
   CreateEmailData,
   CreateEmailResponse,
@@ -14,36 +13,22 @@ const API_URL = import.meta.env.VITE_API_URL;
 const api = axios.create({
   baseURL: API_URL,
   timeout: 10000,
+  withCredentials: true, // Essential for session cookies
 });
-
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiErrorResponse>) => {
-    // Handle token expiration
+    // Handle session expiration
     if (error.response?.status === 401) {
-      Cookies.remove("token");
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
 );
 
 export const emailService = {
-  /**
-   * Create a scheduled email
-   */
   async createEmail(emailData: CreateEmailData) {
     try {
       const response = await api.post<CreateEmailResponse>(
@@ -81,9 +66,6 @@ export const emailService = {
     }
   },
 
-  /**
-   * Get all scheduled emails with pagination and filtering
-   */
   async getEmails(params?: {
     page?: number;
     limit?: number;
@@ -151,9 +133,6 @@ export const emailService = {
     }
   },
 
-  /**
-   * Get email templates
-   */
   async getTemplates() {
     try {
       const response = await api.get<TemplatesResponse>("/emails/templates");
@@ -187,9 +166,6 @@ export const emailService = {
     }
   },
 
-  /**
-   * Cancel scheduled email
-   */
   async cancelEmail(emailId: string) {
     try {
       const response = await api.put<EmailActionResponse>(
@@ -226,9 +202,6 @@ export const emailService = {
     }
   },
 
-  /**
-   * Retry failed email
-   */
   async retryEmail(emailId: string) {
     try {
       const response = await api.put<EmailActionResponse>(
@@ -265,9 +238,6 @@ export const emailService = {
     }
   },
 
-  /**
-   * Get email by ID
-   */
   async getEmailById(emailId: string) {
     try {
       const response = await api.get<{
@@ -305,9 +275,6 @@ export const emailService = {
     }
   },
 
-  /**
-   * Delete email
-   */
   async deleteEmail(emailId: string) {
     try {
       const response = await api.delete<{

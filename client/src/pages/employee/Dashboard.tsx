@@ -9,7 +9,6 @@ export default function EmployeeDashboard() {
     <div
       style={{ minHeight: "100vh", backgroundColor: "var(--background-gray)" }}
     >
-      {/* Header */}
       <Header
         title="Employee Portal"
         variant="dashboard"
@@ -18,10 +17,8 @@ export default function EmployeeDashboard() {
         userName={user?.firstName}
       />
 
-      {/* Content */}
       <main className="container" style={{ paddingTop: "2rem" }}>
         <div className="space-y-6 mb-7">
-          {/* Hero Card */}
           <div className="card">
             <div className="flex items-start justify-between">
               <div>
@@ -30,7 +27,6 @@ export default function EmployeeDashboard() {
                 </h1>
                 <p className="text-lg text-gray-600 mb-6">Employee Portal</p>
 
-                {/* User Info Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <div className="text-sm font-medium text-gray-500 mb-1">
@@ -58,7 +54,6 @@ export default function EmployeeDashboard() {
                 </div>
               </div>
 
-              {/* Avatar Section */}
               <div className="flex-shrink-0">
                 <AvatarImage
                   user={{
@@ -72,13 +67,11 @@ export default function EmployeeDashboard() {
             </div>
           </div>
 
-          {/*Quick Actions for Employee */}
           <div className="card">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">
               Quick Actions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/*View Company - Direct to company details */}
               {user?.companyId && (
                 <Link
                   to={`/employee/company/${user.companyId}`}

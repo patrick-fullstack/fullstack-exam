@@ -25,7 +25,6 @@ export default function CreateEmailPage() {
     <div
       style={{ minHeight: "100vh", backgroundColor: "var(--background-gray)" }}
     >
-      {/* Header */}
       <Header
         title="Create Email"
         variant="dashboard"
@@ -34,13 +33,11 @@ export default function CreateEmailPage() {
         userName={user?.firstName}
       />
 
-      {/* Content */}
       <main
         className="container"
         style={{ paddingTop: "2rem", maxWidth: "900px" }}
       >
         <div className="space-y-6 mb-7">
-          {/* Navigation */}
           <div className="flex flex-wrap items-center gap-4">
             <button
               onClick={() => navigate("/manager-dashboard")}
@@ -57,7 +54,6 @@ export default function CreateEmailPage() {
             </button>
           </div>
 
-          {/* Page Header */}
           <div className="bg-white shadow rounded-lg p-6">
             <div className="flex items-center space-x-3 mb-2">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -90,7 +86,6 @@ export default function CreateEmailPage() {
             </div>
           </div>
 
-          {/* Success Message */}
           {success && (
             <div className="bg-green-50 border border-green-200 rounded-md p-4">
               <div className="flex">

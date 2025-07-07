@@ -1,5 +1,4 @@
 import axios, { AxiosError } from "axios";
-import Cookies from "js-cookie";
 import type {
   CompaniesResponse,
   CompanyResponse,
@@ -13,36 +12,22 @@ const API_URL = import.meta.env.VITE_API_URL;
 const api = axios.create({
   baseURL: API_URL,
   timeout: 30000,
+  withCredentials: true, // Essential for session cookies
 });
-
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiErrorResponse>) => {
-    // Handle token expiration
+    // Handle session expiration
     if (error.response?.status === 401) {
-      Cookies.remove("token");
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
 );
 
 export const companyService = {
-  /**
-   * Get all companies with pagination and search
-   */
   async getCompanies(params?: {
     page?: number;
     limit?: number;
@@ -67,9 +52,6 @@ export const companyService = {
     }
   },
 
-  /**
-   * Get company by ID with employees
-   */
   async getCompanyById(
     companyId: string,
     params?: {
@@ -96,9 +78,6 @@ export const companyService = {
     return response.data;
   },
 
-  /**
-   * Create new company (Super Admin only)
-   */
   async createCompany(
     companyData: CreateCompanyData
   ): Promise<CompanyResponse> {
@@ -128,9 +107,6 @@ export const companyService = {
     }
   },
 
-  /**
-   * Update company
-   */
   async updateCompany(
     companyId: string,
     companyData: UpdateCompanyData
@@ -167,9 +143,6 @@ export const companyService = {
     }
   },
 
-  /**
-   * Delete company (Super Admin only)
-   */
   async deleteCompany(
     companyId: string
   ): Promise<{ success: boolean; message: string }> {
@@ -186,9 +159,6 @@ export const companyService = {
     }
   },
 
-  /**
-   * Export company data to CSV
-   */
   async exportCompanyToCSV(companyId: string): Promise<void> {
     const { data, headers } = await api.get(`/company/export/${companyId}`, {
       responseType: "blob",

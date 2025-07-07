@@ -8,7 +8,7 @@ interface Environment {
   NODE_ENV: string;
   PORT: number;
   MONGO_URI: string;
-  JWT_SECRET: string;
+  SESSION_SECRET: string;
   CLIENT_URL: string;
   isDevelopment: () => boolean;
   isProduction: () => boolean;
@@ -17,6 +17,7 @@ interface Environment {
   SUPER_PASSWORD: string;
   SUPER_FIRSTNAME: string;
   SUPER_LASTNAME: string;
+  SUPER_AVATAR: string;
 }
 
 // Validate and parse environment variables
@@ -25,12 +26,13 @@ const createEnv = (): Environment => {
     "NODE_ENV",
     "PORT",
     "MONGO_URI",
-    "JWT_SECRET",
+    "SESSION_SECRET",
     "CLIENT_URL",
     "SUPER_EMAIL",
     "SUPER_PASSWORD",
     "SUPER_FIRSTNAME",
     "SUPER_LASTNAME",
+    "SUPER_AVATAR",
   ];
 
   // Validate all required variables exist
@@ -46,29 +48,30 @@ const createEnv = (): Environment => {
   const NODE_ENV = process.env.NODE_ENV!;
   const PORT = parseInt(process.env.PORT!, 10);
   const MONGO_URI = process.env.MONGO_URI!;
-  const JWT_SECRET = process.env.JWT_SECRET!;
+  const SESSION_SECRET = process.env.SESSION_SECRET!;
   const CLIENT_URL = process.env.CLIENT_URL!;
   const SUPER_EMAIL = process.env.SUPER_EMAIL!;
   const SUPER_PASSWORD = process.env.SUPER_PASSWORD!;
   const SUPER_FIRSTNAME = process.env.SUPER_FIRSTNAME!;
   const SUPER_LASTNAME = process.env.SUPER_LASTNAME!;
+  const SUPER_AVATAR = process.env.SUPER_AVATAR!;
 
   return {
     NODE_ENV,
     PORT,
     MONGO_URI,
-    JWT_SECRET,
+    SESSION_SECRET,
     CLIENT_URL,
-    isDevelopment: () => NODE_ENV === "development",
-    isProduction: () => NODE_ENV === "production",
-    isTest: () => NODE_ENV === "test",
     SUPER_EMAIL,
     SUPER_PASSWORD,
     SUPER_FIRSTNAME,
     SUPER_LASTNAME,
+    SUPER_AVATAR,
+    isDevelopment: () => NODE_ENV === "development",
+    isProduction: () => NODE_ENV === "production",
+    isTest: () => NODE_ENV === "test",
   };
 };
 
-// Create and export the environment configuration
 export const env = createEnv();
 export default env;

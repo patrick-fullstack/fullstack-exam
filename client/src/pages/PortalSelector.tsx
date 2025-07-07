@@ -9,7 +9,6 @@ export default function PortalSelector() {
       }}
     >
       <div style={{ textAlign: "center", width: "100%" }}>
-        {/* Main Header */}
         <div className="mb-8">
           <div
             style={{
@@ -46,7 +45,6 @@ export default function PortalSelector() {
           </p>
         </div>
 
-        {/* Portal Cards */}
         <div
           style={{
             display: "grid",
@@ -57,7 +55,6 @@ export default function PortalSelector() {
             width: "100%",
           }}
         >
-          {/* Admin Portal */}
           <div
             className="card"
             style={{
@@ -81,7 +78,6 @@ export default function PortalSelector() {
             <button className="btn btn-primary">Access Admin Portal</button>
           </div>
 
-          {/* Manager Portal */}
           <div
             className="card"
             style={{
@@ -105,7 +101,6 @@ export default function PortalSelector() {
             <button className="btn btn-primary">Access Manager Portal</button>
           </div>
 
-          {/* Employee Portal */}
           <div
             className="card"
             style={{
@@ -130,7 +125,6 @@ export default function PortalSelector() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="mt-8" style={{ marginTop: "2rem" }}>
           <p
             style={{
@@ -142,7 +136,6 @@ export default function PortalSelector() {
           </p>
         </div>
 
-        {/* Responsive styles */}
         <style>
           {`
                     @media (max-width: 600px) {

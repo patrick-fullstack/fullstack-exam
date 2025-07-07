@@ -37,7 +37,6 @@ export default function CompanyDetailPage() {
           </Link>
         </div>
 
-        {/* Loading state */}
         {loading && (
           <div className="text-center py-8">
             <div className="loading loading-spinner loading-lg"></div>
@@ -45,7 +44,6 @@ export default function CompanyDetailPage() {
           </div>
         )}
 
-        {/* Error state */}
         {error && !loading && (
           <div className="card text-center py-12">
             <div className="text-red-500 text-lg mb-4">Error</div>
@@ -56,7 +54,6 @@ export default function CompanyDetailPage() {
           </div>
         )}
 
-        {/* Company not found */}
         {!company && !loading && !error && (
           <div className="card text-center py-12">
             <div className="text-gray-500 text-lg mb-4">Company not found</div>
@@ -70,7 +67,6 @@ export default function CompanyDetailPage() {
           </div>
         )}
 
-        {/* Company details */}
         {company && !loading && (
           <CompanyDetails
             company={company}

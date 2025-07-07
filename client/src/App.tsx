@@ -50,7 +50,6 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Landing Page - Smart redirect */}
       <Route
         path="/"
         element={
@@ -94,7 +93,7 @@ function AppRoutes() {
         }
       />
 
-      {/* ADMIN ROUTES - Protected */}
+      {/* ADMIN ROUTES */}
       <Route
         path="/admin-dashboard"
         element={
@@ -173,7 +172,7 @@ function AppRoutes() {
         }
       />
 
-      {/* MANAGER ROUTES - Protected */}
+      {/* MANAGER ROUTES */}
       <Route
         path="/manager-dashboard"
         element={
@@ -230,7 +229,7 @@ function AppRoutes() {
         }
       />
 
-      {/* EMPLOYEE ROUTES - Protected */}
+      {/* EMPLOYEE ROUTES */}
       <Route
         path="/employee-dashboard"
         element={
@@ -254,7 +253,7 @@ function AppRoutes() {
         }
       />
 
-      {/* PROFILE ROUTES - Any authenticated user */}
+      {/* PROFILE ROUTES */}
       <Route
         path="/profile"
         element={

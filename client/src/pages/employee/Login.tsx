@@ -38,17 +38,14 @@ export default function EmployeeLogin() {
       style={{ minHeight: "100vh", backgroundColor: "var(--background-gray)" }}
     >
       <div className="card" style={{ width: "100%", maxWidth: "400px" }}>
-        {/* Header */}
         <Header
           title="Employee Portal"
           subtitle="Employee Access"
           variant="login"
         />
 
-        {/* Login Form Component */}
         <LoginForm onSubmit={handleLogin} loading={loading} error={error} />
 
-        {/* Navigation - Using Link components instead of <a> tags */}
         <div className="mt-4 text-center">
           <p style={{ fontSize: "0.875rem", color: "var(--text-gray)" }}>
             Not an employee?
