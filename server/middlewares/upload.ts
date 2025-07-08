@@ -84,3 +84,20 @@ export const validateFileUpload = (
     return false;
   }
 };
+
+export function handleMulterError(uploadMiddleware: any) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    uploadMiddleware(req, res, (err: any) => {
+      if (
+        err instanceof multer.MulterError ||
+        (err && err.message === "Only image files are allowed")
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: err.message || "File upload error",
+        });
+      }
+      next(err);
+    });
+  };
+}

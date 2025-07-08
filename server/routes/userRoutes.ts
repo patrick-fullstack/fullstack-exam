@@ -7,7 +7,7 @@ import {
 } from "../controllers/userController";
 import { authenticate, authorize } from "../middlewares/auth";
 import { UserRole } from "../models/User";
-import { upload } from "../middlewares/upload";
+import { handleMulterError, upload } from "../middlewares/upload";
 
 const router = express.Router();
 
@@ -21,7 +21,7 @@ router.get(
 );
 router.put(
   "/:userId",
-  upload.single("avatar"),
+  handleMulterError(upload.single("avatar")),
   authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE),
   updateUser
 );

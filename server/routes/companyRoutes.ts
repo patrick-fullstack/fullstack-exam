@@ -8,7 +8,7 @@ import {
   exportCompanyData,
 } from "../controllers/companyController";
 import { authenticate, authorize } from "../middlewares/auth";
-import { upload } from "../middlewares/upload";
+import { handleMulterError, upload } from "../middlewares/upload";
 import { UserRole } from "../models/User";
 
 const router = express.Router();
@@ -30,13 +30,13 @@ router.get(
 );
 router.post(
   "/",
-  upload.single("logo"),
+  handleMulterError(upload.single("logo")),
   authorize(UserRole.SUPER_ADMIN),
   createCompany
 );
 router.put(
   "/:companyId",
-  upload.single("logo"),
+  handleMulterError(upload.single("logo")),
   authorize(UserRole.SUPER_ADMIN, UserRole.MANAGER),
   updateCompany
 );
